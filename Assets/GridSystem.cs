@@ -70,7 +70,7 @@ public class GridSystem : MonoBehaviour
                 );
                 ghostObject.transform.position = snappedPosition;
 
-                if(!isShovelHeld || occupiedPositions.Contains(snappedPosition))
+                if(occupiedPositions.Contains(snappedPosition))
                     SetGhostColor(Color.red);
                 else
                     SetGhostColor(new Color(1f, 1f, 1f, 0.5f));
@@ -104,12 +104,14 @@ public class GridSystem : MonoBehaviour
     {
         isShovelHeld = true;
         Debug.Log("grid detects shovel held");
+        ghostObject.SetActive(true);
     }
 
     private void OnShovelRelease(SelectExitEventArgs args)
     {
         isShovelHeld = false;
         Debug.Log("grid detects shovel dropped");
+        ghostObject.SetActive(false);
     }
     private void OnGrabActivated(ActivateEventArgs args)
     {
@@ -127,11 +129,15 @@ public class GridSystem : MonoBehaviour
             shovelGrab.activated.AddListener(OnGrabActivated);
         }
         CreateGhostObject();
+        ghostObject.SetActive(false);
     }
 
     // Update is called once per frame
     void Update()
     {
-        UpdateGhostPosition();
+        if (isShovelHeld)
+        {
+            UpdateGhostPosition();
+        }
     }
 }
