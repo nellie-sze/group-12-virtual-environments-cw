@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
+using UnityEngine.XR.Interaction.Toolkit;
 
 public class GridSystem : MonoBehaviour
 {
@@ -9,7 +10,8 @@ public class GridSystem : MonoBehaviour
     public float gridSize = 1f;
     private GameObject ghostObject;
     private HashSet<Vector3> occupiedPositions = new HashSet<Vector3>();
-    private PlayerControls _input;
+    public UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable shovelGrab; 
+    private bool isShovelHeld = false;    // tracks if the shovel is grabbed
 
     void CreateGhostObject()
     {
@@ -26,8 +28,8 @@ public class GridSystem : MonoBehaviour
             mat.color = color;
 
             mat.SetFloat("_Mode",2);
-            mat.SetInt("_ScrBlend",(int)UnityEngine.Rendering.BlendMode.SrcAlpha);
-            mat.SetInt("_DstBlend",(int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            mat.SetInt("_ScrBlend",(int)BlendMode.SrcAlpha);
+            mat.SetInt("_DstBlend",(int)BlendMode.OneMinusSrcAlpha);
             mat.SetInt("_ZWrite", 0);
             mat.DisableKeyword("_ALPHATEST_ON");
             mat.DisableKeyword("_ALPHABLEND_ON");
@@ -68,7 +70,7 @@ public class GridSystem : MonoBehaviour
                 );
                 ghostObject.transform.position = snappedPosition;
 
-                if(occupiedPositions.Contains(snappedPosition))
+                if(!isShovelHeld || occupiedPositions.Contains(snappedPosition))
                     SetGhostColor(Color.red);
                 else
                     SetGhostColor(new Color(1f, 1f, 1f, 0.5f));
@@ -98,32 +100,32 @@ public class GridSystem : MonoBehaviour
         }
     }
 
-    void OnEnable()
+    private void OnShovelGrab(SelectEnterEventArgs args)
     {
-        if (_input == null)
-            _input = new PlayerControls();
-
-        _input.Player.Interact.performed += Interact;
-        _input.Player.Enable();
-        Debug.Log(_input.Player.Interact.enabled);
+        isShovelHeld = true;
+        Debug.Log("grid detects shovel held");
     }
 
-    void OnDisable()
+    private void OnShovelRelease(SelectExitEventArgs args)
     {
-        _input.Player.Interact.performed -= Interact;
-        _input.Player.Disable();
-        
+        isShovelHeld = false;
+        Debug.Log("grid detects shovel dropped");
     }
-
-    private void Interact(InputAction.CallbackContext context)
+    private void OnGrabActivated(ActivateEventArgs args)
     {
-        Debug.Log("Interact fired");
-        PlaceObject();
+        Debug.Log("placing object");
+        PlaceObject(); // called when trigger is pressed while grabbing
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        if (shovelGrab != null)
+        {
+            shovelGrab.selectEntered.AddListener(OnShovelGrab);
+            shovelGrab.selectExited.AddListener(OnShovelRelease);
+            shovelGrab.activated.AddListener(OnGrabActivated);
+        }
         CreateGhostObject();
     }
 
@@ -131,9 +133,5 @@ public class GridSystem : MonoBehaviour
     void Update()
     {
         UpdateGhostPosition();
-        if (Mouse.current.leftButton.isPressed)
-        {
-            PlaceObject();
-        }
     }
 }
