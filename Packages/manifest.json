@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.ucl.ubiq": "https://github.com/UCL-VR/ubiq.git#upm",
     "com.unity.ai.navigation": "2.0.9",
     "com.unity.collab-proxy": "2.11.2",
     "com.unity.ide.rider": "3.0.38",
@@ -11,6 +12,8 @@
     "com.unity.timeline": "1.8.10",
     "com.unity.ugui": "2.0.0",
     "com.unity.visualscripting": "1.9.9",
+    "com.unity.webrtc-ubiq-fork": "https://github.com/UCL-VR/unity-webrtc-ubiq-fork.git#v3.0.1-pre.7",
+    "com.unity.xr.hands": "1.7.3",
     "com.unity.xr.interaction.toolkit": "3.4.0",
     "com.unity.modules.accessibility": "1.0.0",
     "com.unity.modules.adaptiveperformance": "1.0.0",
