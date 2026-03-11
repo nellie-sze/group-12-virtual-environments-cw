@@ -119,6 +119,17 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!114 &15702170 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 718920920538893737, guid: 520771063084f164eb68ea0e99414c35, type: 3}
+  m_PrefabInstance: {fileID: 4414534974238125566}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94cd5919d2e6a8e4c90dd039a31aabb6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::VillagerAgent
 --- !u!1001 &305114150
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -256,9 +267,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2093863218}
     - target: {fileID: 5731359841781308914, guid: d64208b47190f0d4a9694f3d7db2daec, type: 3}
+      propertyPath: cornerPrefab
+      value: 
+      objectReference: {fileID: 2071119714}
+    - target: {fileID: 5731359841781308914, guid: d64208b47190f0d4a9694f3d7db2daec, type: 3}
       propertyPath: objectToPlace
       value: 
       objectReference: {fileID: 1734794623}
+    - target: {fileID: 5731359841781308914, guid: d64208b47190f0d4a9694f3d7db2daec, type: 3}
+      propertyPath: straightPrefab
+      value: 
+      objectReference: {fileID: 1818283184}
     - target: {fileID: 8090930180865802785, guid: d64208b47190f0d4a9694f3d7db2daec, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
@@ -532,11 +551,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-
---- !u!1 &1075174734
-
 --- !u!1 &1016064679
-
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -544,70 +559,15 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-
-  - component: {fileID: 1075174736}
-  - component: {fileID: 1075174735}
-  m_Layer: 0
-  m_Name: VillagerSpawner
-
   - component: {fileID: 1016064682}
   - component: {fileID: 1016064681}
-  - component: {fileID: 1016064680}
   m_Layer: 0
-  m_Name: EventSystem
-
+  m_Name: 
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
-
---- !u!114 &1075174735
-
---- !u!114 &1016064680
-
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-
-  m_GameObject: {fileID: 1075174734}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: af950f621ec29c247b72efb11ae882e9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::VillagerSpawner
-  grid: {fileID: 1989070394}
-  villagerPrefab: {fileID: 718920920538893737, guid: 520771063084f164eb68ea0e99414c35, type: 3}
-  count: 3
---- !u!4 &1075174736
-
-  m_GameObject: {fileID: 1016064679}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 01614664b831546d2ae94a42149d80ac, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.UI.InputSystemUIInputModule
-  m_SendPointerHoverToParent: 1
-  m_MoveRepeatDelay: 0.5
-  m_MoveRepeatRate: 0.1
-  m_XRTrackingOrigin: {fileID: 0}
-  m_ActionsAsset: {fileID: -944628639613478452, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
-  m_PointAction: {fileID: -1654692200621890270, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
-  m_MoveAction: {fileID: -8784545083839296357, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
-  m_SubmitAction: {fileID: 392368643174621059, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
-  m_CancelAction: {fileID: 7727032971491509709, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
-  m_LeftClickAction: {fileID: 3001919216989983466, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
-  m_MiddleClickAction: {fileID: -2185481485913320682, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
-  m_RightClickAction: {fileID: -4090225696740746782, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
-  m_ScrollWheelAction: {fileID: 6240969308177333660, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
-  m_TrackedDevicePositionAction: {fileID: 6564999863303420839, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
-  m_TrackedDeviceOrientationAction: {fileID: 7970375526676320489, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
-  m_DeselectOnBackgroundClick: 1
-  m_PointerBehavior: 0
-  m_CursorLockBehavior: 0
-  m_ScrollDeltaPerTick: 6
+  m_IsActive: 0
 --- !u!114 &1016064681
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -624,30 +584,20 @@ MonoBehaviour:
   m_sendNavigationEvents: 1
   m_DragThreshold: 10
 --- !u!4 &1016064682
-
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-
-  m_GameObject: {fileID: 1075174734}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -8.7485, y: 1.93391, z: -8.83034}
-
   m_GameObject: {fileID: 1016064679}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-
-
 --- !u!1 &1058325287
 GameObject:
   m_ObjectHideFlags: 0
@@ -1014,7 +964,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1539106930}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
-
 --- !u!1 &1560243693 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1767192433, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
@@ -1284,19 +1233,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-
---- !u!114 &1989070394 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 2829562666362241420, guid: d64208b47190f0d4a9694f3d7db2daec, type: 3}
-  m_PrefabInstance: {fileID: 404960782}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e39d9dda9807ac54190ac0bbc5115d1f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BoardGrid
-
 --- !u!1 &1818283184
 GameObject:
   m_ObjectHideFlags: 0
@@ -1521,6 +1457,64 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1873221106}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &1989070394 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2829562666362241420, guid: d64208b47190f0d4a9694f3d7db2daec, type: 3}
+  m_PrefabInstance: {fileID: 404960782}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e39d9dda9807ac54190ac0bbc5115d1f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BoardGrid
+--- !u!1 &2066992081
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2066992083}
+  - component: {fileID: 2066992082}
+  m_Layer: 0
+  m_Name: VillagerSpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2066992082
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2066992081}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af950f621ec29c247b72efb11ae882e9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::VillagerSpawner
+  grid: {fileID: 1989070394}
+  villagerPrefab: {fileID: 15702170}
+  count: 10
+--- !u!4 &2066992083
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2066992081}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -3.10553, y: 1.93391, z: -6.22437}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2071119714
 GameObject:
   m_ObjectHideFlags: 0
@@ -1635,7 +1629,6 @@ Transform:
   - {fileID: 1873221107}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-
 --- !u!1 &2093863214 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 7322173429083555654, guid: 9ab17a5463ca4ea45bcb6c7371b46ad9, type: 3}
@@ -1928,6 +1921,7 @@ PrefabInstance:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
+  - {fileID: 1016064682}
   - {fileID: 410087041}
   - {fileID: 832575519}
   - {fileID: 404960782}
@@ -1936,12 +1930,8 @@ SceneRoots:
   - {fileID: 1563600261}
   - {fileID: 305114150}
   - {fileID: 1564483239}
-
   - {fileID: 4414534974238125566}
-  - {fileID: 1075174736}
-
   - {fileID: 1537750449}
-  - {fileID: 1016064682}
   - {fileID: 2071119718}
   - {fileID: 1818283188}
-
+  - {fileID: 2066992083}

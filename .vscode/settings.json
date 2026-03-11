@@ -67,6 +67,6 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "Group-12-Virtual-Environments-CW.slnx",
+    "dotnet.defaultSolution": "Group 12 Virtual Environments.slnx",
     "dotnet.preferCSharpExtension": true
 }
