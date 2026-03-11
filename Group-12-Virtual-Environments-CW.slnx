@@ -1,6 +1,6 @@
 ﻿<Solution>
-  <Project Path="Unity.XR.Interaction.Toolkit.Samples.StarterAssets.csproj" />
   <Project Path="Unity.XR.Hands.Samples.VisualizerSample.csproj" />
+  <Project Path="Unity.XR.Interaction.Toolkit.Samples.StarterAssets.csproj" />
   <Project Path="Unity.XR.Interaction.Toolkit.Samples.SpatialKeyboard.csproj" />
   <Project Path="Unity.XR.Interaction.Toolkit.Samples.SpatialKeyboard.Editor.csproj" />
   <Project Path="Unity.XR.Hands.Samples.HandCapture.csproj" />
