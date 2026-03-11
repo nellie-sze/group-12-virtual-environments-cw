@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 8090930180865802785}
   - component: {fileID: 540649585469975999}
   - component: {fileID: 5731359841781308914}
+  - component: {fileID: 2829562666362241420}
   m_Layer: 0
   m_Name: Game Surface
   m_TagString: Untagged
@@ -32,7 +33,8 @@ Transform:
   m_LocalPosition: {x: 2.1, y: -6.26, z: 18.01}
   m_LocalScale: {x: 20, y: 1.8678182, z: 20}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 2258075837953039054}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &1344943456830138369
@@ -127,3 +129,51 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   objectToPlace: {fileID: 0}
   gridSize: 1
+  shovelGrab: {fileID: 0}
+--- !u!114 &2829562666362241420
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2112691572553345893}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e39d9dda9807ac54190ac0bbc5115d1f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BoardGrid
+  width: 20
+  height: 20
+  cellSize: 1
+  origin: {fileID: 2258075837953039054}
+--- !u!1 &8243822752414605957
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2258075837953039054}
+  m_Layer: 0
+  m_Name: GridOrigin
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2258075837953039054
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8243822752414605957}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.475, y: 0.5, z: -0.475}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3291232947170354309}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
