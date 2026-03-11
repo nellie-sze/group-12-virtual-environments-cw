@@ -60,13 +60,13 @@
         "*.asset": "yaml",
         "*.meta": "yaml",
         "*.prefab": "yaml",
-        "*.unity": "yaml",
+        "*.unity": "yaml"
     },
     "explorer.fileNesting.enabled": true,
     "explorer.fileNesting.patterns": {
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "Group 12 Virtual Environments.slnx",
+    "dotnet.defaultSolution": "Group-12-Virtual-Environments-CW.slnx",
     "dotnet.preferCSharpExtension": true
 }

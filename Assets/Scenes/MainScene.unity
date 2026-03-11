@@ -520,6 +520,53 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1075174734
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1075174736}
+  - component: {fileID: 1075174735}
+  m_Layer: 0
+  m_Name: VillagerSpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1075174735
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1075174734}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af950f621ec29c247b72efb11ae882e9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::VillagerSpawner
+  grid: {fileID: 1989070394}
+  villagerPrefab: {fileID: 718920920538893737, guid: 520771063084f164eb68ea0e99414c35, type: 3}
+  count: 3
+--- !u!4 &1075174736
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1075174734}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -8.7485, y: 1.93391, z: -8.83034}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1560243693 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1767192433, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
@@ -789,6 +836,17 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1989070394 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2829562666362241420, guid: d64208b47190f0d4a9694f3d7db2daec, type: 3}
+  m_PrefabInstance: {fileID: 404960782}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e39d9dda9807ac54190ac0bbc5115d1f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BoardGrid
 --- !u!1 &2093863214 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 7322173429083555654, guid: 9ab17a5463ca4ea45bcb6c7371b46ad9, type: 3}
@@ -1016,6 +1074,67 @@ MeshCollider:
   m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: 2260892554767797379, guid: ca881504683845f4bbcd85392b6e2532, type: 3}
+--- !u!1001 &4414534974238125566
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 718920920538893737, guid: 520771063084f164eb68ea0e99414c35, type: 3}
+      propertyPath: grid
+      value: 
+      objectReference: {fileID: 1989070394}
+    - target: {fileID: 5983313118969206678, guid: 520771063084f164eb68ea0e99414c35, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -9.857
+      objectReference: {fileID: 0}
+    - target: {fileID: 5983313118969206678, guid: 520771063084f164eb68ea0e99414c35, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1.93391
+      objectReference: {fileID: 0}
+    - target: {fileID: 5983313118969206678, guid: 520771063084f164eb68ea0e99414c35, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -8.83034
+      objectReference: {fileID: 0}
+    - target: {fileID: 5983313118969206678, guid: 520771063084f164eb68ea0e99414c35, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5983313118969206678, guid: 520771063084f164eb68ea0e99414c35, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5983313118969206678, guid: 520771063084f164eb68ea0e99414c35, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5983313118969206678, guid: 520771063084f164eb68ea0e99414c35, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5983313118969206678, guid: 520771063084f164eb68ea0e99414c35, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5983313118969206678, guid: 520771063084f164eb68ea0e99414c35, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5983313118969206678, guid: 520771063084f164eb68ea0e99414c35, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9103908360952733498, guid: 520771063084f164eb68ea0e99414c35, type: 3}
+      propertyPath: m_Name
+      value: Villager
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 520771063084f164eb68ea0e99414c35, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -1028,3 +1147,5 @@ SceneRoots:
   - {fileID: 1563600261}
   - {fileID: 305114150}
   - {fileID: 1564483239}
+  - {fileID: 4414534974238125566}
+  - {fileID: 1075174736}
