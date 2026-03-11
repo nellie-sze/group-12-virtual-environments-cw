@@ -10,11 +10,11 @@ public class ScaleAndResetOnGrab : MonoBehaviour
     private Quaternion originalRotation;
 
     [Range(0.01f, 1f)]
-    public float grabScaleMultiplier = 0.05f; // 25% of original size
+    public float grabScaleMultiplier = 0.1f; // 25% of original size
 
     void Start()
     {
-        originalScale = visualMesh.localScale;
+        originalScale = transform.localScale;
         originalPosition = transform.position;
         originalRotation = transform.rotation;
 
@@ -40,11 +40,13 @@ public class ScaleAndResetOnGrab : MonoBehaviour
 
     private void XRGrabInteractable_SelectEntered(SelectEnterEventArgs eventArgs)
     {
+        transform.localScale = originalScale * grabScaleMultiplier;
         Debug.Log("shovel grabbed");
     }
 
     private void XRGrabInteractable_SelectExited(SelectExitEventArgs eventArgs)
     {
+        transform.localScale = originalScale;
         transform.position = originalPosition;
         transform.rotation = originalRotation;
         Debug.Log("shovel released");
