@@ -33,7 +33,7 @@ public class GridSystem : MonoBehaviour
     public Color cornerPlacedColor = new Color(0f, 1f, 0.3f, 1f);
 
     private GameObject ghostObject;
-    private HashSet<Vector3> occupiedPositions = new HashSet<Vector3>();
+    // occupiedPositions removed — GridManager.Instance is now the single source of truth
     // 0, 90, 180, 270
     private int currentRotationY = 0;
 
@@ -203,7 +203,7 @@ public class GridSystem : MonoBehaviour
             if (!IsWithinGrid(cell))
                 return false;
 
-            if (occupiedPositions.Contains(cell))
+            if (GridManager.Instance != null && GridManager.Instance.IsOccupied(GridManager.Instance.WorldToGrid(cell)))
                 return false;
         }
 
@@ -233,11 +233,10 @@ public class GridSystem : MonoBehaviour
         GameObject placedObject = Instantiate(prefab, placementPosition, placementRotation);
         ApplyPlacedModeColour(placedObject);
 
-        // occupiedPositions.Add(placementPosition);
-        List<Vector3> cells = GetCellsForPlacedObject(placedObject);
-        foreach (Vector3 cell in cells)
+        List<Vector3> cellPositions = GetCellsForPlacedObject(placedObject);
+        foreach (Vector3 cellPos in cellPositions)
         {
-            occupiedPositions.Add(cell);
+            GridManager.Instance.TryPlace(GridManager.Instance.WorldToGrid(cellPos), CellType.Path, placedObject);
         }
         Debug.Log("Placed object in mode: " + currentMode);
     }
