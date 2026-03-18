@@ -196,6 +196,8 @@ public class GridSystem : MonoBehaviour
 
         Matrix4x4 rootWorldToLocal = ghostObject.transform.worldToLocalMatrix;
 
+        Debug.Log("Scaling ghost to grid cell. Initial renderers count: " + renderers.Length);
+
         foreach (Renderer renderer in renderers)
         {
             if (renderer == null)
@@ -260,6 +262,7 @@ public class GridSystem : MonoBehaviour
             col.enabled = false;
         }
 
+        Debug.Log("Created ghost object from prefab: " + prefab.name);
         ScaleGhostToGridCell();
         CacheGhostMaterials();
         ApplyGhostAlphaFromBase(ghostOpacity);
@@ -287,7 +290,7 @@ public class GridSystem : MonoBehaviour
         if (Physics.Raycast(ray, out RaycastHit hit))
         {
             Vector3 point = hit.point;
-            float radius = 0.5f;
+            float radius = 0.1f;
 
             if (IsWithinGrid(point) &&
                 IsWithinGrid(point + new Vector3(radius, 0.0f, 0.0f)) &&
@@ -509,9 +512,9 @@ public class GridSystem : MonoBehaviour
         }
         if (shovelGrab != null)
         {
-            shovelGrab.selectEntered.AddListener(OnShovelGrab);
-            shovelGrab.selectExited.AddListener(OnShovelRelease);
-            shovelGrab.activated.AddListener(OnGrabActivated);
+            //shovelGrab.selectEntered.AddListener(OnShovelGrab);
+            //shovelGrab.selectExited.AddListener(OnShovelRelease);
+            //shovelGrab.activated.AddListener(OnGrabActivated);
         }
 
         CreateGhostObject();
@@ -537,7 +540,7 @@ public class GridSystem : MonoBehaviour
         // Desktop prototype mode switching
         if (Keyboard.current != null && Keyboard.current.pKey.wasPressedThisFrame)
         {
-            SwitchMode();
+            //SwitchMode();
             // ToggleMode();
         }
         if (Keyboard.current != null && Keyboard.current.bKey.wasPressedThisFrame)
@@ -570,29 +573,9 @@ public class GridSystem : MonoBehaviour
         Debug.Log("Rotated ghost to " + currentRotationY + " degrees");
     }
 
-    void SwitchMode()
-    {
-        currentMode = currentMode == ToolMode.Straight
-            ? ToolMode.Corner
-            : ToolMode.Straight;
-
-        FindAnyObjectByType<ToolModeUI>()?.UpdateModeText();
-
-        if (ghostObject != null)
-            Destroy(ghostObject);
-
-        CreateGhostObject();
-        UpdateGhostPosition();
-        ghostObject.SetActive(isShovelHeld);
-
-        // if (!isShovelHeld)
-        //     ghostObject.SetActive(false);
-
-        Debug.Log("Switched mode to " + currentMode);
-    }
-
+   
     private void SwitchMode(InputAction.CallbackContext ctx)
     {
-        SwitchMode();
+        //SwitchMode();
     }
 }
