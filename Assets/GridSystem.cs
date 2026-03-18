@@ -231,7 +231,7 @@ public class GridSystem : MonoBehaviour
 
         
         GameObject placedObject = Instantiate(prefab, placementPosition, placementRotation);
-        ApplyPlacedModeColour(placedObject);
+        //ApplyPlacedModeColour(placedObject);
 
         List<Vector3> cellPositions = GetCellsForPlacedObject(placedObject);
         foreach (Vector3 cellPos in cellPositions)
