@@ -24,15 +24,20 @@ public class GridSystem : MonoBehaviour
     [Header("Mode")]
     public ToolMode currentMode = ToolMode.Straight;
 
-    [Header("Mode Colours")]
-    public Color straightGhostColor = new Color(0f, 0.6f, 1f, 0.5f);
-    public Color cornerGhostColor = new Color(0f, 1f, 0.3f, 0.5f);
-    public Color invalidGhostColor = new Color(1f, 0f, 0f, 0.5f);
+    [Header("Ghost Visuals")]
+    [Range(0f, 1f)]
+    public float ghostOpacity = 0.5f;
+    public Color invalidGhostColor = new Color(1f, 0f, 0f, 1f);
+
+    [Header("Ghost Sizing")]
+    public bool scaleGhostToGridCells = true;
 
     public Color straightPlacedColor = new Color(0f, 0.6f, 1f, 1f);
     public Color cornerPlacedColor = new Color(0f, 1f, 0.3f, 1f);
 
     private GameObject ghostObject;
+    private readonly List<Material> ghostMaterials = new List<Material>();
+    private readonly List<Color> ghostBaseColors = new List<Color>();
     // occupiedPositions removed — GridManager.Instance is now the single source of truth
     // 0, 90, 180, 270
     private int currentRotationY = 0;
@@ -40,6 +45,204 @@ public class GridSystem : MonoBehaviour
     [Header("Prefabs")]
     public GameObject straightPrefab;
     public GameObject cornerPrefab;
+
+    static Color GetMaterialColor(Material mat)
+    {
+        if (mat == null)
+            return Color.white;
+
+        if (mat.HasProperty("_BaseColor"))
+            return mat.GetColor("_BaseColor");
+        if (mat.HasProperty("_Color"))
+            return mat.GetColor("_Color");
+
+        return mat.color;
+    }
+
+    static void SetMaterialColor(Material mat, Color color)
+    {
+        if (mat == null)
+            return;
+
+        if (mat.HasProperty("_BaseColor"))
+            mat.SetColor("_BaseColor", color);
+        if (mat.HasProperty("_Color"))
+            mat.SetColor("_Color", color);
+
+        mat.color = color;
+    }
+
+    static void ConfigureMaterialForTransparency(Material mat)
+    {
+        if (mat == null)
+            return;
+
+        // URP Lit: set Surface Type to Transparent (Alpha blend).
+        if (mat.HasProperty("_Surface"))
+        {
+            mat.SetFloat("_Surface", 1f);
+            if (mat.HasProperty("_Blend"))
+                mat.SetFloat("_Blend", 0f); // Alpha
+            if (mat.HasProperty("_AlphaClip"))
+                mat.SetFloat("_AlphaClip", 0f);
+            if (mat.HasProperty("_QueueControl"))
+                mat.SetFloat("_QueueControl", 1f); // UserOverride
+            if (mat.HasProperty("_ZWriteControl"))
+                mat.SetFloat("_ZWriteControl", 0f);
+            if (mat.HasProperty("_ZWrite"))
+                mat.SetFloat("_ZWrite", 0f);
+
+            if (mat.HasProperty("_SrcBlend"))
+                mat.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+            if (mat.HasProperty("_DstBlend"))
+                mat.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
+            if (mat.HasProperty("_SrcBlendAlpha"))
+                mat.SetFloat("_SrcBlendAlpha", (float)BlendMode.One);
+            if (mat.HasProperty("_DstBlendAlpha"))
+                mat.SetFloat("_DstBlendAlpha", (float)BlendMode.OneMinusSrcAlpha);
+            if (mat.HasProperty("_BlendOp"))
+                mat.SetFloat("_BlendOp", (float)BlendOp.Add);
+            if (mat.HasProperty("_BlendOpAlpha"))
+                mat.SetFloat("_BlendOpAlpha", (float)BlendOp.Add);
+
+            mat.SetOverrideTag("RenderType", "Transparent");
+            mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            mat.DisableKeyword("_ALPHATEST_ON");
+            mat.EnableKeyword("_ALPHABLEND_ON");
+            mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+            mat.renderQueue = (int)RenderQueue.Transparent;
+            return;
+        }
+
+        // Built-in Standard shader fallback
+        if (mat.HasProperty("_Mode"))
+        {
+            mat.SetFloat("_Mode", 2f);
+            mat.SetInt("_SrcBlend", (int)BlendMode.SrcAlpha);
+            mat.SetInt("_DstBlend", (int)BlendMode.OneMinusSrcAlpha);
+            mat.SetInt("_ZWrite", 0);
+            mat.DisableKeyword("_ALPHATEST_ON");
+            mat.EnableKeyword("_ALPHABLEND_ON");
+            mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+            mat.renderQueue = (int)RenderQueue.Transparent;
+        }
+    }
+
+    void CacheGhostMaterials()
+    {
+        ghostMaterials.Clear();
+        ghostBaseColors.Clear();
+
+        if (ghostObject == null)
+            return;
+
+        Renderer[] renderers = ghostObject.GetComponentsInChildren<Renderer>();
+        foreach (Renderer renderer in renderers)
+        {
+            Material[] materials = renderer.materials; // per-instance
+            for (int i = 0; i < materials.Length; i++)
+            {
+                Material mat = materials[i];
+                if (mat == null)
+                    continue;
+
+                ConfigureMaterialForTransparency(mat);
+                ghostMaterials.Add(mat);
+                ghostBaseColors.Add(GetMaterialColor(mat));
+            }
+        }
+    }
+
+    void ApplyGhostAlphaFromBase(float alpha)
+    {
+        for (int i = 0; i < ghostMaterials.Count; i++)
+        {
+            Material mat = ghostMaterials[i];
+            if (mat == null)
+                continue;
+
+            Color baseColor = i < ghostBaseColors.Count ? ghostBaseColors[i] : GetMaterialColor(mat);
+            baseColor.a = alpha;
+            SetMaterialColor(mat, baseColor);
+        }
+    }
+
+    void ApplyGhostInvalidVisual()
+    {
+        Color c = invalidGhostColor;
+        c.a = ghostOpacity;
+
+        for (int i = 0; i < ghostMaterials.Count; i++)
+        {
+            Material mat = ghostMaterials[i];
+            if (mat == null)
+                continue;
+
+            SetMaterialColor(mat, c);
+        }
+    }
+
+    void ScaleGhostToGridCell()
+    {
+        if (ghostObject == null || !scaleGhostToGridCells)
+            return;
+
+        Renderer[] renderers = ghostObject.GetComponentsInChildren<Renderer>();
+        if (renderers == null || renderers.Length == 0)
+            return;
+
+        Bounds combined = new Bounds();
+        bool hasBounds = false;
+
+        Matrix4x4 rootWorldToLocal = ghostObject.transform.worldToLocalMatrix;
+
+        foreach (Renderer renderer in renderers)
+        {
+            if (renderer == null)
+                continue;
+
+            Bounds lb = renderer.localBounds;
+            Vector3 center = lb.center;
+            Vector3 extents = lb.extents;
+
+            Vector3[] corners =
+            {
+                new Vector3(center.x - extents.x, center.y - extents.y, center.z - extents.z),
+                new Vector3(center.x - extents.x, center.y - extents.y, center.z + extents.z),
+                new Vector3(center.x - extents.x, center.y + extents.y, center.z - extents.z),
+                new Vector3(center.x - extents.x, center.y + extents.y, center.z + extents.z),
+                new Vector3(center.x + extents.x, center.y - extents.y, center.z - extents.z),
+                new Vector3(center.x + extents.x, center.y - extents.y, center.z + extents.z),
+                new Vector3(center.x + extents.x, center.y + extents.y, center.z - extents.z),
+                new Vector3(center.x + extents.x, center.y + extents.y, center.z + extents.z)
+            };
+
+            Matrix4x4 rendererLocalToRootLocal = rootWorldToLocal * renderer.transform.localToWorldMatrix;
+            for (int i = 0; i < corners.Length; i++)
+            {
+                Vector3 p = rendererLocalToRootLocal.MultiplyPoint3x4(corners[i]);
+                if (!hasBounds)
+                {
+                    combined = new Bounds(p, Vector3.zero);
+                    hasBounds = true;
+                }
+                else
+                {
+                    combined.Encapsulate(p);
+                }
+            }
+        }
+
+        if (!hasBounds)
+            return;
+
+        float footprint = Mathf.Max(combined.size.x, combined.size.z);
+        if (footprint <= 0.0001f || gridSize <= 0.0001f)
+            return;
+
+        float scale = gridSize / footprint;
+        ghostObject.transform.localScale = ghostObject.transform.localScale * scale;
+    }
 
     void CreateGhostObject()
     {
@@ -57,24 +260,9 @@ public class GridSystem : MonoBehaviour
             col.enabled = false;
         }
 
-        Renderer[] renderers = ghostObject.GetComponentsInChildren<Renderer>();
-
-        foreach (Renderer renderer in renderers)
-        {
-            Material mat = renderer.material;
-            Color color = mat.color;
-            color.a = 0.5f;
-            mat.color = color;
-
-            mat.SetFloat("_Mode", 2);
-            mat.SetInt("_SrcBlend", (int)BlendMode.SrcAlpha);
-            mat.SetInt("_DstBlend", (int)BlendMode.OneMinusSrcAlpha);
-            mat.SetInt("_ZWrite", 0);
-            mat.DisableKeyword("_ALPHATEST_ON");
-            mat.EnableKeyword("_ALPHABLEND_ON");
-            mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
-            mat.renderQueue = 3000;
-        }
+        ScaleGhostToGridCell();
+        CacheGhostMaterials();
+        ApplyGhostAlphaFromBase(ghostOpacity);
     }
 
     bool IsWithinGrid(Vector3 pos)
@@ -119,7 +307,7 @@ public class GridSystem : MonoBehaviour
                 if (CanPlaceGhost())
                     UpdateGhostVisual();
                 else
-                    SetGhostColor(invalidGhostColor);
+                    ApplyGhostInvalidVisual();
 
                 // if (occupiedPositions.Contains(snappedPosition))
                 //     SetGhostColor(invalidGhostColor);
@@ -134,26 +322,7 @@ public class GridSystem : MonoBehaviour
         if (ghostObject == null)
             return;
 
-        switch (currentMode)
-        {
-            case ToolMode.Straight:
-                SetGhostColor(straightGhostColor);
-                break;
-
-            case ToolMode.Corner:
-                SetGhostColor(cornerGhostColor);
-                break;
-        }
-    }
-
-    void SetGhostColor(Color color)
-    {
-        Renderer[] renderers = ghostObject.GetComponentsInChildren<Renderer>();
-
-        foreach (Renderer renderer in renderers)
-        {
-            renderer.material.color = color;
-        }
+        ApplyGhostAlphaFromBase(ghostOpacity);
     }
 
     // Gets every grid cell occupied by the current ghost
@@ -395,7 +564,7 @@ public class GridSystem : MonoBehaviour
             if (CanPlaceGhost())
                 UpdateGhostVisual();
             else
-                SetGhostColor(invalidGhostColor);
+                ApplyGhostInvalidVisual();
         }
 
         Debug.Log("Rotated ghost to " + currentRotationY + " degrees");
