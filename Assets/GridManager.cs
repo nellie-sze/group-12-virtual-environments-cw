@@ -15,7 +15,11 @@ public class GridManager : MonoBehaviour
     public static GridManager Instance { get; private set; }
 
     [Header("Grid Settings")]
-    public float gridSize = 1f;
+    [Tooltip("Optional explicit reference. If unset, GridManager will try to find a GridSystem in the scene.")]
+    [SerializeField] private GridSystem gridSystem;
+
+    // Read-only: sourced from GridSystem.gridSize (single source of truth).
+    public float gridSize { get; private set; } = 1f;
 
     [Header("Grid Surface")]
     [Tooltip("Assign the Renderer on the plane/table surface")]
@@ -28,6 +32,24 @@ public class GridManager : MonoBehaviour
 
     private Dictionary<Vector2Int, GridCell> cells = new Dictionary<Vector2Int, GridCell>();
 
+    private void SyncGridSizeFromGridSystem()
+    {
+        if (!gridSystem)
+        {
+            gridSystem = FindAnyObjectByType<GridSystem>();
+        }
+
+        if (gridSystem)
+        {
+            gridSize = gridSystem.gridSize;
+        }
+        else
+        {
+            Debug.LogWarning("GridManager: no GridSystem found - using default gridSize=1. Assign a GridSystem reference to GridManager or add one to the scene.");
+            gridSize = 1f;
+        }
+    }
+
     void Awake()
     {
         if (Instance != null && Instance != this)
@@ -36,6 +58,8 @@ public class GridManager : MonoBehaviour
             return;
         }
         Instance = this;
+
+        SyncGridSizeFromGridSystem();
 
         // Calculate bounds in Awake so spawners can use them in Start()
         if (gridSurfaceRenderer != null)
@@ -54,6 +78,26 @@ public class GridManager : MonoBehaviour
         else
         {
             Debug.LogWarning("GridManager: gridSurfaceRenderer not assigned — grid bounds defaulting to 0.");
+        }
+    }
+
+    private void OnValidate()
+    {
+        // Keep bounds math consistent in edit mode when GridSystem.gridSize changes.
+        SyncGridSizeFromGridSystem();
+
+        if (gridSurfaceRenderer != null)
+        {
+            Bounds bounds = gridSurfaceRenderer.bounds;
+            surfaceY = bounds.max.y;
+            gridMin = new Vector2Int(
+                Mathf.CeilToInt(bounds.min.x / gridSize),
+                Mathf.CeilToInt(bounds.min.z / gridSize)
+            );
+            gridMax = new Vector2Int(
+                Mathf.FloorToInt(bounds.max.x / gridSize),
+                Mathf.FloorToInt(bounds.max.z / gridSize)
+            );
         }
     }
 
@@ -76,6 +120,31 @@ public class GridManager : MonoBehaviour
     {
         return cell.x >= gridMin.x && cell.x <= gridMax.x &&
                cell.y >= gridMin.y && cell.y <= gridMax.y;
+    }
+
+    // World position check against the surface bounds (XZ only).
+    public bool IsWithinGridSurface(Vector3 worldPos)
+    {
+        if (gridSurfaceRenderer == null)
+        {
+            return true;
+        }
+
+        Bounds bounds = gridSurfaceRenderer.bounds;
+        return worldPos.x >= bounds.min.x &&
+               worldPos.x <= bounds.max.x &&
+               worldPos.z >= bounds.min.z &&
+               worldPos.z <= bounds.max.z;
+    }
+
+    // Matches GridSystem's "radius" placement buffer (prevents overhang at edges).
+    public bool IsWithinGridSurfaceBuffered(Vector3 worldPos, float radius)
+    {
+        return IsWithinGridSurface(worldPos) &&
+               IsWithinGridSurface(worldPos + new Vector3(radius, 0.0f, 0.0f)) &&
+               IsWithinGridSurface(worldPos + new Vector3(0.0f, 0.0f, radius)) &&
+               IsWithinGridSurface(worldPos + new Vector3(-radius, 0.0f, 0.0f)) &&
+               IsWithinGridSurface(worldPos + new Vector3(0.0f, 0.0f, -radius));
     }
 
     // Returns false if cell is already occupied

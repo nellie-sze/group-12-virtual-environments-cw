@@ -801,7 +801,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3291232947170354309, guid: d64208b47190f0d4a9694f3d7db2daec, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -1.05
+      value: -1.32
       objectReference: {fileID: 0}
     - target: {fileID: 3291232947170354309, guid: d64208b47190f0d4a9694f3d7db2daec, type: 3}
       propertyPath: m_LocalPosition.z
@@ -846,7 +846,7 @@ PrefabInstance:
     - target: {fileID: 5731359841781308914, guid: d64208b47190f0d4a9694f3d7db2daec, type: 3}
       propertyPath: cornerPrefab
       value: 
-      objectReference: {fileID: 2071119714}
+      objectReference: {fileID: 5071392686214402512, guid: b284af1cee672eb4aa527ef1fa8cecb0, type: 3}
     - target: {fileID: 5731359841781308914, guid: d64208b47190f0d4a9694f3d7db2daec, type: 3}
       propertyPath: objectToPlace
       value: 
@@ -854,7 +854,43 @@ PrefabInstance:
     - target: {fileID: 5731359841781308914, guid: d64208b47190f0d4a9694f3d7db2daec, type: 3}
       propertyPath: straightPrefab
       value: 
-      objectReference: {fileID: 1818283184}
+      objectReference: {fileID: 318373990914543345, guid: 97e623eb280a5234fb28e1687e0fb9ca, type: 3}
+    - target: {fileID: 5731359841781308914, guid: d64208b47190f0d4a9694f3d7db2daec, type: 3}
+      propertyPath: cornerGhostColor.b
+      value: 0.3647059
+      objectReference: {fileID: 0}
+    - target: {fileID: 5731359841781308914, guid: d64208b47190f0d4a9694f3d7db2daec, type: 3}
+      propertyPath: cornerGhostColor.g
+      value: 0.38431376
+      objectReference: {fileID: 0}
+    - target: {fileID: 5731359841781308914, guid: d64208b47190f0d4a9694f3d7db2daec, type: 3}
+      propertyPath: cornerGhostColor.r
+      value: 0.41176474
+      objectReference: {fileID: 0}
+    - target: {fileID: 5731359841781308914, guid: d64208b47190f0d4a9694f3d7db2daec, type: 3}
+      propertyPath: straightGhostColor.b
+      value: 0.3647059
+      objectReference: {fileID: 0}
+    - target: {fileID: 5731359841781308914, guid: d64208b47190f0d4a9694f3d7db2daec, type: 3}
+      propertyPath: straightGhostColor.g
+      value: 0.38431376
+      objectReference: {fileID: 0}
+    - target: {fileID: 5731359841781308914, guid: d64208b47190f0d4a9694f3d7db2daec, type: 3}
+      propertyPath: straightGhostColor.r
+      value: 0.40784317
+      objectReference: {fileID: 0}
+    - target: {fileID: 5731359841781308914, guid: d64208b47190f0d4a9694f3d7db2daec, type: 3}
+      propertyPath: straightPlacedColor.b
+      value: 0.21568629
+      objectReference: {fileID: 0}
+    - target: {fileID: 5731359841781308914, guid: d64208b47190f0d4a9694f3d7db2daec, type: 3}
+      propertyPath: straightPlacedColor.g
+      value: 0.21568629
+      objectReference: {fileID: 0}
+    - target: {fileID: 5731359841781308914, guid: d64208b47190f0d4a9694f3d7db2daec, type: 3}
+      propertyPath: straightPlacedColor.r
+      value: 0.21568629
+      objectReference: {fileID: 0}
     - target: {fileID: 8090930180865802785, guid: d64208b47190f0d4a9694f3d7db2daec, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
@@ -1138,11 +1174,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 16c9ad2412d00054690d54465ec37f9a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ObstacleSpawner
+  edgeBufferRadius: 0.5
   treePrefabs:
   - {fileID: 5142532879768883847, guid: 29eec5647f7432a44bbb3cb141546b76, type: 3}
   - {fileID: 108225653778294438, guid: e7800082768e1084ca8cd3ade014a98e, type: 3}
   - {fileID: 5023827496289606453, guid: 6ec3c3271a2b84b488579c6e3a7c67c7, type: 3}
-  treeCount: 1
+  treeCount: 5
   rockPrefabs:
   - {fileID: 6359112800851457702, guid: 709c39c713992aa40b9672dc631c3951, type: 3}
   - {fileID: 6201417577865561771, guid: 843a94ab995064440afa12be14be411c, type: 3}
@@ -1156,7 +1193,7 @@ MonoBehaviour:
   - {fileID: 4894849518924458267, guid: b84d1e04148baaa4291cb442c19b69bf, type: 3}
   - {fileID: 1567778426036168570, guid: 2d0acfd84dd7986418f7d2dcabe1bef3, type: 3}
   - {fileID: 8402614890987163458, guid: 96692eb261d3ade4f9a3c18ee9976119, type: 3}
-  rockCount: 1
+  rockCount: 5
   flowerPrefabs:
   - {fileID: 2594766243793620232, guid: e6424d62f59e3c7428e315959f12c196, type: 3}
   - {fileID: 2464754855653894261, guid: 0447a3ed236893d4cbb6b671815c95e9, type: 3}
@@ -1170,7 +1207,7 @@ MonoBehaviour:
   - {fileID: 3117357111836234255, guid: 388c45742a31caa4287e41a71fd235a5, type: 3}
   - {fileID: 2807940955490974254, guid: 19a6248d40b2b9246830dcc50e9928b9, type: 3}
   - {fileID: 6352184942146035110, guid: d97713245c9daa24caf783d27f3b6438, type: 3}
-  flowerCount: 1
+  flowerCount: 10
 --- !u!114 &681633584
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1213,7 +1250,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4d1236ea7d215304b848524c41b00c06, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GridManager
-  gridSize: 1
+  gridSystem: {fileID: 1989070399}
   gridSurfaceRenderer: {fileID: 1989070398}
 --- !u!1001 &726275455
 PrefabInstance:
@@ -2615,6 +2652,17 @@ MeshRenderer:
   m_CorrespondingSourceObject: {fileID: 8090930180865802785, guid: d64208b47190f0d4a9694f3d7db2daec, type: 3}
   m_PrefabInstance: {fileID: 404960782}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1989070399 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5731359841781308914, guid: d64208b47190f0d4a9694f3d7db2daec, type: 3}
+  m_PrefabInstance: {fileID: 404960782}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ff2f7cf4a9ab864fbff1a8c9a28273c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
 --- !u!1 &2066992081
 GameObject:
   m_ObjectHideFlags: 0
