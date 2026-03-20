@@ -8,10 +8,7 @@ public class PickaxeTool : MonoBehaviour
 {
     [Header("Tool")]
     public XRGrabInteractable pickaxeGrab;
-    public float gridSize = 1f;
-
-    [Header("Held Raycast")]
-    public bool ignoreRaycastWhileHeld = true;
+    public float gridSize;
 
     [Header("Ghost Prefab")]
     public GameObject ghostPrefab;
@@ -19,7 +16,7 @@ public class PickaxeTool : MonoBehaviour
 
     [Header("Ghost Colours")]
     public Color validColor   = new Color(0f,   1f,   0f,   0.5f); // green = hovering a rock
-    public Color invalidColor = new Color(0.4f, 0.4f, 1f,   0.5f); // blue  = not a rock
+    public Color invalidColor = new Color(1f,   0.3f, 0f,   0.5f); // orange = not a rock
 
     private bool isHeld = false;
     private GameObject ghostHighlight;
@@ -66,9 +63,6 @@ public class PickaxeTool : MonoBehaviour
 
     void SetHeldRaycastIgnored(bool ignored)
     {
-        if (!ignoreRaycastWhileHeld)
-            return;
-
         if (ignored)
         {
             cachedTransforms = GetComponentsInChildren<Transform>(true);
@@ -98,7 +92,7 @@ public class PickaxeTool : MonoBehaviour
     {
         if (!isHeld) return;
 
-        // Desktop fallback: X key
+        // Desktop fallback: T key
         if (Keyboard.current != null && Keyboard.current.tKey.wasPressedThisFrame)
             TryBreak();
 

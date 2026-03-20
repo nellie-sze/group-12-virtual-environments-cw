@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
@@ -15,10 +14,10 @@ public class ShovelTool : MonoBehaviour
 
     [Header("Tool")]
     public XRGrabInteractable shovelGrab;
-    public float gridSize = 0.2f;
+    public float gridSize;
 
-    [Header("Held Raycast")]
-    public bool ignoreRaycastWhileHeld = true;
+    [Tooltip("Small vertical offset to keep the placed object above the surface and avoid z-fighting.")]
+    public float surfaceEpsilon = 0.001f;
 
     [Header("Prefabs")]
     public GameObject straightPrefab;
@@ -26,7 +25,7 @@ public class ShovelTool : MonoBehaviour
 
     [Header("Ghost Prefab")]
     public GameObject ghostPrefab;
-    private GameObject ghostObject;
+    private GameObject ghostHighlight;
     public bool scaleGhostToGridCell = true;
 
     [Header("Ghost Colours")]
@@ -40,8 +39,6 @@ public class ShovelTool : MonoBehaviour
     private int[] cachedLayers;
     private Transform[] cachedTransforms;
 
-    float EffectiveGridSize => GridManager.Instance != null ? GridManager.Instance.gridSize : gridSize;
-
     void Start()
     {
         if (shovelGrab != null)
@@ -50,9 +47,6 @@ public class ShovelTool : MonoBehaviour
             shovelGrab.selectExited.AddListener(OnRelease);
             shovelGrab.activated.AddListener(OnActivated);
         }
-
-        if (GridManager.Instance != null)
-            gridSize = GridManager.Instance.gridSize;
 
         CreateGhost();
     }
@@ -65,30 +59,26 @@ public class ShovelTool : MonoBehaviour
             shovelGrab.selectExited.RemoveListener(OnRelease);
             shovelGrab.activated.RemoveListener(OnActivated);
         }
-        if (ghostObject != null) Destroy(ghostObject);
+        if (ghostHighlight != null) Destroy(ghostHighlight);
     }
-
 
     void OnGrab(SelectEnterEventArgs args)
     {
         isHeld = true;
         SetHeldRaycastIgnored(true);
-        if (ghostObject != null) ghostObject.SetActive(true);
+        ghostHighlight.SetActive(true);
     }
 
     void OnRelease(SelectExitEventArgs args)
     {
         isHeld = false;
         SetHeldRaycastIgnored(false);
-        if (ghostObject != null) ghostObject.SetActive(false);
+        ghostHighlight.SetActive(false);
     }
     void OnActivated(ActivateEventArgs args) => TryBuild();
 
     void SetHeldRaycastIgnored(bool ignored)
     {
-        if (!ignoreRaycastWhileHeld)
-            return;
-
         if (ignored)
         {
             cachedTransforms = GetComponentsInChildren<Transform>(true);
@@ -141,24 +131,23 @@ public class ShovelTool : MonoBehaviour
     // ── same mouse-ray pattern as GridSystem.UpdateGhostPosition ──────────────
     void UpdateGhostPosition()
     {
-        if (Mouse.current == null || Camera.main == null || ghostObject == null) return;
+        if (Mouse.current == null || Camera.main == null || ghostHighlight == null) return;
 
         Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
 
         if (Physics.Raycast(ray, out RaycastHit hit))
         {
-            float s = gridSize;
             Vector3 snapped = new Vector3(
-                Mathf.Round(hit.point.x / s) * s,
-                Mathf.Round(hit.point.y / s) * s,
-                Mathf.Round(hit.point.z / s) * s
+                Mathf.Round(hit.point.x / gridSize) * gridSize,
+                Mathf.Round(hit.point.y / gridSize) * gridSize,
+                Mathf.Round(hit.point.z / gridSize) * gridSize
             );
 
-            ghostObject.transform.position = snapped;
+            ghostHighlight.transform.position = snapped;
 
             Vector2Int cell = GridManager.Instance.WorldToGrid(hit.point);
-            bool isValid = GridManager.Instance.TryGetCell(cell, out var data)
-                           && (data.type == CellType.Tree || data.type == CellType.Flower);
+            bool isValid = GridManager.Instance.IsInBounds(cell) && !GridManager.Instance.IsOccupied(cell)
+                        && GridManager.Instance.IsWithinGridSurfaceBuffered(ghostHighlight.transform.position, gridSize / 2f);
 
             SetGhostColor(isValid ? validColor : invalidColor);
         }
@@ -168,14 +157,9 @@ public class ShovelTool : MonoBehaviour
     {
         currentRotationY = (currentRotationY + 90) % 360;
 
-        if (ghostObject != null)
+        if (ghostHighlight != null)
         {
-            ghostObject.transform.rotation = Quaternion.Euler(0f, currentRotationY, 0f);
-
-            if (CanPlaceGhost())
-                UpdateGhostVisual();
-            else
-                ApplyGhostInvalidVisual();
+            ghostHighlight.transform.rotation = Quaternion.Euler(0f, currentRotationY, 0f);
         }
 
         Debug.Log("Rotated ghost to " + currentRotationY + " degrees");
@@ -183,24 +167,19 @@ public class ShovelTool : MonoBehaviour
 
     void TryBuild()
     {
-        if (ghostObject == null || !ghostObject.activeSelf || GridManager.Instance == null)
-            return;
+        if (ghostHighlight == null || !ghostHighlight.activeSelf) return;
 
-        if (!CanPlaceGhost())
-            return;
-
-        GameObject prefab = currentMode == ToolMode.Straight ? straightPrefab : cornerPrefab;
-        Vector3 placementPosition = ghostObject.transform.position;
-        Quaternion placementRotation = Quaternion.Euler(0f, currentRotationY, 0f);
-
-        GameObject placedObject = Instantiate(prefab, placementPosition, placementRotation);
-        FitToSingleGridCell(placedObject);
-        foreach (Vector3 cellWorldPos in GetCellsForPlacedObject(placedObject))
+        Vector2Int cell = GridManager.Instance.WorldToGrid(ghostHighlight.transform.position);
+        if (GridManager.Instance.IsInBounds(cell) && !GridManager.Instance.IsOccupied(cell))
         {
-            GridManager.Instance.TryPlace(GridManager.Instance.WorldToGrid(cellWorldPos), CellType.Path, placedObject);
+            GameObject prefab = straightPrefab;
+            Vector3 placementPosition = ghostHighlight.transform.position;
+            Quaternion placementRotation = Quaternion.Euler(0f, 0f, 0f);
+            Debug.Log($"Placing at y={placementPosition.y} from ghost y={ghostHighlight.transform.position.y}");
+            GameObject placedObject = Instantiate(prefab, placementPosition, placementRotation);
+            GridManager.Instance.TryPlace(cell, CellType.Path, placedObject);
         }
     }
-
     void SwitchMode()
     {
         currentMode = currentMode == ToolMode.Straight
@@ -209,19 +188,18 @@ public class ShovelTool : MonoBehaviour
 
         FindAnyObjectByType<ToolModeUI>()?.UpdateModeText();
 
-        if (ghostObject != null)
-            Destroy(ghostObject);
+        if (ghostHighlight != null)
+            Destroy(ghostHighlight);
 
         CreateGhost();
         UpdateGhostPosition();
-        ghostObject.SetActive(isHeld);
+        ghostHighlight.SetActive(isHeld);
 
         // if (!isHeld)
-        //     ghostObject.SetActive(false);
+        //     ghostHighlight.SetActive(false);
 
         Debug.Log("Switched mode to " + currentMode);
     }
-
         private void SwitchMode(InputAction.CallbackContext ctx)
     {
         SwitchMode();
@@ -278,46 +256,10 @@ public class ShovelTool : MonoBehaviour
         }
     }
 
-    private void FitToSingleGridCell(GameObject obj)
-    {
-        if (obj == null || GridManager.Instance == null)
-        {
-            return;
-        }
-
-        var renderers = obj.GetComponentsInChildren<Renderer>();
-        if (renderers == null || renderers.Length == 0)
-        {
-            return;
-        }
-
-        Bounds bounds = renderers[0].bounds;
-        for (int i = 1; i < renderers.Length; i++)
-        {
-            bounds.Encapsulate(renderers[i].bounds);
-        }
-
-        float maxWidthXZ = Mathf.Max(bounds.size.x, bounds.size.z);
-        float cellSize = GridManager.Instance.gridSize;
-        if (cellSize <= 0f || maxWidthXZ <= 0f)
-        {
-            return;
-        }
-
-        // Keep a small margin so it doesn't touch the cell edges visually.
-        float targetMaxWidth = cellSize * 0.95f;
-        if (maxWidthXZ <= targetMaxWidth)
-        {
-            return;
-        }
-
-        float scaleFactor = targetMaxWidth / maxWidthXZ;
-        obj.transform.localScale = obj.transform.localScale * scaleFactor;
-    }
     void ScaleGhostToCell(GameObject target)
     {
-        float s = EffectiveGridSize;
-        if (target == null || !scaleGhostToGridCell || s <= 0.0001f)
+        Debug.Log("GridSize: " + gridSize);
+        if (target == null || !scaleGhostToGridCell || gridSize <= 0.0001f)
             return;
 
         Renderer[] renderers = target.GetComponentsInChildren<Renderer>();
@@ -373,16 +315,16 @@ public class ShovelTool : MonoBehaviour
         if (footprint <= 0.0001f)
             return;
 
-        float scale = s / footprint;
+        float scale = gridSize / footprint;
         target.transform.localScale = target.transform.localScale * scale;
     }
 
     void ApplyGhostColour(Color color)
     {
-        if (ghostObject == null)
+        if (ghostHighlight == null)
             return;
 
-        Renderer[] renderers = ghostObject.GetComponentsInChildren<Renderer>();
+        Renderer[] renderers = ghostHighlight.GetComponentsInChildren<Renderer>();
         foreach (Renderer renderer in renderers)
         {
             Material[] materials = renderer.materials;
@@ -401,128 +343,23 @@ public class ShovelTool : MonoBehaviour
     }
 
     // ── ghost setup ──
-    void UpdateGhostVisual() => SetGhostColor(validColor);
-
-    void ApplyGhostInvalidVisual() => SetGhostColor(invalidColor);
-
-    List<Vector3> GetGhostOccupiedCells()
-    {
-        List<Vector3> cells = new List<Vector3>();
-
-        if (ghostObject == null)
-            return cells;
-
-        float s = EffectiveGridSize;
-        Renderer[] renderers = ghostObject.GetComponentsInChildren<Renderer>();
-
-        foreach (Renderer renderer in renderers)
-        {
-            Vector3 p = renderer.transform.position;
-            Vector3 snapped = new Vector3(
-                Mathf.Round(p.x / gridSize) * gridSize,
-                Mathf.Round(p.y / gridSize) * gridSize,
-                Mathf.Round(p.z / gridSize) * gridSize
-            );
-
-            if (!cells.Contains(snapped))
-                cells.Add(snapped);
-        }
-
-        if (cells.Count == 0)
-        {
-            Vector3 rootPos = new Vector3(
-                Mathf.Round(ghostObject.transform.position.x / s) * s,
-                Mathf.Round(ghostObject.transform.position.y / s) * s,
-                Mathf.Round(ghostObject.transform.position.z / s) * s
-            );
-            cells.Add(rootPos);
-        }
-
-        return cells;
-    }
-
-    bool CanPlaceGhost()
-    {
-        if (ghostObject == null)
-            return false;
-
-        if (GridManager.Instance == null)
-            return true;
-
-        float radius = EffectiveGridSize * 0.5f;
-        if (!GridManager.Instance.IsWithinGridSurfaceBuffered(ghostObject.transform.position, radius))
-            return false;
-
-        foreach (Vector3 cellWorldPos in GetGhostOccupiedCells())
-        {
-            Vector2Int cell = GridManager.Instance.WorldToGrid(cellWorldPos);
-            if (!GridManager.Instance.IsInBounds(cell))
-                return false;
-            if (GridManager.Instance.IsOccupied(cell))
-                return false;
-        }
-
-        return true;
-    }
-
-    List<Vector3> GetCellsForPlacedObject(GameObject placedObject)
-    {
-        List<Vector3> cells = new List<Vector3>();
-
-        if (placedObject == null)
-            return cells;
-
-        float s = EffectiveGridSize;
-        Renderer[] renderers = placedObject.GetComponentsInChildren<Renderer>();
-
-        foreach (Renderer renderer in renderers)
-        {
-            Vector3 p = renderer.transform.position;
-            Vector3 snapped = new Vector3(
-                Mathf.Round(p.x / s) * s,
-                Mathf.Round(p.y / s) * s,
-                Mathf.Round(p.z / s) * s
-            );
-
-            if (!cells.Contains(snapped))
-                cells.Add(snapped);
-        }
-
-        if (cells.Count == 0)
-        {
-            Vector3 rootPos = new Vector3(
-                Mathf.Round(placedObject.transform.position.x / s) * s,
-                Mathf.Round(placedObject.transform.position.y / s) * s,
-                Mathf.Round(placedObject.transform.position.z / s) * s
-            );
-            cells.Add(rootPos);
-        }
-
-        return cells;
-    }
-
     void CreateGhost()
     {
-        GameObject prefab = currentMode == ToolMode.Straight
-        ? straightPrefab
-        : cornerPrefab;
+        ghostHighlight = ghostPrefab != null
+            ? Instantiate(ghostPrefab)
+            : GameObject.CreatePrimitive(PrimitiveType.Cube);
 
-        ghostObject = Instantiate(prefab);
-        ghostObject.transform.rotation = Quaternion.Euler(0f, currentRotationY, 0f);
-        
-        Collider rootCollider = ghostObject.GetComponent<Collider>();
-        if (rootCollider != null)
-            rootCollider.enabled = false;
+        ghostHighlight.transform.localScale = Vector3.one; // start neutral; ScaleGhostToCell handles sizing
 
-        foreach (Collider col in ghostObject.GetComponentsInChildren<Collider>())
+        foreach (Collider col in ghostHighlight.GetComponentsInChildren<Collider>())
         {
             col.enabled = false;
         }
 
-        ScaleGhostToCell(ghostObject);
+        ScaleGhostToCell(ghostHighlight);
         ApplyGhostColour(invalidColor);
 
-        ghostObject.SetActive(false);
+        ghostHighlight.SetActive(false);
     }
 
     void SetGhostColor(Color color)

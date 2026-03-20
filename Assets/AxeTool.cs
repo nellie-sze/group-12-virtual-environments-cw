@@ -8,11 +8,7 @@ public class AxeTool : MonoBehaviour
 {
     [Header("Tool")]
     public XRGrabInteractable axeGrab;
-    public float gridSize = 1f;
-
-    [Header("Held Raycast")]
-    public bool ignoreRaycastWhileHeld = true;
-
+    public float gridSize;
     [Header("Ghost Prefab")]
     public GameObject ghostPrefab;
     public bool scaleGhostToGridCell = true;
@@ -66,9 +62,6 @@ public class AxeTool : MonoBehaviour
 
     void SetHeldRaycastIgnored(bool ignored)
     {
-        if (!ignoreRaycastWhileHeld)
-            return;
-
         if (ignored)
         {
             cachedTransforms = GetComponentsInChildren<Transform>(true);
