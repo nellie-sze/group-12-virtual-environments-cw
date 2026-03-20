@@ -1320,6 +1320,9 @@ MonoBehaviour:
   gridSize: 0.2
   ghostPrefab: {fileID: 8698819563803553754, guid: db10e2e58ec38ad40937033da48aa7a3, type: 3}
   scaleGhostToGridCell: 1
+  placementRayInteractor: {fileID: 0}
+  autoAssignPlacementRayByHoldingHand: 1
+  allowMousePlacementFallback: 0
 --- !u!64 &284371418
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -2142,6 +2145,9 @@ MonoBehaviour:
   surfaceEpsilon: 0.001
   straightPrefab: {fileID: 318373990914543345, guid: 97e623eb280a5234fb28e1687e0fb9ca, type: 3}
   cornerPrefab: {fileID: 5071392686214402512, guid: b284af1cee672eb4aa527ef1fa8cecb0, type: 3}
+  placementRayInteractor: {fileID: 1052715846}
+  autoAssignPlacementRayByHoldingHand: 0
+  allowMousePlacementFallback: 0
   scaleGhostToGridCell: 1
   invalidColor: {r: 1, g: 0.3, b: 0, a: 0.5}
   currentMode: 0
@@ -3201,6 +3207,9 @@ MonoBehaviour:
   gridSize: 0.2
   ghostPrefab: {fileID: 8698819563803553754, guid: db10e2e58ec38ad40937033da48aa7a3, type: 3}
   scaleGhostToGridCell: 1
+  placementRayInteractor: {fileID: 0}
+  autoAssignPlacementRayByHoldingHand: 1
+  allowMousePlacementFallback: 0
 --- !u!114 &1467081644
 MonoBehaviour:
   m_ObjectHideFlags: 0
