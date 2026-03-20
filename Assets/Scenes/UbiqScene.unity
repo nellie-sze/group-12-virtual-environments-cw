@@ -704,7 +704,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8029130835389692227, guid: bb25b73aa11996046885b3fbcfa4587c, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
-      value: 2
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 8029130835389692227, guid: bb25b73aa11996046885b3fbcfa4587c, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
@@ -712,6 +712,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8029130835389692227, guid: bb25b73aa11996046885b3fbcfa4587c, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[1].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8029130835389692227, guid: bb25b73aa11996046885b3fbcfa4587c, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[2].m_Mode
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8029130835389692227, guid: bb25b73aa11996046885b3fbcfa4587c, type: 3}
@@ -723,7 +727,15 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 578569723}
     - target: {fileID: 8029130835389692227, guid: bb25b73aa11996046885b3fbcfa4587c, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[2].m_Target
+      value: 
+      objectReference: {fileID: 2070249551}
+    - target: {fileID: 8029130835389692227, guid: bb25b73aa11996046885b3fbcfa4587c, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[1].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8029130835389692227, guid: bb25b73aa11996046885b3fbcfa4587c, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[2].m_CallState
       value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 8029130835389692227, guid: bb25b73aa11996046885b3fbcfa4587c, type: 3}
@@ -735,12 +747,20 @@ PrefabInstance:
       value: Spawn
       objectReference: {fileID: 0}
     - target: {fileID: 8029130835389692227, guid: bb25b73aa11996046885b3fbcfa4587c, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[2].m_MethodName
+      value: SpawnAll
+      objectReference: {fileID: 0}
+    - target: {fileID: 8029130835389692227, guid: bb25b73aa11996046885b3fbcfa4587c, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
       value: ObstacleSpawner, Assembly-CSharp
       objectReference: {fileID: 0}
     - target: {fileID: 8029130835389692227, guid: bb25b73aa11996046885b3fbcfa4587c, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[1].m_TargetAssemblyTypeName
       value: VillagerSpawner, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 8029130835389692227, guid: bb25b73aa11996046885b3fbcfa4587c, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[2].m_TargetAssemblyTypeName
+      value: LavaSpawner, Assembly-CSharp
       objectReference: {fileID: 0}
     - target: {fileID: 8029130835389692227, guid: bb25b73aa11996046885b3fbcfa4587c, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgument
@@ -752,6 +772,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8029130835389692227, guid: bb25b73aa11996046885b3fbcfa4587c, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[1].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
+    - target: {fileID: 8029130835389692227, guid: bb25b73aa11996046885b3fbcfa4587c, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[2].m_Arguments.m_ObjectArgumentAssemblyTypeName
       value: UnityEngine.Object, UnityEngine
       objectReference: {fileID: 0}
     - target: {fileID: 8458716006735372860, guid: bb25b73aa11996046885b3fbcfa4587c, type: 3}
@@ -4367,7 +4391,7 @@ MonoBehaviour:
   - {fileID: 8567095677938957659, guid: d37f7081fcca0bc4a99acd0566253353, type: 3}
   - {fileID: 861409152501810883, guid: 511641df3d9e41a4eb48d13abbaaebfe, type: 3}
   - {fileID: 3285490127594803986, guid: e293ce3f11a0dae49981535b06a4018b, type: 3}
-  treeCount: 7
+  treeCount: 10
   rockPrefabs:
   - {fileID: 1236191318538652637, guid: ebd09b9b8a2e1e44a9cff0b6f9e6cf6b, type: 3}
   - {fileID: 7797138299032197413, guid: 953b230bb6fdcc74d8aac64debd09cbb, type: 3}
@@ -4375,7 +4399,7 @@ MonoBehaviour:
   - {fileID: 6909043887109763944, guid: 0cbcedbcd61f8b84daba062afe673203, type: 3}
   - {fileID: 682090605879056270, guid: 01e4a2cc6c0ba274183335a66a6a0d47, type: 3}
   - {fileID: 4130270420782036289, guid: 0995a7ae0e38ae5449f646637dd1601f, type: 3}
-  rockCount: 5
+  rockCount: 25
   flowerPrefabs:
   - {fileID: 1848447829742602878, guid: 109f843aa672ab54694dc893057f4de8, type: 3}
   - {fileID: 5876086391244628230, guid: d1437b9429ec56649b20d10edb4575d5, type: 3}
@@ -4385,8 +4409,8 @@ MonoBehaviour:
   - {fileID: 6133580751976785622, guid: aab0a918ae5e61f4e99c8bf5c1a5fd32, type: 3}
   - {fileID: 3605865210972825898, guid: f67004194ae597146b37998b414fae75, type: 3}
   - {fileID: 8917552460802425134, guid: d66d3a7b8039a104eb48d7ed78381da1, type: 3}
-  flowerCount: 5
-  spawnOnStart: 1
+  flowerCount: 80
+  spawnOnStart: 0
 --- !u!114 &2070249551
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4399,8 +4423,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3185eb0a793ab3f478a615ec6427d5e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LavaSpawner
-  lavaPrefab: {fileID: 4373080667063482954, guid: dae403787ff8aa9459feee63bbced7d3, type: 3}
-  lavaCellCount: 0
+  lavaPrefab: {fileID: 4373080667063482954, guid: 245ea9e2d6e3b4349ac1d56e98fe0a8e, type: 3}
+  lavaCellCount: 4
   yOffset: 0.02
 --- !u!4 &2070249552
 Transform:
