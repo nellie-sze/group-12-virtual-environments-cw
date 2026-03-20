@@ -1,4 +1,5 @@
 {
+    "version": 1,
     "name": "XR Device Simulator Controls",
     "maps": [
         {
@@ -81,7 +82,7 @@
                     "name": "Manipulate Head",
                     "type": "Button",
                     "id": "f5febf74-651b-4f73-8d0a-08b0acdabc4d",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -90,7 +91,7 @@
                     "name": "Hand-Controller Mode",
                     "type": "Button",
                     "id": "31a82fde-55bc-4b18-b15a-8adc7e75658e",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -189,7 +190,7 @@
                     "name": "Reset",
                     "type": "Button",
                     "id": "339ccb79-aee9-4ba4-8864-3b6c81c199db",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -466,7 +467,7 @@
                 {
                     "name": "",
                     "id": "cd7dcdd6-b569-4c25-87ea-c62a0fb1cf89",
-                    "path": "<Keyboard>/v",
+                    "path": "<Keyboard>/r",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
