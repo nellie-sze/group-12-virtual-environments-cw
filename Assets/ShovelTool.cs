@@ -16,6 +16,8 @@ public class ShovelTool : MonoBehaviour
     [Header("Tool")]
     public XRGrabInteractable shovelGrab;
     public float gridSize;
+    public InputActionReference rotateAction;
+    public InputActionReference switchModeAction;
 
     [Tooltip("Small vertical offset to keep the placed object above the surface and avoid z-fighting.")]
     public float surfaceEpsilon = 0.001f;
@@ -47,9 +49,42 @@ public class ShovelTool : MonoBehaviour
             shovelGrab.activated.AddListener(OnActivated);
         }
 
+        rotateAction?.action.Enable();
+        switchModeAction?.action.Enable();
+
         CreateGhost();
         Collider surfaceCollider = GridManager.Instance.gridSurfaceRenderer.GetComponent<Collider>();
         topSurfaceY = surfaceCollider.bounds.max.y;
+    }
+
+    void OnEnable()
+    {
+        if (rotateAction != null && rotateAction.action != null)
+        {
+            rotateAction.action.Enable();
+            rotateAction.action.performed += OnRotatePerformed;
+        }
+
+        if (switchModeAction != null && switchModeAction.action != null)
+        {
+            switchModeAction.action.Enable();
+            switchModeAction.action.performed += OnSwitchModePerformed;
+        }
+    }
+
+    void OnDisable()
+    {
+        if (rotateAction != null && rotateAction.action != null)
+        {
+            rotateAction.action.performed -= OnRotatePerformed;
+            rotateAction.action.Disable();
+        }
+
+        if (switchModeAction != null && switchModeAction.action != null)
+        {
+            switchModeAction.action.performed -= OnSwitchModePerformed;
+            switchModeAction.action.Disable();
+        }
     }
 
     void OnDestroy()
@@ -60,6 +95,7 @@ public class ShovelTool : MonoBehaviour
             shovelGrab.selectExited.RemoveListener(OnRelease);
             shovelGrab.activated.RemoveListener(OnActivated);
         }
+
         if (ghostHighlight != null) Destroy(ghostHighlight);
     }
 
@@ -125,6 +161,22 @@ public class ShovelTool : MonoBehaviour
         }
 
         UpdateGhostPosition();
+    }
+
+    void OnRotatePerformed(InputAction.CallbackContext ctx)
+    {
+        if (!isHeld)
+            return;
+
+        RotateGhost();
+    }
+
+    void OnSwitchModePerformed(InputAction.CallbackContext ctx)
+    {
+        if (!isHeld)
+            return;
+
+        SwitchMode();
     }
 
     // ── same mouse-ray pattern as GridSystem.UpdateGhostPosition ──────────────

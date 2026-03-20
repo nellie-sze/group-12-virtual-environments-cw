@@ -26,6 +26,7 @@ public class ObstacleSpawner : MonoBehaviour
     [Tooltip("Flowers are removed by the axe tool, same as trees")]
     public GameObject[] flowerPrefabs;
     public int flowerCount = 5;
+    public bool spawnOnStart;
     void Start()
     {
         spawnManager = NetworkSpawnManager.Find(this);
@@ -51,6 +52,11 @@ public class ObstacleSpawner : MonoBehaviour
         }
 
         obstaclePrefabNames = BuildObstaclePrefabNameSet();
+        
+        if (spawnOnStart)
+        {
+            SpawnAll();
+        }
     }
 
     void OnDestroy()
