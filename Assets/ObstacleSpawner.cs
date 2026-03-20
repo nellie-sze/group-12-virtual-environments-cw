@@ -168,8 +168,8 @@ public class ObstacleSpawner : MonoBehaviour
         isSpawning = true;
         Debug.Log("Spawning obstacles...");
 
-        SpawnN(treePrefabs,   CellType.Tree,   treeCount);
-        SpawnN(rockPrefabs,   CellType.Rock,   rockCount);
+        SpawnN(treePrefabs, CellType.Tree, treeCount);
+        SpawnN(rockPrefabs, CellType.Rock, rockCount);
         SpawnN(flowerPrefabs, CellType.Flower, flowerCount);
 
         isSpawning = false;
@@ -194,70 +194,91 @@ public class ObstacleSpawner : MonoBehaviour
             return;
         }
 
+        // Build a shuffled list of every free, in-bounds, buffered cell.
+        // Picking from this list guarantees no two objects share a cell,
+        // even across multiple SpawnN calls within the same SpawnAll.
+        var freeCells = GetShuffledFreeCells();
+
         int placed = 0;
-        int attempts = 0;
-
-        while (placed < count && attempts < 200)
+        foreach (Vector2Int cell in freeCells)
         {
-            attempts++;
-            Vector2Int cell = GridManager.Instance.GetRandomCell();
+            if (placed >= count) break;
 
-            if (!GridManager.Instance.IsOccupied(cell))
+            // Re-check: a previous type in this SpawnAll call may have taken this cell.
+            if (GridManager.Instance.IsOccupied(cell)) continue;
+
+            Vector3 pos = GridManager.Instance.GridToWorld(cell);
+
+            GameObject prefab = prefabs[Random.Range(0, prefabs.Length)];
+            if (spawnManager.catalogue.IndexOf(prefab) < 0)
             {
-                Vector3 pos = GridManager.Instance.GridToWorld(cell);
-                if (!GridManager.Instance.IsWithinGridSurfaceBuffered(pos, edgeBufferRadius))
-                {
-                    continue;
-                }
+                Debug.LogError($"ObstacleSpawner: Prefab '{prefab.name}' not in Prefab Catalogue.");
+                continue;
+            }
 
-                // Recompute the cell from the final world position to ensure consistent occupancy checks.
-                Vector2Int snappedCell = GridManager.Instance.WorldToGrid(pos);
-                if (GridManager.Instance.IsOccupied(snappedCell))
-                {
-                    Debug.Log($"ObstacleSpawner: Skip {type} (cell occupied) cell={snappedCell} worldPos={pos}");
-                    continue;
-                }
+            // IMPORTANT: In this Ubiq version, SpawnWithRoomScope returns void and does not return the instance.
+            // SpawnWithPeerScope returns the spawned instance, so all peers will see it and we can position it.
+            GameObject obj = spawnManager.SpawnWithPeerScope(prefab);
+            if (obj == null)
+            {
+                Debug.LogError($"ObstacleSpawner: Failed to spawn {prefab.name}. Is it in the Prefab Catalogue?");
+                continue;
+            }
 
-                GameObject prefab = prefabs[Random.Range(0, prefabs.Length)];
-                if (spawnManager.catalogue.IndexOf(prefab) < 0)
-                {
-                    Debug.LogError($"ObstacleSpawner: Prefab not in Prefab Catalogue: {prefab.name}. Add it to the catalogue used by the active NetworkSpawnManager.");
-                    continue;
-                }
+            obj.transform.SetPositionAndRotation(pos, Quaternion.identity);
+            FitToSingleGridCell(obj);
 
-                // IMPORTANT: In this Ubiq version, SpawnWithRoomScope returns void and does not return the instance.
-                // SpawnWithPeerScope returns the spawned instance, so all peers will see it and we can position it.
-                GameObject obj = spawnManager.SpawnWithPeerScope(prefab);
-                if (obj == null)
-                {
-                    Debug.LogError($"ObstacleSpawner: Failed to spawn {prefab.name}. Is it added to the Prefab Catalogue?");
-                    continue;
-                }
+            var sync = obj.GetComponent<NetworkedSpawnedTransform>();
+            if (sync != null)
+            {
+                // Spawn events fire before this method regains control, so request send after final transform is set.
+                sync.RequestInitialSend();
+            }
 
-                obj.transform.SetPositionAndRotation(pos, Quaternion.identity);
-                FitToSingleGridCell(obj);
-
-                var sync = obj.GetComponent<NetworkedSpawnedTransform>();
-                if (sync != null)
-                {
-                    // Spawn events fire before this method regains control, so request send after final transform is set.
-                    sync.RequestInitialSend();
-                }
-                if (GridManager.Instance.TryPlace(snappedCell, type, obj))
-                {
-                    Debug.Log($"ObstacleSpawner: Spawned {type} prefab={prefab.name} cell={snappedCell} worldPos={pos}");
-                    placed++;
-                }
-                else
-                {
-                    // If we failed to reserve the cell, remove the spawned object to prevent overlaps.
-                    Debug.LogWarning($"ObstacleSpawner: Despawn {type} prefab={prefab.name} (TryPlace failed) cell={snappedCell} worldPos={pos}");
-                    spawnManager.Despawn(obj);
-                }
+            if (GridManager.Instance.TryPlace(cell, type, obj))
+            {
+                placed++;
+            }
+            else
+            {
+                // Cell was taken between our check and TryPlace — shouldn't happen in single-player,
+                // but handle defensively.
+                Debug.LogWarning($"ObstacleSpawner: TryPlace failed for {type} at {cell} — despawning.");
+                spawnManager.Despawn(obj);
             }
         }
 
         if (placed < count)
-            Debug.LogWarning($"ObstacleSpawner: Only placed {placed}/{count} {type} obstacles after 200 attempts.");
+            Debug.LogWarning($"ObstacleSpawner: Only placed {placed}/{count} {type} — not enough free cells.");
+    }
+
+    List<Vector2Int> GetShuffledFreeCells()
+    {
+        var cells = new List<Vector2Int>();
+        Vector2Int min = GridManager.Instance.gridMin;
+        Vector2Int max = GridManager.Instance.gridMax;
+
+        for (int x = min.x; x <= max.x; x++)
+        {
+            for (int y = min.y; y <= max.y; y++)
+            {
+                Vector2Int cell = new Vector2Int(x, y);
+                if (GridManager.Instance.IsOccupied(cell)) continue;
+
+                Vector3 pos = GridManager.Instance.GridToWorld(cell);
+                if (!GridManager.Instance.IsWithinGridSurfaceBuffered(pos, edgeBufferRadius)) continue;
+
+                cells.Add(cell);
+            }
+        }
+
+        // Fisher-Yates shuffle
+        for (int i = cells.Count - 1; i > 0; i--)
+        {
+            int j = Random.Range(0, i + 1);
+            (cells[i], cells[j]) = (cells[j], cells[i]);
+        }
+
+        return cells;
     }
 }
