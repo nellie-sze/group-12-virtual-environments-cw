@@ -14,13 +14,15 @@ public class AxeTool : MonoBehaviour
     public bool scaleGhostToGridCell = true;
 
     [Header("Ghost Colours")]
-    public Color validColor   = new Color(0f,   1f,   0f,   0.5f); // green  = hovering a tree
-    public Color invalidColor = new Color(1f,   0.3f, 0f,   0.5f); // orange = not a tree
+    private Color validColor   = new Color(0f,   1f,   0f,   0.5f); // green  = hovering a tree
+    private Color invalidColor = new Color(1f,   0.3f, 0f,   0.5f); // orange = not a tree
 
     private bool isHeld = false;
     private GameObject ghostHighlight;
     private int[] cachedLayers;
     private Transform[] cachedTransforms;
+    private float topSurfaceY;
+
 
     void Start()
     {
@@ -32,6 +34,8 @@ public class AxeTool : MonoBehaviour
         }
 
         CreateGhost();
+        Collider surfaceCollider = GridManager.Instance.gridSurfaceRenderer.GetComponent<Collider>();
+        topSurfaceY = surfaceCollider.bounds.max.y;
     }
 
     void OnDestroy()
@@ -109,17 +113,21 @@ public class AxeTool : MonoBehaviour
         {
             Vector3 snapped = new Vector3(
                 Mathf.Round(hit.point.x / gridSize) * gridSize,
-                Mathf.Round(hit.point.y / gridSize) * gridSize,
+                topSurfaceY,
                 Mathf.Round(hit.point.z / gridSize) * gridSize
             );
 
             ghostHighlight.transform.position = snapped;
 
             Vector2Int cell = GridManager.Instance.WorldToGrid(hit.point);
-            bool isValid = GridManager.Instance.TryGetCell(cell, out var data)
-                           && (data.type == CellType.Tree || data.type == CellType.Flower);
-
-            SetGhostColor(isValid ? validColor : invalidColor);
+            if (!GridManager.Instance.IsWithinGridSurfaceBuffered(ghostHighlight.transform.position, gridSize / 2f))
+                SetGhostColor(new Color(1f,   1f,   1f,   0f));
+            else if (GridManager.Instance.IsInBounds(cell)
+                    && GridManager.Instance.TryGetCell(cell, out var data)
+                    && (data.type == CellType.Tree || data.type == CellType.Flower))
+                SetGhostColor(validColor);
+            else
+                SetGhostColor(invalidColor);
         }
     }
 
@@ -128,6 +136,7 @@ public class AxeTool : MonoBehaviour
         if (ghostHighlight == null || !ghostHighlight.activeSelf) return;
 
         Vector2Int cell = GridManager.Instance.WorldToGrid(ghostHighlight.transform.position);
+        Debug.Log($"Trying to chop at cell {cell}");
         if (GridManager.Instance.TryGetCell(cell, out var data)
             && (data.type == CellType.Tree || data.type == CellType.Flower))
             GridManager.Instance.TryRemove(cell);
@@ -275,8 +284,6 @@ public class AxeTool : MonoBehaviour
         ghostHighlight = ghostPrefab != null
             ? Instantiate(ghostPrefab)
             : GameObject.CreatePrimitive(PrimitiveType.Cube);
-
-        ghostHighlight.transform.localScale = Vector3.one; // start neutral; ScaleGhostToCell handles sizing
 
         foreach (Collider col in ghostHighlight.GetComponentsInChildren<Collider>())
         {

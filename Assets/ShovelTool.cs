@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
@@ -23,13 +24,9 @@ public class ShovelTool : MonoBehaviour
     public GameObject straightPrefab;
     public GameObject cornerPrefab;
 
-    [Header("Ghost Prefab")]
-    public GameObject ghostPrefab;
+    [Header("Ghost")]
     private GameObject ghostHighlight;
     public bool scaleGhostToGridCell = true;
-
-    [Header("Ghost Colours")]
-    public Color validColor   = new Color(0f,   1f,   0f,   0.5f); // green  = hovering a tree
     public Color invalidColor = new Color(1f,   0.3f, 0f,   0.5f); // orange = not a tree
 
     [Header("Mode")]
@@ -38,6 +35,8 @@ public class ShovelTool : MonoBehaviour
     private int currentRotationY = 0;
     private int[] cachedLayers;
     private Transform[] cachedTransforms;
+    private float topSurfaceY;
+    private readonly List<Color> ghostBaseColors = new List<Color>();
 
     void Start()
     {
@@ -49,6 +48,8 @@ public class ShovelTool : MonoBehaviour
         }
 
         CreateGhost();
+        Collider surfaceCollider = GridManager.Instance.gridSurfaceRenderer.GetComponent<Collider>();
+        topSurfaceY = surfaceCollider.bounds.max.y;
     }
 
     void OnDestroy()
@@ -113,11 +114,9 @@ public class ShovelTool : MonoBehaviour
         if (Keyboard.current != null && Keyboard.current.pKey.wasPressedThisFrame)
         {
             SwitchMode();
-            // ToggleMode();
         }
-        if (Keyboard.current != null && Keyboard.current.bKey.wasPressedThisFrame)
+        if (Keyboard.current != null && Keyboard.current.tKey.wasPressedThisFrame)
         {
-            Debug.Log("Building Path");
             TryBuild();
         }
         if (Keyboard.current != null && Keyboard.current.mKey.wasPressedThisFrame)
@@ -139,17 +138,24 @@ public class ShovelTool : MonoBehaviour
         {
             Vector3 snapped = new Vector3(
                 Mathf.Round(hit.point.x / gridSize) * gridSize,
-                Mathf.Round(hit.point.y / gridSize) * gridSize,
+                topSurfaceY,
                 Mathf.Round(hit.point.z / gridSize) * gridSize
             );
+            //ghostHighlight.transform.position = snapped;
+            Vector3 offset = new Vector3(gridSize / 2f, 0f, gridSize / 2f);
+            //ghostHighlight.transform.position = snapped + offset; // offset needed for path prefabs only
+            ghostHighlight.transform.position = snapped; // offset needed for path prefabs only
 
-            ghostHighlight.transform.position = snapped;
+            ghostHighlight.transform.rotation = Quaternion.Euler(0f, currentRotationY, 0f);
 
-            Vector2Int cell = GridManager.Instance.WorldToGrid(hit.point);
-            bool isValid = GridManager.Instance.IsInBounds(cell) && !GridManager.Instance.IsOccupied(cell)
-                        && GridManager.Instance.IsWithinGridSurfaceBuffered(ghostHighlight.transform.position, gridSize / 2f);
+            Vector2Int cell = GridManager.Instance.WorldToGrid(snapped);
 
-            SetGhostColor(isValid ? validColor : invalidColor);
+            if (!GridManager.Instance.IsWithinGridSurfaceBuffered(snapped, gridSize / 2f))
+                ApplyGhostBaseTransparency(0.0f);
+            else if (GridManager.Instance.IsInBounds(cell) && !GridManager.Instance.IsOccupied(cell))
+                ApplyGhostBaseTransparency(0.5f);
+            else
+                SetGhostColor(invalidColor);
         }
     }
 
@@ -165,18 +171,86 @@ public class ShovelTool : MonoBehaviour
         Debug.Log("Rotated ghost to " + currentRotationY + " degrees");
     }
 
+    GameObject CreateCenteredWrapper(GameObject prefab, string wrapperName)
+    {
+        GameObject wrapper = new GameObject(wrapperName);
+        GameObject visual = Instantiate(prefab, wrapper.transform);
+        visual.transform.localPosition = Vector3.zero;
+        visual.transform.localRotation = Quaternion.identity;
+
+        CenterVisualUnderRoot(wrapper.transform, visual.transform);
+        return wrapper;
+    }
+
+    void CenterVisualUnderRoot(Transform root, Transform visual)
+    {
+        Renderer[] renderers = root.GetComponentsInChildren<Renderer>();
+        if (renderers == null || renderers.Length == 0)
+            return;
+
+        Bounds combined = new Bounds();
+        bool hasBounds = false;
+        Matrix4x4 worldToRoot = root.worldToLocalMatrix;
+
+        foreach (Renderer renderer in renderers)
+        {
+            Bounds bounds = renderer.bounds;
+            Vector3 center = bounds.center;
+            Vector3 extents = bounds.extents;
+            Vector3[] corners =
+            {
+                new Vector3(center.x - extents.x, center.y - extents.y, center.z - extents.z),
+                new Vector3(center.x - extents.x, center.y - extents.y, center.z + extents.z),
+                new Vector3(center.x - extents.x, center.y + extents.y, center.z - extents.z),
+                new Vector3(center.x - extents.x, center.y + extents.y, center.z + extents.z),
+                new Vector3(center.x + extents.x, center.y - extents.y, center.z - extents.z),
+                new Vector3(center.x + extents.x, center.y - extents.y, center.z + extents.z),
+                new Vector3(center.x + extents.x, center.y + extents.y, center.z - extents.z),
+                new Vector3(center.x + extents.x, center.y + extents.y, center.z + extents.z)
+            };
+
+            for (int i = 0; i < corners.Length; i++)
+            {
+                Vector3 localPoint = worldToRoot.MultiplyPoint3x4(corners[i]);
+                if (!hasBounds)
+                {
+                    combined = new Bounds(localPoint, Vector3.zero);
+                    hasBounds = true;
+                }
+                else
+                {
+                    combined.Encapsulate(localPoint);
+                }
+            }
+        }
+
+        if (!hasBounds)
+            return;
+
+        Vector3 centerOffset = combined.center;
+        visual.localPosition -= new Vector3(centerOffset.x, 0f, centerOffset.z);
+    }
+
     void TryBuild()
     {
         if (ghostHighlight == null || !ghostHighlight.activeSelf) return;
 
-        Vector2Int cell = GridManager.Instance.WorldToGrid(ghostHighlight.transform.position);
+        //Vector2Int cell = GridManager.Instance.WorldToGrid(ghostHighlight.transform.position - new Vector3(gridSize / 2f, 0f, gridSize / 2f)); // reverse offset to get correct cell
+        Vector2Int cell = GridManager.Instance.WorldToGrid(ghostHighlight.transform.position); 
+        Debug.Log($"Trying to build at cell {cell}");
         if (GridManager.Instance.IsInBounds(cell) && !GridManager.Instance.IsOccupied(cell))
         {
-            GameObject prefab = straightPrefab;
+            GameObject prefab = currentMode == ToolMode.Straight
+            ? straightPrefab
+            : cornerPrefab;
             Vector3 placementPosition = ghostHighlight.transform.position;
-            Quaternion placementRotation = Quaternion.Euler(0f, 0f, 0f);
-            Debug.Log($"Placing at y={placementPosition.y} from ghost y={ghostHighlight.transform.position.y}");
-            GameObject placedObject = Instantiate(prefab, placementPosition, placementRotation);
+            Quaternion placementRotation = Quaternion.Euler(0f, currentRotationY, 0f);
+            Debug.Log($"Placing path at position={placementPosition}, cell={cell}");
+
+            GameObject placedObject = CreateCenteredWrapper(prefab, $"{prefab.name}_PlacedRoot");
+            FitToSingleGridCell(placedObject);
+            placedObject.transform.rotation = placementRotation;
+            placedObject.transform.position = placementPosition;
             GridManager.Instance.TryPlace(cell, CellType.Path, placedObject);
         }
     }
@@ -254,6 +328,34 @@ public class ShovelTool : MonoBehaviour
             mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
             mat.renderQueue = 3000;
         }
+    }
+
+    void FitToSingleGridCell(GameObject obj)
+    {
+        if (obj == null || GridManager.Instance == null)
+            return;
+
+        Renderer[] renderers = obj.GetComponentsInChildren<Renderer>();
+        if (renderers == null || renderers.Length == 0)
+            return;
+
+        Bounds bounds = renderers[0].bounds;
+        for (int i = 1; i < renderers.Length; i++)
+        {
+            bounds.Encapsulate(renderers[i].bounds);
+        }
+
+        float maxWidthXZ = Mathf.Max(bounds.size.x, bounds.size.z);
+        float cellSize = GridManager.Instance.gridSize;
+        if (cellSize <= 0f || maxWidthXZ <= 0f)
+            return;
+
+        float targetMaxWidth = cellSize * 1f;
+        if (maxWidthXZ <= targetMaxWidth)
+            return;
+
+        float scaleFactor = targetMaxWidth / maxWidthXZ;
+        obj.transform.localScale = obj.transform.localScale * scaleFactor;
     }
 
     void ScaleGhostToCell(GameObject target)
@@ -342,22 +444,79 @@ public class ShovelTool : MonoBehaviour
         }
     }
 
+    void CacheGhostBaseColours()
+    {
+        ghostBaseColors.Clear();
+
+        if (ghostHighlight == null)
+            return;
+
+        Renderer[] renderers = ghostHighlight.GetComponentsInChildren<Renderer>();
+        foreach (Renderer renderer in renderers)
+        {
+            Material[] materials = renderer.materials;
+            for (int i = 0; i < materials.Length; i++)
+            {
+                Material mat = materials[i];
+                if (mat == null)
+                    continue;
+
+                Color baseColor = mat.HasProperty("_BaseColor")
+                    ? mat.GetColor("_BaseColor")
+                    : mat.color;
+                ghostBaseColors.Add(baseColor);
+            }
+        }
+    }
+
+    void ApplyGhostBaseTransparency(float alpha)
+    {
+        if (ghostHighlight == null)
+            return;
+
+        Renderer[] renderers = ghostHighlight.GetComponentsInChildren<Renderer>();
+        int colorIndex = 0;
+
+        foreach (Renderer renderer in renderers)
+        {
+            Material[] materials = renderer.materials;
+            for (int i = 0; i < materials.Length; i++)
+            {
+                Material mat = materials[i];
+                if (mat == null)
+                    continue;
+
+                ConfigureMaterialForTransparency(mat);
+
+                Color baseColor = colorIndex < ghostBaseColors.Count ? ghostBaseColors[colorIndex] : mat.color;
+                baseColor.a = alpha;
+                SetMaterialColor(mat, baseColor);
+                colorIndex++;
+            }
+        }
+    }
+
     // ── ghost setup ──
     void CreateGhost()
     {
-        ghostHighlight = ghostPrefab != null
-            ? Instantiate(ghostPrefab)
-            : GameObject.CreatePrimitive(PrimitiveType.Cube);
-
-        ghostHighlight.transform.localScale = Vector3.one; // start neutral; ScaleGhostToCell handles sizing
+        GameObject ghostPrefab = currentMode == ToolMode.Straight ? straightPrefab : cornerPrefab;
+        ghostHighlight = CreateCenteredWrapper(ghostPrefab, $"{ghostPrefab.name}_GhostRoot");
 
         foreach (Collider col in ghostHighlight.GetComponentsInChildren<Collider>())
         {
             col.enabled = false;
         }
 
+        Renderer[] renderers = ghostHighlight.GetComponentsInChildren<Renderer>();
+        foreach (Renderer renderer in renderers)
+        {
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+        }
+
         ScaleGhostToCell(ghostHighlight);
-        ApplyGhostColour(invalidColor);
+        CacheGhostBaseColours();
+        ApplyGhostBaseTransparency(0.5f);
 
         ghostHighlight.SetActive(false);
     }
