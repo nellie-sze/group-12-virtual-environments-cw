@@ -213,6 +213,14 @@ public class ScaleAndResetOnGrab : MonoBehaviour
 
     private void LateUpdate()
     {
+        // Prevent tool drifting when not held 
+        if (grab != null && !grab.isSelected)
+        {
+        transform.localScale = originalScale;
+        transform.position = originalPosition;
+        transform.rotation = originalRotation;  
+        }
+
         // If we lose ownership (e.g., conflict resolution), force release locally so the lock winner controls motion.
         if (grab != null && grab.isSelected && IsLeaseValid() && !IsLocalOwner())
         {
