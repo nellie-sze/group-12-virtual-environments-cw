@@ -110,9 +110,11 @@ public class VillagerSpawner : MonoBehaviour
             Debug.LogError("VillagerSpawner: Villager prefab not set.");
             return;
         }
-        if (spawnManager.catalogue.IndexOf(villagerPrefab.gameObject) < 0)
+
+        var prefabToSpawn = ResolveCataloguePrefab();
+        if (prefabToSpawn == null)
         {
-            Debug.LogError($"VillagerSpawner: Prefab not in Prefab Catalogue: {villagerPrefab.name}. Add it to the catalogue used by the active NetworkSpawnManager.");
+            Debug.LogError($"VillagerSpawner: Prefab not in Prefab Catalogue: {villagerPrefab.name}. Add the project prefab asset to the catalogue used by the active NetworkSpawnManager, or assign that catalogue prefab directly on this spawner.");
             return;
         }
 
@@ -120,10 +122,10 @@ public class VillagerSpawner : MonoBehaviour
 
         for (int i = 0; i < count; i++)
         {
-            var obj = spawnManager.SpawnWithPeerScope(villagerPrefab.gameObject);
+            var obj = spawnManager.SpawnWithPeerScope(prefabToSpawn);
             if (obj == null)
             {
-                Debug.LogError($"VillagerSpawner: Failed to spawn {villagerPrefab.name}. Is it added to the Prefab Catalogue?");
+                Debug.LogError($"VillagerSpawner: Failed to spawn {prefabToSpawn.name}. Is it added to the Prefab Catalogue?");
                 continue;
             }
 
@@ -145,6 +147,39 @@ public class VillagerSpawner : MonoBehaviour
                 sync.RequestInitialSend();
             }
         }
+    }
+
+    private GameObject ResolveCataloguePrefab()
+    {
+        var prefabObject = villagerPrefab.gameObject;
+        if (spawnManager.catalogue.IndexOf(prefabObject) >= 0)
+        {
+            return prefabObject;
+        }
+
+        if (spawnManager.catalogue.prefabs == null)
+        {
+            return null;
+        }
+
+        for (int i = 0; i < spawnManager.catalogue.prefabs.Count; i++)
+        {
+            var candidate = spawnManager.catalogue.prefabs[i];
+            if (candidate == null || candidate.name != prefabObject.name)
+            {
+                continue;
+            }
+
+            if (candidate.GetComponent<VillagerAgent>() == null)
+            {
+                continue;
+            }
+
+            Debug.LogWarning($"VillagerSpawner: '{villagerPrefab.name}' is referencing a scene instance or non-catalogue object. Using catalogue prefab asset '{candidate.name}' instead.");
+            return candidate;
+        }
+
+        return null;
     }
 
     private void OnNetworkSpawned(GameObject obj, IRoom room, IPeer peer, NetworkSpawnOrigin origin)

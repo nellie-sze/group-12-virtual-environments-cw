@@ -25,6 +25,8 @@ public class ShovelTool : MonoBehaviour
     [Header("Ghost")]
     private GameObject ghostHighlight;
     public bool scaleGhostToGridCell = true;
+    [Tooltip("If false, ghost is cast from tool to surface. Set true if needed for desktop.")]
+    public bool useMouseCursor = false;
     public Color invalidColor = new Color(1f, 0.3f, 0f, 0.5f); 
 
     [Header("Mode")]
@@ -153,27 +155,48 @@ public class ShovelTool : MonoBehaviour
 
     void UpdateGhostPosition()
     {
-        if (Mouse.current == null || Camera.main == null || ghostHighlight == null) return;
+        Ray ray;
+        if(!useMouseCursor && ghostHighlight != null && GridManager.Instance != null && Camera.main != null)
+        {
+            Vector3 origin = Camera.main.transform.position;
+            Vector3 direction = (transform.position - origin).normalized;
 
-        Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
-        if (!Physics.Raycast(ray, out RaycastHit hit)) return;
+            if (direction.sqrMagnitude < 0.0001f)
+                return;
 
-        Vector3 snapped = new Vector3(
-            Mathf.Round(hit.point.x / gridSize) * gridSize,
-            topSurfaceY,
-            Mathf.Round(hit.point.z / gridSize) * gridSize);
-
-        ghostHighlight.transform.position = snapped;
-        ghostHighlight.transform.rotation = Quaternion.Euler(0f, currentRotationY, 0f);
-
-        Vector2Int cell = GridManager.Instance.WorldToGrid(snapped);
-
-        // Ghost is visible at 50% opacity inside the grid, hidden outside
-        if (!GridManager.Instance.IsWithinGridSurfaceBuffered(snapped, gridSize / 2f))
-            ApplyGhostBaseTransparency(0f);
+            ray = new Ray(origin, direction);        
+        }
+        else if (Mouse.current != null && Camera.main != null && ghostHighlight != null)
+        {
+            ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
+        }
         else
-            ApplyGhostBaseTransparency(0.5f);
+        {
+            return;
+        }
+
+        if (Physics.Raycast(ray, out RaycastHit hit))
+        {
+            Vector3 snapped = new Vector3(
+                Mathf.Round(hit.point.x / gridSize) * gridSize,
+                topSurfaceY,
+                Mathf.Round(hit.point.z / gridSize) * gridSize
+            );
+
+            ghostHighlight.transform.position = snapped; 
+            ghostHighlight.transform.rotation = Quaternion.Euler(0f, currentRotationY, 0f);
+
+            Vector2Int cell = GridManager.Instance.WorldToGrid(snapped);
+
+            if (!GridManager.Instance.IsWithinGridSurfaceBuffered(snapped, gridSize / 2f))
+                ApplyGhostBaseTransparency(0.0f);
+            else if (GridManager.Instance.IsInBounds(cell) && !GridManager.Instance.IsOccupied(cell))
+                ApplyGhostBaseTransparency(0.5f);
+            else
+                SetGhostColor(invalidColor);
+        }
     }
+
     bool CanConnect(Vector2Int cell)
     {
         if (PathChecker.Instance == null) return true; // fail-open if PathChecker missing
@@ -204,43 +227,35 @@ public class ShovelTool : MonoBehaviour
     void TryBuild()
     {
         if (ghostHighlight == null || !ghostHighlight.activeSelf) return;
+        
+        Vector2Int cell = GridManager.Instance.WorldToGrid(ghostHighlight.transform.position); 
 
-        if (GameManager.Instance != null && !GameManager.Instance.IsPlaying)
-        {
-            Debug.Log("[ShovelTool] Cannot place — game not started yet.");
-            return;
-        }
+        if (!GridManager.Instance.IsInBounds(cell) || GridManager.Instance.IsOccupied(cell)) return;
 
-        Vector2Int cell = GridManager.Instance.WorldToGrid(ghostHighlight.transform.position);
-        Debug.Log($"[ShovelTool] Trying to build at cell {cell}");
-
-        if (!GridManager.Instance.IsInBounds(cell) || GridManager.Instance.IsOccupied(cell))
-        {
-            Debug.LogWarning($"[ShovelTool] Cell {cell} is out of bounds or already occupied.");
-            return;
-        }
-
+        Debug.Log($"Trying to build at cell {cell}");
+        
         if (!CanConnect(cell))
         {
             // Yellow flash feedback + console log
             if (PathChecker.Instance != null)
                 PathChecker.Instance.ReportInvalidPlacement(cell, ghostHighlight);
             else
-                Debug.LogWarning($"[ShovelTool] INVALID placement at {cell} — " +
+                Debug.LogWarning($"INVALID placement at {cell} — " +
                                  "no valid directional connection to an adjacent Start or Path cell.");
             return;
         }
 
-        GameObject prefab = currentMode == ToolMode.Straight ? straightPrefab : cornerPrefab;
-        Vector3    pos    = ghostHighlight.transform.position;
-        Quaternion rot    = Quaternion.Euler(0f, currentRotationY, 0f);
+        GameObject prefab = currentMode == ToolMode.Straight
+        ? straightPrefab
+        : cornerPrefab;
+        Vector3 placementPosition = ghostHighlight.transform.position;
+        Quaternion placementRotation = Quaternion.Euler(0f, currentRotationY, 0f);
+        Debug.Log($"Placing path at position={placementPosition}, cell={cell}");
 
         GameObject placedObject = CreateCenteredWrapper(prefab, $"{prefab.name}_PlacedRoot");
         FitToSingleGridCell(placedObject);
-        placedObject.transform.rotation = rot;
-        placedObject.transform.position = pos;
-
-        // Register in GridManager so occupancy checks work
+        placedObject.transform.rotation = placementRotation;
+        placedObject.transform.position = placementPosition;
         GridManager.Instance.TryPlace(cell, CellType.Path, placedObject);
 
         PathNode node = currentMode == ToolMode.Straight
@@ -254,8 +269,6 @@ public class ShovelTool : MonoBehaviour
             // Run BFS — if Start→Finish is now connected, triggers win condition
             PathChecker.Instance.CheckPath();
         }
-
-        Debug.Log($"[ShovelTool] Placed {currentMode} at cell {cell}, rotation {currentRotationY}°");
     }
 
 

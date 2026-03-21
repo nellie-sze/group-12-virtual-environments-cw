@@ -12,6 +12,8 @@ public class AxeTool : MonoBehaviour
     [Header("Ghost Prefab")]
     public GameObject ghostPrefab;
     public bool scaleGhostToGridCell = true;
+    [Tooltip("If false, ghost is cast from tool to surface. Set true if needed for desktop.")]
+    public bool useMouseCursor = false;
 
     [Header("Ghost Colours")]
     private Color validColor   = new Color(0f,   1f,   0f,   0.5f); // green  = hovering a tree
@@ -105,10 +107,27 @@ public class AxeTool : MonoBehaviour
     // ── same mouse-ray pattern as GridSystem.UpdateGhostPosition ──────────────
     void UpdateGhostPosition()
     {
-        if (Mouse.current == null || Camera.main == null || ghostHighlight == null) return;
+        Ray ray;
+        if(!useMouseCursor && ghostHighlight != null && GridManager.Instance != null && Camera.main != null)
+        {
+            Vector3 origin = Camera.main.transform.position;
+            Vector3 direction = (transform.position - origin).normalized;
 
-        Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
+            if (direction.sqrMagnitude < 0.0001f)
+                return;
 
+            ray = new Ray(origin, direction);        
+        }
+        else if (Mouse.current != null && Camera.main != null && ghostHighlight != null)
+        {
+            ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
+        }
+
+        else
+        {
+            return;
+        }
+        
         if (Physics.Raycast(ray, out RaycastHit hit))
         {
             Vector3 snapped = new Vector3(
