@@ -345,7 +345,7 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
             gameObject.SetActive(false);
 
             if (GameManager.Instance != null)
-                GameManager.Instance.TriggerGameOver();
+                GameManager.Instance.OnVillagerDied();
 
             yield break;
         }
@@ -499,7 +499,7 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
             gameObject.SetActive(false);
 
             if (GameManager.Instance != null)
-                GameManager.Instance.TriggerGameOver();
+                GameManager.Instance.OnVillagerDied();
         }
     }
 
@@ -661,7 +661,7 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
             gameObject.SetActive(false);
 
             if (GameManager.Instance != null)
-                GameManager.Instance.TriggerGameOver();
+                GameManager.Instance.OnVillagerDied();
 
             return;
         }
