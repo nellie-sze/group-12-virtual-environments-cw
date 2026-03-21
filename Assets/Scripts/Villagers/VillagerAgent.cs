@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using Ubiq.Geometry;
 using Ubiq.Messaging;
 using Ubiq.Spawning;
@@ -192,6 +193,13 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
     {
         while (state != VillagerState.Dead)
         {
+            // Stop wandering when the game is over.
+            if (GameManager.Instance != null && GameManager.Instance.IsGameOver)
+            {
+                state = VillagerState.Idle;
+                break;
+            }
+
             if (!isAuthority || state == VillagerState.Held)
             {
                 yield return null;
@@ -218,10 +226,10 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
         {
             var d = dirs[Random.Range(0, dirs.Length)];
             var c = cell + d;
-            if (grid.InBounds(c))
+            if (IsCellWalkable(c))
                 return c;
         }
-        return cell;
+        return cell; // stay put if all attempts hit blocked cells
     }
 
     IEnumerator MoveToCell(Vector2Int target)
@@ -260,6 +268,12 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
 
         cell = target;
         SnapToCell(cell);
+
+        // Check if we arrived on lava — triggers death and game over.
+        CheckLavaAndDie();
+        if (state == VillagerState.Dead)
+            yield break;
+
         state = VillagerState.Idle;
 
         if (isAuthority)
@@ -315,8 +329,32 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
     {
         yield return new WaitForFixedUpdate();
 
-        var dropCell = grid.Clamp(grid.WorldToCell(releaseWorldPos));
-        cell = dropCell;
+        var rawCell = grid.Clamp(grid.WorldToCell(releaseWorldPos));
+
+        // Dropped onto lava — instant death.
+        if (isAuthority && IsCellLava(rawCell))
+        {
+            Debug.Log("Game over! Villager dropped into lava.");
+            cell = rawCell;
+            SnapToCell(cell);
+            releaseRoutine = null;
+            HideDropPreview();
+
+            state = VillagerState.Dead;
+            SendState(force: true);
+            gameObject.SetActive(false);
+
+            if (GameManager.Instance != null)
+                GameManager.Instance.TriggerGameOver();
+
+            yield break;
+        }
+
+        // Dropped onto a blocked cell (tree/rock/path) — redirect to nearest valid cell.
+        if (!IsCellWalkable(rawCell))
+            rawCell = FindNearestWalkableCell(rawCell);
+
+        cell = rawCell;
         SnapToCell(cell);
 
         if (rb != null && !rb.isKinematic)
@@ -344,9 +382,125 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
 
     public void Die()
     {
+        Debug.Log($"Villager Die() called on '{gameObject.name}' at cell {cell}");
         state = VillagerState.Dead;
         HideDropPreview();
         gameObject.SetActive(false);
+    }
+
+    // ── Grid-bridging walkability helpers ────────────────────────────
+    // These query GridManager live every call (no caching) so they
+    // always reflect the current board state, including runtime-placed
+    // path blocks, removed trees/rocks, and newly spawned lava.
+
+    /// <summary>
+    /// Returns true if the BoardGrid cell can be entered by a villager.
+    /// Blocked: Tree, Rock, Path. Walkable: Empty, Flower, Start, Finish, Lava.
+    /// Lava is walkable (entering it triggers death separately).
+    /// </summary>
+    bool IsCellWalkable(Vector2Int boardCell)
+    {
+        if (!grid.InBounds(boardCell))
+            return false;
+
+        if (GridManager.Instance == null)
+            return true;
+
+        Vector3 worldPos = grid.CellToWorld(boardCell, 0f);
+        Vector2Int gmCell = GridManager.Instance.WorldToGrid(worldPos);
+
+        if (!GridManager.Instance.TryGetCell(gmCell, out GridCell data))
+            return true; // no data = empty ground
+
+        switch (data.type)
+        {
+            case CellType.Tree:
+            case CellType.Rock:
+            case CellType.Path:
+                return false;
+            default:
+                return true;
+        }
+    }
+
+    /// <summary>
+    /// Returns true if the BoardGrid cell overlaps a GridManager Lava cell.
+    /// </summary>
+    bool IsCellLava(Vector2Int boardCell)
+    {
+        if (GridManager.Instance == null)
+            return false;
+
+        Vector3 worldPos = grid.CellToWorld(boardCell, 0f);
+        Vector2Int gmCell = GridManager.Instance.WorldToGrid(worldPos);
+
+        if (GridManager.Instance.TryGetCell(gmCell, out GridCell data))
+            return data.type == CellType.Lava;
+
+        return false;
+    }
+
+    /// <summary>
+    /// BFS outward from 'from' to find the nearest walkable, non-lava cell.
+    /// Used when dropping a villager onto a blocked cell.
+    /// </summary>
+    Vector2Int FindNearestWalkableCell(Vector2Int from)
+    {
+        if (grid.InBounds(from) && IsCellWalkable(from) && !IsCellLava(from))
+            return from;
+
+        var visited = new HashSet<Vector2Int>();
+        var queue = new Queue<Vector2Int>();
+        queue.Enqueue(from);
+        visited.Add(from);
+
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+            for (int i = 0; i < dirs.Length; i++)
+            {
+                var neighbor = current + dirs[i];
+                if (visited.Contains(neighbor)) continue;
+                visited.Add(neighbor);
+
+                if (!grid.InBounds(neighbor)) continue;
+
+                if (IsCellWalkable(neighbor) && !IsCellLava(neighbor))
+                    return neighbor;
+
+                queue.Enqueue(neighbor);
+            }
+
+            if (visited.Count > grid.width * grid.height)
+                break;
+        }
+
+        return grid.Clamp(from);
+    }
+
+    /// <summary>
+    /// If the villager's current cell is lava, trigger death and game over.
+    /// Only runs on the authority peer; remotes receive the Dead state via network.
+    /// </summary>
+    void CheckLavaAndDie()
+    {
+        if (state == VillagerState.Dead) return;
+        if (!isAuthority) return;
+
+        if (IsCellLava(cell))
+        {
+            Debug.Log("Game over! Villager fell into lava.");
+
+            // Send Dead state to remote peers BEFORE deactivating the GameObject.
+            state = VillagerState.Dead;
+            SendState(force: true);
+
+            HideDropPreview();
+            gameObject.SetActive(false);
+
+            if (GameManager.Instance != null)
+                GameManager.Instance.TriggerGameOver();
+        }
     }
 
     float GetHalfHeight()
@@ -379,6 +533,18 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
         dropPreview.SetActive(true);
         dropPreview.transform.position = previewPos;
         dropPreview.transform.localScale = new Vector3(grid.cellSize, previewThickness, grid.cellSize);
+
+        // Color feedback: red = lava (death), yellow = blocked (will redirect), white = safe.
+        var renderer = dropPreview.GetComponent<Renderer>();
+        if (renderer != null)
+        {
+            if (IsCellLava(previewCell))
+                renderer.material.color = Color.red;
+            else if (!IsCellWalkable(previewCell))
+                renderer.material.color = Color.yellow;
+            else
+                renderer.material.color = Color.white;
+        }
     }
 
     void HideDropPreview()
@@ -487,7 +653,20 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
         state = remoteState;
         cell = remoteCell;
 
-        if (state != VillagerState.Moving && state != VillagerState.Held && state != VillagerState.Dead)
+        // Replicate death on remote peers.
+        if (state == VillagerState.Dead)
+        {
+            Debug.Log($"Villager '{gameObject.name}' received Dead state from remote peer.");
+            HideDropPreview();
+            gameObject.SetActive(false);
+
+            if (GameManager.Instance != null)
+                GameManager.Instance.TriggerGameOver();
+
+            return;
+        }
+
+        if (state != VillagerState.Moving && state != VillagerState.Held)
         {
             SnapToCell(cell);
         }
