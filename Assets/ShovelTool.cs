@@ -3,7 +3,6 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
 using UnityEngine.XR.Interaction.Toolkit;
-using UnityEngine.XR.Interaction.Toolkit.Interactors;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 public class ShovelTool : MonoBehaviour
@@ -27,14 +26,6 @@ public class ShovelTool : MonoBehaviour
     public GameObject straightPrefab;
     public GameObject cornerPrefab;
 
-    [Header("Placement")]
-    [Tooltip("Ray interactor used to position the ghost. Assign the pointing hand ray here.")]
-    public XRRayInteractor placementRayInteractor;
-    [Tooltip("Automatically finds a placement ray on the opposite hand when this tool is grabbed.")]
-    public bool autoAssignPlacementRayByHoldingHand = true;
-    [Tooltip("When enabled, uses mouse raycast if no placement ray interactor is assigned.")]
-    public bool allowMousePlacementFallback = true;
-
     [Header("Ghost")]
     private GameObject ghostHighlight;
     public bool scaleGhostToGridCell = true;
@@ -47,9 +38,6 @@ public class ShovelTool : MonoBehaviour
     private int[] cachedLayers;
     private Transform[] cachedTransforms;
     private float topSurfaceY;
-    private bool hasValidPlacementPoint;
-    private bool hasWarnedMissingPlacementSource;
-    private InteractorHandedness holdingHandedness = InteractorHandedness.None;
     private readonly List<Color> ghostBaseColors = new List<Color>();
 
     void Start()
@@ -114,11 +102,6 @@ public class ShovelTool : MonoBehaviour
     void OnGrab(SelectEnterEventArgs args)
     {
         isHeld = true;
-        hasValidPlacementPoint = false;
-        hasWarnedMissingPlacementSource = false;
-        holdingHandedness = args.interactorObject != null ? args.interactorObject.handedness : InteractorHandedness.None;
-        if (autoAssignPlacementRayByHoldingHand)
-            placementRayInteractor = FindBestPlacementRayInteractor(holdingHandedness, args.interactorObject);
         SetHeldRaycastIgnored(true);
         ghostHighlight.SetActive(true);
     }
@@ -126,8 +109,6 @@ public class ShovelTool : MonoBehaviour
     void OnRelease(SelectExitEventArgs args)
     {
         isHeld = false;
-        hasValidPlacementPoint = false;
-        holdingHandedness = InteractorHandedness.None;
         SetHeldRaycastIgnored(false);
         ghostHighlight.SetActive(false);
     }
@@ -201,110 +182,33 @@ public class ShovelTool : MonoBehaviour
     // ── same mouse-ray pattern as GridSystem.UpdateGhostPosition ──────────────
     void UpdateGhostPosition()
     {
-        if (ghostHighlight == null)
-            return;
+        if (Mouse.current == null || Camera.main == null || ghostHighlight == null) return;
 
-        if (!TryGetPlacementPoint(out Vector3 placementPoint))
+        Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
+
+        if (Physics.Raycast(ray, out RaycastHit hit))
         {
-            hasValidPlacementPoint = false;
-            if (!hasWarnedMissingPlacementSource)
-            {
-                Debug.LogWarning("ShovelTool has no placement point source. Assign Placement Ray Interactor or enable Allow Mouse Placement Fallback.");
-                hasWarnedMissingPlacementSource = true;
-            }
-            return;
+            Vector3 snapped = new Vector3(
+                Mathf.Round(hit.point.x / gridSize) * gridSize,
+                topSurfaceY,
+                Mathf.Round(hit.point.z / gridSize) * gridSize
+            );
+            //ghostHighlight.transform.position = snapped;
+            Vector3 offset = new Vector3(gridSize / 2f, 0f, gridSize / 2f);
+            //ghostHighlight.transform.position = snapped + offset; // offset needed for path prefabs only
+            ghostHighlight.transform.position = snapped; // offset needed for path prefabs only
+
+            ghostHighlight.transform.rotation = Quaternion.Euler(0f, currentRotationY, 0f);
+
+            Vector2Int cell = GridManager.Instance.WorldToGrid(snapped);
+
+            if (!GridManager.Instance.IsWithinGridSurfaceBuffered(snapped, gridSize / 2f))
+                ApplyGhostBaseTransparency(0.0f);
+            else if (GridManager.Instance.IsInBounds(cell) && !GridManager.Instance.IsOccupied(cell))
+                ApplyGhostBaseTransparency(0.5f);
+            else
+                SetGhostColor(invalidColor);
         }
-
-        hasValidPlacementPoint = true;
-
-        Vector3 snapped = new Vector3(
-            Mathf.Round(placementPoint.x / gridSize) * gridSize,
-            topSurfaceY,
-            Mathf.Round(placementPoint.z / gridSize) * gridSize
-        );
-
-        ghostHighlight.transform.position = snapped;
-        ghostHighlight.transform.rotation = Quaternion.Euler(0f, currentRotationY, 0f);
-
-        Vector2Int cell = GridManager.Instance.WorldToGrid(snapped);
-
-        if (!GridManager.Instance.IsWithinGridSurfaceBuffered(snapped, gridSize / 2f))
-            ApplyGhostBaseTransparency(0.0f);
-        else if (GridManager.Instance.IsInBounds(cell) && !GridManager.Instance.IsOccupied(cell))
-            ApplyGhostBaseTransparency(0.5f);
-        else
-            SetGhostColor(invalidColor);
-    }
-
-    bool TryGetPlacementPoint(out Vector3 point)
-    {
-        if (autoAssignPlacementRayByHoldingHand && (placementRayInteractor == null || !placementRayInteractor.isActiveAndEnabled))
-            placementRayInteractor = FindBestPlacementRayInteractor(holdingHandedness, null);
-
-        if (placementRayInteractor != null && placementRayInteractor.isActiveAndEnabled)
-        {
-            if (placementRayInteractor.TryGetCurrent3DRaycastHit(out RaycastHit raycastHit))
-            {
-                if (GridManager.Instance == null || GridManager.Instance.IsWithinGridSurface(raycastHit.point))
-                {
-                    point = raycastHit.point;
-                    return true;
-                }
-            }
-        }
-
-        if (allowMousePlacementFallback && Mouse.current != null && Camera.main != null)
-        {
-            Ray mouseRay = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
-            if (Physics.Raycast(mouseRay, out RaycastHit mouseHit))
-            {
-                if (GridManager.Instance == null || GridManager.Instance.IsWithinGridSurface(mouseHit.point))
-                {
-                    point = mouseHit.point;
-                    return true;
-                }
-            }
-        }
-
-        point = default;
-        return false;
-    }
-
-    XRRayInteractor FindBestPlacementRayInteractor(InteractorHandedness grabHandedness, IXRInteractor grabbingInteractor)
-    {
-        XRRayInteractor[] rays = FindObjectsOfType<XRRayInteractor>(true);
-        XRRayInteractor bestRay = null;
-        int bestScore = int.MinValue;
-
-        for (int i = 0; i < rays.Length; i++)
-        {
-            XRRayInteractor ray = rays[i];
-            if (ray == null || !ray.isActiveAndEnabled || !ray.gameObject.activeInHierarchy)
-                continue;
-
-            if (grabbingInteractor != null && ReferenceEquals(ray, grabbingInteractor))
-                continue;
-
-            int score = 0;
-            if (grabHandedness != InteractorHandedness.None)
-            {
-                if (ray.handedness != InteractorHandedness.None && ray.handedness != grabHandedness)
-                    score += 100;
-                else if (ray.handedness == grabHandedness)
-                    score -= 100;
-            }
-
-            if (!ray.gameObject.name.ToLowerInvariant().Contains("teleport"))
-                score += 10;
-
-            if (score > bestScore)
-            {
-                bestScore = score;
-                bestRay = ray;
-            }
-        }
-
-        return bestRay;
     }
 
     void RotateGhost()
@@ -382,7 +286,6 @@ public class ShovelTool : MonoBehaviour
     void TryBuild()
     {
         if (ghostHighlight == null || !ghostHighlight.activeSelf) return;
-        if (!hasValidPlacementPoint) return;
 
         //Vector2Int cell = GridManager.Instance.WorldToGrid(ghostHighlight.transform.position - new Vector3(gridSize / 2f, 0f, gridSize / 2f)); // reverse offset to get correct cell
         Vector2Int cell = GridManager.Instance.WorldToGrid(ghostHighlight.transform.position); 
