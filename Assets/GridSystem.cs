@@ -2,19 +2,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
-using UnityEngine.UIElements;
 using UnityEngine.XR.Interaction.Toolkit;
 
 public class GridSystem : MonoBehaviour
 {
-    public enum ToolMode
-    {
-        Straight,
-        Corner
-    }
+    public enum ToolMode { Straight, Corner }
 
     [Header("Placement")]
-    // public GameObject objectToPlace;
     public float gridSize = 1f;
 
     [Header("Tool")]
@@ -33,13 +27,13 @@ public class GridSystem : MonoBehaviour
     public bool scaleGhostToGridCells = true;
 
     public Color straightPlacedColor = new Color(0f, 0.6f, 1f, 1f);
-    public Color cornerPlacedColor = new Color(0f, 1f, 0.3f, 1f);
+    public Color cornerPlacedColor   = new Color(0f, 1f,   0.3f, 1f);
 
     private GameObject ghostObject;
     private readonly List<Material> ghostMaterials = new List<Material>();
-    private readonly List<Color> ghostBaseColors = new List<Color>();
-    // occupiedPositions removed — GridManager.Instance is now the single source of truth
-    // 0, 90, 180, 270
+    private readonly List<Color>    ghostBaseColors = new List<Color>();
+
+    // Current ghost rotation in degrees (0 / 90 / 180 / 270)
     private int currentRotationY = 0;
 
     [Header("Prefabs")]
@@ -48,62 +42,38 @@ public class GridSystem : MonoBehaviour
 
     static Color GetMaterialColor(Material mat)
     {
-        if (mat == null)
-            return Color.white;
-
-        if (mat.HasProperty("_BaseColor"))
-            return mat.GetColor("_BaseColor");
-        if (mat.HasProperty("_Color"))
-            return mat.GetColor("_Color");
-
+        if (mat == null) return Color.white;
+        if (mat.HasProperty("_BaseColor")) return mat.GetColor("_BaseColor");
+        if (mat.HasProperty("_Color"))     return mat.GetColor("_Color");
         return mat.color;
     }
 
     static void SetMaterialColor(Material mat, Color color)
     {
-        if (mat == null)
-            return;
-
-        if (mat.HasProperty("_BaseColor"))
-            mat.SetColor("_BaseColor", color);
-        if (mat.HasProperty("_Color"))
-            mat.SetColor("_Color", color);
-
+        if (mat == null) return;
+        if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", color);
+        if (mat.HasProperty("_Color"))     mat.SetColor("_Color",     color);
         mat.color = color;
     }
 
     static void ConfigureMaterialForTransparency(Material mat)
     {
-        if (mat == null)
-            return;
+        if (mat == null) return;
 
-        // URP Lit: set Surface Type to Transparent (Alpha blend).
         if (mat.HasProperty("_Surface"))
         {
             mat.SetFloat("_Surface", 1f);
-            if (mat.HasProperty("_Blend"))
-                mat.SetFloat("_Blend", 0f); // Alpha
-            if (mat.HasProperty("_AlphaClip"))
-                mat.SetFloat("_AlphaClip", 0f);
-            if (mat.HasProperty("_QueueControl"))
-                mat.SetFloat("_QueueControl", 1f); // UserOverride
-            if (mat.HasProperty("_ZWriteControl"))
-                mat.SetFloat("_ZWriteControl", 0f);
-            if (mat.HasProperty("_ZWrite"))
-                mat.SetFloat("_ZWrite", 0f);
-
-            if (mat.HasProperty("_SrcBlend"))
-                mat.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
-            if (mat.HasProperty("_DstBlend"))
-                mat.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
-            if (mat.HasProperty("_SrcBlendAlpha"))
-                mat.SetFloat("_SrcBlendAlpha", (float)BlendMode.One);
-            if (mat.HasProperty("_DstBlendAlpha"))
-                mat.SetFloat("_DstBlendAlpha", (float)BlendMode.OneMinusSrcAlpha);
-            if (mat.HasProperty("_BlendOp"))
-                mat.SetFloat("_BlendOp", (float)BlendOp.Add);
-            if (mat.HasProperty("_BlendOpAlpha"))
-                mat.SetFloat("_BlendOpAlpha", (float)BlendOp.Add);
+            if (mat.HasProperty("_Blend"))         mat.SetFloat("_Blend",         0f);
+            if (mat.HasProperty("_AlphaClip"))     mat.SetFloat("_AlphaClip",     0f);
+            if (mat.HasProperty("_QueueControl"))  mat.SetFloat("_QueueControl",  1f);
+            if (mat.HasProperty("_ZWriteControl")) mat.SetFloat("_ZWriteControl", 0f);
+            if (mat.HasProperty("_ZWrite"))        mat.SetFloat("_ZWrite",        0f);
+            if (mat.HasProperty("_SrcBlend"))      mat.SetFloat("_SrcBlend",      (float)BlendMode.SrcAlpha);
+            if (mat.HasProperty("_DstBlend"))      mat.SetFloat("_DstBlend",      (float)BlendMode.OneMinusSrcAlpha);
+            if (mat.HasProperty("_SrcBlendAlpha")) mat.SetFloat("_SrcBlendAlpha", (float)BlendMode.One);
+            if (mat.HasProperty("_DstBlendAlpha")) mat.SetFloat("_DstBlendAlpha", (float)BlendMode.OneMinusSrcAlpha);
+            if (mat.HasProperty("_BlendOp"))       mat.SetFloat("_BlendOp",       (float)BlendOp.Add);
+            if (mat.HasProperty("_BlendOpAlpha"))  mat.SetFloat("_BlendOpAlpha",  (float)BlendOp.Add);
 
             mat.SetOverrideTag("RenderType", "Transparent");
             mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
@@ -120,7 +90,7 @@ public class GridSystem : MonoBehaviour
             mat.SetFloat("_Mode", 2f);
             mat.SetInt("_SrcBlend", (int)BlendMode.SrcAlpha);
             mat.SetInt("_DstBlend", (int)BlendMode.OneMinusSrcAlpha);
-            mat.SetInt("_ZWrite", 0);
+            mat.SetInt("_ZWrite",   0);
             mat.DisableKeyword("_ALPHATEST_ON");
             mat.EnableKeyword("_ALPHABLEND_ON");
             mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
@@ -132,20 +102,13 @@ public class GridSystem : MonoBehaviour
     {
         ghostMaterials.Clear();
         ghostBaseColors.Clear();
+        if (ghostObject == null) return;
 
-        if (ghostObject == null)
-            return;
-
-        Renderer[] renderers = ghostObject.GetComponentsInChildren<Renderer>();
-        foreach (Renderer renderer in renderers)
+        foreach (Renderer renderer in ghostObject.GetComponentsInChildren<Renderer>())
         {
-            Material[] materials = renderer.materials; // per-instance
-            for (int i = 0; i < materials.Length; i++)
+            foreach (Material mat in renderer.materials)
             {
-                Material mat = materials[i];
-                if (mat == null)
-                    continue;
-
+                if (mat == null) continue;
                 ConfigureMaterialForTransparency(mat);
                 ghostMaterials.Add(mat);
                 ghostBaseColors.Add(GetMaterialColor(mat));
@@ -157,54 +120,38 @@ public class GridSystem : MonoBehaviour
     {
         for (int i = 0; i < ghostMaterials.Count; i++)
         {
-            Material mat = ghostMaterials[i];
-            if (mat == null)
-                continue;
-
-            Color baseColor = i < ghostBaseColors.Count ? ghostBaseColors[i] : GetMaterialColor(mat);
-            baseColor.a = alpha;
-            SetMaterialColor(mat, baseColor);
+            if (ghostMaterials[i] == null) continue;
+            Color c = i < ghostBaseColors.Count ? ghostBaseColors[i] : GetMaterialColor(ghostMaterials[i]);
+            c.a = alpha;
+            SetMaterialColor(ghostMaterials[i], c);
         }
     }
 
     void ApplyGhostInvalidVisual()
     {
+        // Red tint on the ghost — connection or bounds check failed
         Color c = invalidGhostColor;
         c.a = ghostOpacity;
-
-        for (int i = 0; i < ghostMaterials.Count; i++)
-        {
-            Material mat = ghostMaterials[i];
-            if (mat == null)
-                continue;
-
-            SetMaterialColor(mat, c);
-        }
+        foreach (Material mat in ghostMaterials)
+            if (mat != null) SetMaterialColor(mat, c);
     }
 
     void ScaleGhostToGridCell()
     {
-        if (ghostObject == null || !scaleGhostToGridCells)
-            return;
+        if (ghostObject == null || !scaleGhostToGridCells) return;
 
         Renderer[] renderers = ghostObject.GetComponentsInChildren<Renderer>();
-        if (renderers == null || renderers.Length == 0)
-            return;
+        if (renderers == null || renderers.Length == 0) return;
 
-        Bounds combined = new Bounds();
-        bool hasBounds = false;
-
+        Bounds    combined       = new Bounds();
+        bool      hasBounds      = false;
         Matrix4x4 rootWorldToLocal = ghostObject.transform.worldToLocalMatrix;
 
-        Debug.Log("Scaling ghost to grid cell. Initial renderers count: " + renderers.Length);
-
-        foreach (Renderer renderer in renderers)
+        foreach (Renderer r in renderers)
         {
-            if (renderer == null)
-                continue;
-
-            Bounds lb = renderer.localBounds;
-            Vector3 center = lb.center;
+            if (r == null) continue;
+            Bounds  lb      = r.localBounds;
+            Vector3 center  = lb.center;
             Vector3 extents = lb.extents;
 
             Vector3[] corners =
@@ -219,50 +166,33 @@ public class GridSystem : MonoBehaviour
                 new Vector3(center.x + extents.x, center.y + extents.y, center.z + extents.z)
             };
 
-            Matrix4x4 rendererLocalToRootLocal = rootWorldToLocal * renderer.transform.localToWorldMatrix;
-            for (int i = 0; i < corners.Length; i++)
+            Matrix4x4 toRoot = rootWorldToLocal * r.transform.localToWorldMatrix;
+            foreach (Vector3 corner in corners)
             {
-                Vector3 p = rendererLocalToRootLocal.MultiplyPoint3x4(corners[i]);
-                if (!hasBounds)
-                {
-                    combined = new Bounds(p, Vector3.zero);
-                    hasBounds = true;
-                }
-                else
-                {
-                    combined.Encapsulate(p);
-                }
+                Vector3 p = toRoot.MultiplyPoint3x4(corner);
+                if (!hasBounds) { combined = new Bounds(p, Vector3.zero); hasBounds = true; }
+                else            { combined.Encapsulate(p); }
             }
         }
 
-        if (!hasBounds)
-            return;
-
+        if (!hasBounds) return;
         float footprint = Mathf.Max(combined.size.x, combined.size.z);
-        if (footprint <= 0.0001f || gridSize <= 0.0001f)
-            return;
+        if (footprint <= 0.0001f || gridSize <= 0.0001f) return;
 
-        float scale = gridSize / footprint;
-        ghostObject.transform.localScale = ghostObject.transform.localScale * scale;
+        ghostObject.transform.localScale *= gridSize / footprint;
     }
 
     void CreateGhostObject()
     {
-        GameObject prefab = currentMode == ToolMode.Straight
-        ? straightPrefab
-        : cornerPrefab;
-
+        GameObject prefab = currentMode == ToolMode.Straight ? straightPrefab : cornerPrefab;
         ghostObject = Instantiate(prefab);
         ghostObject.transform.rotation = Quaternion.Euler(0f, currentRotationY, 0f);
 
-        ghostObject.GetComponent<Collider>().enabled = false;
-
+        // Disable physics on the ghost — it's purely visual
+        if (ghostObject.TryGetComponent<Collider>(out var rootCol)) rootCol.enabled = false;
         foreach (Collider col in ghostObject.GetComponentsInChildren<Collider>())
-        {
             col.enabled = false;
-        }
 
-        Debug.Log("Created ghost object from prefab: " + prefab.name);
         ScaleGhostToGridCell();
         CacheGhostMaterials();
         ApplyGhostAlphaFromBase(ghostOpacity);
@@ -270,256 +200,220 @@ public class GridSystem : MonoBehaviour
 
     bool IsWithinGrid(Vector3 pos)
     {
-        Renderer r = GetComponent<Renderer>();
-        Bounds bounds = r.bounds;
+        Bounds b = GetComponent<Renderer>().bounds;
+        return pos.x >= b.min.x && pos.x <= b.max.x &&
+               pos.z >= b.min.z && pos.z <= b.max.z;
+    }
 
-        return pos.x >= bounds.min.x &&
-               pos.x <= bounds.max.x &&
-               pos.z >= bounds.min.z &&
-               pos.z <= bounds.max.z;
+    // Snaps a world position to the nearest grid cell centre.
+    Vector3 SnapToGrid(Vector3 pos) => new Vector3(
+        Mathf.Round(pos.x / gridSize) * gridSize,
+        Mathf.Round(pos.y / gridSize) * gridSize,
+        Mathf.Round(pos.z / gridSize) * gridSize);
+
+    List<Vector3> GetGhostOccupiedCells()
+    {
+        var cells = new List<Vector3>();
+        if (ghostObject == null) return cells;
+
+        foreach (Renderer r in ghostObject.GetComponentsInChildren<Renderer>())
+        {
+            Vector3 s = SnapToGrid(r.transform.position);
+            if (!cells.Contains(s)) cells.Add(s);
+        }
+        // Fallback to root position if no child renderers found
+        if (cells.Count == 0) cells.Add(SnapToGrid(ghostObject.transform.position));
+        return cells;
+    }
+
+    List<Vector3> GetCellsForPlacedObject(GameObject obj)
+    {
+        var cells = new List<Vector3>();
+
+        foreach (Renderer r in obj.GetComponentsInChildren<Renderer>())
+        {
+            Vector3 s = SnapToGrid(r.transform.position);
+            if (!cells.Contains(s)) cells.Add(s);
+        }
+        if (cells.Count == 0) cells.Add(SnapToGrid(obj.transform.position));
+        return cells;
     }
 
     void UpdateGhostPosition()
     {
-        if (Mouse.current == null || Camera.main == null || ghostObject == null)
-            return;
+        if (Mouse.current == null || Camera.main == null || ghostObject == null) return;
 
-        Vector2 mousePosition = Mouse.current.position.ReadValue();
-        Ray ray = Camera.main.ScreenPointToRay(mousePosition);
+        Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
 
         if (Physics.Raycast(ray, out RaycastHit hit))
         {
-            Vector3 point = hit.point;
-            float radius = 0.1f;
+            Vector3 point  = hit.point;
+            float   radius = 0.1f;
 
-            if (IsWithinGrid(point) &&
-                IsWithinGrid(point + new Vector3(radius, 0.0f, 0.0f)) &&
-                IsWithinGrid(point + new Vector3(0.0f, 0.0f, radius)) &&
-                IsWithinGrid(point + new Vector3(-radius, 0.0f, 0.0f)) &&
-                IsWithinGrid(point + new Vector3(0.0f, 0.0f, -radius)))
-            {
-                Vector3 snappedPosition = new Vector3(
-                    Mathf.Round(point.x / gridSize) * gridSize,
-                    Mathf.Round(point.y / gridSize) * gridSize,
-                    Mathf.Round(point.z / gridSize) * gridSize
-                );
+            bool inGrid = IsWithinGrid(point)
+                       && IsWithinGrid(point + new Vector3( radius, 0f,  0f))
+                       && IsWithinGrid(point + new Vector3(-radius, 0f,  0f))
+                       && IsWithinGrid(point + new Vector3( 0f, 0f,  radius))
+                       && IsWithinGrid(point + new Vector3( 0f, 0f, -radius));
 
-                ghostObject.transform.position = snappedPosition;
-                ghostObject.transform.rotation = Quaternion.Euler(0f, currentRotationY, 0f);
+            if (!inGrid) return;
 
-                if (CanPlaceGhost())
-                    UpdateGhostVisual();
-                else
-                    ApplyGhostInvalidVisual();
+            Vector3 snapped = SnapToGrid(point);
+            ghostObject.transform.position = snapped;
+            ghostObject.transform.rotation = Quaternion.Euler(0f, currentRotationY, 0f);
 
-                // if (occupiedPositions.Contains(snappedPosition))
-                //     SetGhostColor(invalidGhostColor);
-                // else
-                //     UpdateGhostVisual();
-            }
+            // Red ghost = cannot place here; normal semi-transparent ghost = valid
+            if (CanPlaceGhost()) ApplyGhostAlphaFromBase(ghostOpacity);
+            else                 ApplyGhostInvalidVisual();
         }
     }
 
-    void UpdateGhostVisual()
+    // Builds the PathNode the ghost would create if placed now.
+    PathNode BuildNodeForGhost() =>
+        currentMode == ToolMode.Straight
+            ? PathNode.Straight(currentRotationY)
+            : PathNode.Corner(currentRotationY);
+
+    // Returns true if the candidate cell has at least one mutually-connected
+    // neighbour that is a Path or Start cell.
+    bool IsConnectedToExistingPath(Vector2Int gridCell, PathNode candidateNode)
     {
-        if (ghostObject == null)
-            return;
-
-        ApplyGhostAlphaFromBase(ghostOpacity);
-    }
-
-    // Gets every grid cell occupied by the current ghost
-    List<Vector3> GetGhostOccupiedCells()
-    {
-        List<Vector3> cells = new List<Vector3>();
-
-        if (ghostObject == null)
-            return cells;
-
-        Renderer[] renderers = ghostObject.GetComponentsInChildren<Renderer>();
-
-        foreach (Renderer renderer in renderers)
+        foreach (Vector2Int dir in PathDirections.All)
         {
-            Vector3 p = renderer.transform.position;
+            Vector2Int neighbourCell = gridCell + dir;
 
-            Vector3 snapped = new Vector3(
-                Mathf.Round(p.x / gridSize) * gridSize,
-                Mathf.Round(p.y / gridSize) * gridSize,
-                Mathf.Round(p.z / gridSize) * gridSize
-            );
+            // Only connect to Path or Start cells
+            if (!GridManager.Instance.TryGetCell(neighbourCell, out GridCell data)) continue;
+            if (data.type != CellType.Path && data.type != CellType.Start)          continue;
 
-            if (!cells.Contains(snapped))
-                cells.Add(snapped);
+            if (!candidateNode.HasExit(dir)) continue;
+
+            if (!PathChecker.Instance.HasExitToward(neighbourCell, PathDirections.Opposite(dir))) continue;
+
+            return true; // valid mutual connection found
         }
 
-        // Fallback if prefab has no child renderers except root
-        if (cells.Count == 0)
-        {
-            Vector3 rootPos = new Vector3(
-                Mathf.Round(ghostObject.transform.position.x / gridSize) * gridSize,
-                Mathf.Round(ghostObject.transform.position.y / gridSize) * gridSize,
-                Mathf.Round(ghostObject.transform.position.z / gridSize) * gridSize
-            );
-            cells.Add(rootPos);
-        }
-
-        return cells;
+        return false;
     }
 
     bool CanPlaceGhost()
     {
-        List<Vector3> cells = GetGhostOccupiedCells();
+        List<Vector3> ghostCells = GetGhostOccupiedCells();
 
-        foreach (Vector3 cell in cells)
+        foreach (Vector3 worldPos in ghostCells)
         {
-            if (!IsWithinGrid(cell))
-                return false;
-
-            if (GridManager.Instance != null && GridManager.Instance.IsOccupied(GridManager.Instance.WorldToGrid(cell)))
-                return false;
+            if (!IsWithinGrid(worldPos))                                              return false;
+            if (GridManager.Instance.IsOccupied(GridManager.Instance.WorldToGrid(worldPos))) return false;
         }
 
-        return true;
-    }
+        // Connection check — primary cell is [0] (the root / anchor of the piece)
+        Vector2Int primaryCell    = GridManager.Instance.WorldToGrid(ghostCells[0]);
+        PathNode   candidateNode  = BuildNodeForGhost();
 
+        return IsConnectedToExistingPath(primaryCell, candidateNode);
+    }
 
     void PlaceObject()
     {
-        if (ghostObject == null)
-            return;
-
-        if (!CanPlaceGhost()) // if (occupiedPositions.Contains(placementPosition))
+        // Block placement until the game is actually running
+        if (GameManager.Instance != null && !GameManager.Instance.IsPlaying)
         {
-            Debug.Log("Cannot place here: already occupied.");
+            Debug.Log("[GridSystem] Cannot place — game not started yet.");
             return;
         }
+        if (ghostObject == null) return;
 
-        Vector3 placementPosition = ghostObject.transform.position;
-        Quaternion placementRotation = Quaternion.Euler(0f, currentRotationY, 0f);
+        List<Vector3> ghostCells = GetGhostOccupiedCells();
+        Vector2Int    primaryCell = GridManager.Instance.WorldToGrid(ghostCells[0]);
 
-        GameObject prefab = currentMode == ToolMode.Straight
-        ? straightPrefab
-        : cornerPrefab;
-
-        
-        GameObject placedObject = Instantiate(prefab, placementPosition, placementRotation);
-        //ApplyPlacedModeColour(placedObject);
-
-        List<Vector3> cellPositions = GetCellsForPlacedObject(placedObject);
-        foreach (Vector3 cellPos in cellPositions)
+        if (!CanPlaceGhost())
         {
-            GridManager.Instance.TryPlace(GridManager.Instance.WorldToGrid(cellPos), CellType.Path, placedObject);
+            // Yellow flash on the ghost + console log with grid/world coords
+            PathChecker.Instance.ReportInvalidPlacement(primaryCell, ghostObject);
+            return;
         }
-        Debug.Log("Placed object in mode: " + currentMode);
+
+        // Instantiate the real block at the ghost's position/rotation
+        GameObject prefab = currentMode == ToolMode.Straight ? straightPrefab : cornerPrefab;
+        GameObject placed = Instantiate(prefab,
+                                        ghostObject.transform.position,
+                                        Quaternion.Euler(0f, currentRotationY, 0f));
+
+        // Register all cells occupied by this block in GridManager
+        List<Vector3> cellWorldPositions = GetCellsForPlacedObject(placed);
+        foreach (Vector3 cellPos in cellWorldPositions)
+            GridManager.Instance.TryPlace(GridManager.Instance.WorldToGrid(cellPos), CellType.Path, placed);
+
+        // Build the directional node for this piece
+        PathNode node = currentMode == ToolMode.Straight
+            ? PathNode.Straight(currentRotationY)
+            : PathNode.Corner(currentRotationY);
+
+        PathChecker.Instance.RegisterNode(primaryCell, node, placed);
+
+        // Run BFS to check if Start → Finish is now fully connected
+        PathChecker.Instance.CheckPath();
     }
 
-    List<Vector3> GetCellsForPlacedObject(GameObject placedObject)
+    public void RegisterSpecialCells()
     {
-        List<Vector3> cells = new List<Vector3>();
-
-        Renderer[] renderers = placedObject.GetComponentsInChildren<Renderer>();
-
-        foreach (Renderer renderer in renderers)
+        if (PathChecker.Instance == null)
         {
-            Vector3 p = renderer.transform.position;
-
-            Vector3 snapped = new Vector3(
-                Mathf.Round(p.x / gridSize) * gridSize,
-                Mathf.Round(p.y / gridSize) * gridSize,
-                Mathf.Round(p.z / gridSize) * gridSize
-            );
-
-            if (!cells.Contains(snapped))
-                cells.Add(snapped);
+            Debug.LogWarning("[GridSystem] PathChecker not found — cannot register special cells.");
+            return;
         }
 
-        if (cells.Count == 0)
+        foreach (var kvp in GridManager.Instance.GetAllCells())
         {
-            Vector3 rootPos = new Vector3(
-                Mathf.Round(placedObject.transform.position.x / gridSize) * gridSize,
-                Mathf.Round(placedObject.transform.position.y / gridSize) * gridSize,
-                Mathf.Round(placedObject.transform.position.z / gridSize) * gridSize
-            );
-            cells.Add(rootPos);
-        }
-
-        return cells;
-    }
-
-    void ApplyPlacedModeColour(GameObject placedObject)
-    {
-        Color placedColor = straightPlacedColor;
-
-        switch (currentMode)
-        {
-            case ToolMode.Straight:
-                placedColor = straightPlacedColor;
-                break;
-
-            case ToolMode.Corner:
-                placedColor = cornerPlacedColor;
-                break;
-        }
-
-        Renderer[] renderers = placedObject.GetComponentsInChildren<Renderer>();
-        foreach (Renderer renderer in renderers)
-        {
-            renderer.material.color = placedColor;
+            if (kvp.Value.type == CellType.Start || kvp.Value.type == CellType.Finish)
+            {
+                PathChecker.Instance.RegisterNode(kvp.Key, PathNode.Omnidirectional(), kvp.Value.placedObject);
+                Debug.Log($"[GridSystem] Registered {kvp.Value.type} cell at {kvp.Key} as omnidirectional node");
+            }
         }
     }
 
     private void OnShovelGrab(SelectEnterEventArgs args)
     {
         isShovelHeld = true;
-        Debug.Log("Grid detects shovel held");
-        if (ghostObject != null)
-        {
-            ghostObject.SetActive(true);
-            UpdateGhostVisual();
-        }
+        if (ghostObject != null) { ghostObject.SetActive(true); ApplyGhostAlphaFromBase(ghostOpacity); }
+        Debug.Log("[GridSystem] Shovel grabbed");
     }
+
     private void OnShovelRelease(SelectExitEventArgs args)
     {
         isShovelHeld = false;
-        Debug.Log("Grid detects shovel dropped");
-        if (ghostObject != null)
-        {
-            ghostObject.SetActive(false);
-        }
+        if (ghostObject != null) ghostObject.SetActive(false);
+        Debug.Log("[GridSystem] Shovel released");
     }
 
     private void OnGrabActivated(ActivateEventArgs args)
     {
-        Debug.Log("Placing object");
+        Debug.Log("[GridSystem] Placing via XR activate");
         PlaceObject();
     }
 
-        void Start()
+    void Start()
     {
-        Debug.Log("GridSystem Start");
-        if (straightPrefab == null)
-        {
-            Debug.LogError("GridSystem: straightPrefab is not assigned in the Inspector.");
-            enabled = false;
-            return;
-        }
+        if (straightPrefab == null) { Debug.LogError("[GridSystem] straightPrefab not assigned."); enabled = false; return; }
+        if (cornerPrefab   == null) { Debug.LogError("[GridSystem] cornerPrefab not assigned.");   enabled = false; return; }
+        if (PathChecker.Instance == null)
+            Debug.LogWarning("[GridSystem] PathChecker not found in scene — add it as a component.");
 
-        if (cornerPrefab == null)
-        {
-            Debug.LogError("GridSystem: cornerPrefab is not assigned in the Inspector.");
-            enabled = false;
-            return;
-        }
-        if (shovelGrab != null)
-        {
-            //shovelGrab.selectEntered.AddListener(OnShovelGrab);
-            //shovelGrab.selectExited.AddListener(OnShovelRelease);
-            //shovelGrab.activated.AddListener(OnGrabActivated);
-        }
+        // XR events — uncomment when moving from desktop prototype to XR
+        // if (shovelGrab != null)
+        // {
+        //     shovelGrab.selectEntered.AddListener(OnShovelGrab);
+        //     shovelGrab.selectExited.AddListener(OnShovelRelease);
+        //     shovelGrab.activated.AddListener(OnGrabActivated);
+        // }
+
+        // NOTE: Do NOT call RegisterSpecialCells() here.
+        // StartFinishSpawner.Start() runs after this and calls it explicitly once
+        // Start/Finish cells are written into GridManager.
 
         CreateGhostObject();
         ghostObject.SetActive(false);
-        UpdateGhostVisual();
     }
 
     void OnDestroy()
@@ -534,23 +428,12 @@ public class GridSystem : MonoBehaviour
 
     void Update()
     {
-        if (!isShovelHeld)
-            return;
+        if (!isShovelHeld) return;
 
-        // Desktop prototype mode switching
-        if (Keyboard.current != null && Keyboard.current.pKey.wasPressedThisFrame)
+        if (Keyboard.current != null)
         {
-            //SwitchMode();
-            // ToggleMode();
-        }
-        if (Keyboard.current != null && Keyboard.current.bKey.wasPressedThisFrame)
-        {
-            Debug.Log("Placing object");
-            PlaceObject();
-        }
-        if (Keyboard.current != null && Keyboard.current.mKey.wasPressedThisFrame)
-        {
-            RotateGhost();
+            if (Keyboard.current.bKey.wasPressedThisFrame) PlaceObject();  // B = place
+            if (Keyboard.current.mKey.wasPressedThisFrame) RotateGhost();  // M = rotate
         }
 
         UpdateGhostPosition();
@@ -563,19 +446,12 @@ public class GridSystem : MonoBehaviour
         if (ghostObject != null)
         {
             ghostObject.transform.rotation = Quaternion.Euler(0f, currentRotationY, 0f);
-
-            if (CanPlaceGhost())
-                UpdateGhostVisual();
-            else
-                ApplyGhostInvalidVisual();
+            if (CanPlaceGhost()) ApplyGhostAlphaFromBase(ghostOpacity);
+            else                 ApplyGhostInvalidVisual();
         }
 
-        Debug.Log("Rotated ghost to " + currentRotationY + " degrees");
+        Debug.Log($"[GridSystem] Ghost rotated to {currentRotationY}°");
     }
 
-   
-    private void SwitchMode(InputAction.CallbackContext ctx)
-    {
-        //SwitchMode();
-    }
+    private void SwitchMode(InputAction.CallbackContext ctx) { }
 }
