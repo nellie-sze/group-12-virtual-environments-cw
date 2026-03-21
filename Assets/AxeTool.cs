@@ -2,7 +2,6 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
 using UnityEngine.XR.Interaction.Toolkit;
-using UnityEngine.XR.Interaction.Toolkit.Interactors;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 public class AxeTool : MonoBehaviour
@@ -14,14 +13,6 @@ public class AxeTool : MonoBehaviour
     public GameObject ghostPrefab;
     public bool scaleGhostToGridCell = true;
 
-    [Header("Placement")]
-    [Tooltip("Ray interactor used to position the ghost. Assign the pointing hand ray here.")]
-    public XRRayInteractor placementRayInteractor;
-    [Tooltip("Automatically finds a placement ray on the opposite hand when this tool is grabbed.")]
-    public bool autoAssignPlacementRayByHoldingHand = true;
-    [Tooltip("When enabled, uses mouse raycast if no placement ray interactor is assigned.")]
-    public bool allowMousePlacementFallback = true;
-
     [Header("Ghost Colours")]
     private Color validColor   = new Color(0f,   1f,   0f,   0.5f); // green  = hovering a tree
     private Color invalidColor = new Color(1f,   0.3f, 0f,   0.5f); // orange = not a tree
@@ -31,9 +22,6 @@ public class AxeTool : MonoBehaviour
     private int[] cachedLayers;
     private Transform[] cachedTransforms;
     private float topSurfaceY;
-    private bool hasValidPlacementPoint;
-    private bool hasWarnedMissingPlacementSource;
-    private InteractorHandedness holdingHandedness = InteractorHandedness.None;
 
 
     void Start()
@@ -64,11 +52,6 @@ public class AxeTool : MonoBehaviour
     void OnGrab(SelectEnterEventArgs args)
     {
         isHeld = true;
-        hasValidPlacementPoint = false;
-        hasWarnedMissingPlacementSource = false;
-        holdingHandedness = args.interactorObject != null ? args.interactorObject.handedness : InteractorHandedness.None;
-        if (autoAssignPlacementRayByHoldingHand)
-            placementRayInteractor = FindBestPlacementRayInteractor(holdingHandedness, args.interactorObject);
         SetHeldRaycastIgnored(true);
         ghostHighlight.SetActive(true);
     }
@@ -76,8 +59,6 @@ public class AxeTool : MonoBehaviour
     void OnRelease(SelectExitEventArgs args)
     {
         isHeld = false;
-        hasValidPlacementPoint = false;
-        holdingHandedness = InteractorHandedness.None;
         SetHeldRaycastIgnored(false);
         ghostHighlight.SetActive(false);
     }
@@ -124,116 +105,35 @@ public class AxeTool : MonoBehaviour
     // ── same mouse-ray pattern as GridSystem.UpdateGhostPosition ──────────────
     void UpdateGhostPosition()
     {
-        if (ghostHighlight == null)
-            return;
+        if (Mouse.current == null || Camera.main == null || ghostHighlight == null) return;
 
-        if (!TryGetPlacementPoint(out Vector3 placementPoint))
+        Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
+
+        if (Physics.Raycast(ray, out RaycastHit hit))
         {
-            hasValidPlacementPoint = false;
-            if (!hasWarnedMissingPlacementSource)
-            {
-                Debug.LogWarning("AxeTool has no placement point source. Assign Placement Ray Interactor or enable Allow Mouse Placement Fallback.");
-                hasWarnedMissingPlacementSource = true;
-            }
-            return;
+            Vector3 snapped = new Vector3(
+                Mathf.Round(hit.point.x / gridSize) * gridSize,
+                topSurfaceY,
+                Mathf.Round(hit.point.z / gridSize) * gridSize
+            );
+
+            ghostHighlight.transform.position = snapped;
+
+            Vector2Int cell = GridManager.Instance.WorldToGrid(hit.point);
+            if (!GridManager.Instance.IsWithinGridSurfaceBuffered(ghostHighlight.transform.position, gridSize / 2f))
+                SetGhostColor(new Color(1f,   1f,   1f,   0f));
+            else if (GridManager.Instance.IsInBounds(cell)
+                    && GridManager.Instance.TryGetCell(cell, out var data)
+                    && (data.type == CellType.Tree || data.type == CellType.Flower))
+                SetGhostColor(validColor);
+            else
+                SetGhostColor(invalidColor);
         }
-
-        hasValidPlacementPoint = true;
-
-        Vector3 snapped = new Vector3(
-            Mathf.Round(placementPoint.x / gridSize) * gridSize,
-            topSurfaceY,
-            Mathf.Round(placementPoint.z / gridSize) * gridSize
-        );
-
-        ghostHighlight.transform.position = snapped;
-
-        Vector2Int cell = GridManager.Instance.WorldToGrid(placementPoint);
-        if (!GridManager.Instance.IsWithinGridSurfaceBuffered(ghostHighlight.transform.position, gridSize / 2f))
-            SetGhostColor(new Color(1f,   1f,   1f,   0f));
-        else if (GridManager.Instance.IsInBounds(cell)
-                && GridManager.Instance.TryGetCell(cell, out var data)
-                && (data.type == CellType.Tree || data.type == CellType.Flower))
-            SetGhostColor(validColor);
-        else
-            SetGhostColor(invalidColor);
-    }
-
-    bool TryGetPlacementPoint(out Vector3 point)
-    {
-        if (autoAssignPlacementRayByHoldingHand && (placementRayInteractor == null || !placementRayInteractor.isActiveAndEnabled))
-            placementRayInteractor = FindBestPlacementRayInteractor(holdingHandedness, null);
-
-        if (placementRayInteractor != null && placementRayInteractor.isActiveAndEnabled)
-        {
-            if (placementRayInteractor.TryGetCurrent3DRaycastHit(out RaycastHit raycastHit))
-            {
-                if (GridManager.Instance == null || GridManager.Instance.IsWithinGridSurface(raycastHit.point))
-                {
-                    point = raycastHit.point;
-                    return true;
-                }
-            }
-        }
-
-        if (allowMousePlacementFallback && Mouse.current != null && Camera.main != null)
-        {
-            Ray mouseRay = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
-            if (Physics.Raycast(mouseRay, out RaycastHit mouseHit))
-            {
-                if (GridManager.Instance == null || GridManager.Instance.IsWithinGridSurface(mouseHit.point))
-                {
-                    point = mouseHit.point;
-                    return true;
-                }
-            }
-        }
-
-        point = default;
-        return false;
-    }
-
-    XRRayInteractor FindBestPlacementRayInteractor(InteractorHandedness grabHandedness, IXRInteractor grabbingInteractor)
-    {
-        XRRayInteractor[] rays = FindObjectsOfType<XRRayInteractor>(true);
-        XRRayInteractor bestRay = null;
-        int bestScore = int.MinValue;
-
-        for (int i = 0; i < rays.Length; i++)
-        {
-            XRRayInteractor ray = rays[i];
-            if (ray == null || !ray.isActiveAndEnabled || !ray.gameObject.activeInHierarchy)
-                continue;
-
-            if (grabbingInteractor != null && ReferenceEquals(ray, grabbingInteractor))
-                continue;
-
-            int score = 0;
-            if (grabHandedness != InteractorHandedness.None)
-            {
-                if (ray.handedness != InteractorHandedness.None && ray.handedness != grabHandedness)
-                    score += 100;
-                else if (ray.handedness == grabHandedness)
-                    score -= 100;
-            }
-
-            if (!ray.gameObject.name.ToLowerInvariant().Contains("teleport"))
-                score += 10;
-
-            if (score > bestScore)
-            {
-                bestScore = score;
-                bestRay = ray;
-            }
-        }
-
-        return bestRay;
     }
 
     void TryChop()
     {
         if (ghostHighlight == null || !ghostHighlight.activeSelf) return;
-        if (!hasValidPlacementPoint) return;
 
         Vector2Int cell = GridManager.Instance.WorldToGrid(ghostHighlight.transform.position);
         Debug.Log($"Trying to chop at cell {cell}");
