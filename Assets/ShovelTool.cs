@@ -7,11 +7,7 @@ using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 public class ShovelTool : MonoBehaviour
 {
-    public enum ToolMode
-    {
-        Straight,
-        Corner
-    }
+    public enum ToolMode { Straight, Corner }
 
     [Header("Tool")]
     public XRGrabInteractable shovelGrab;
@@ -29,15 +25,17 @@ public class ShovelTool : MonoBehaviour
     [Header("Ghost")]
     private GameObject ghostHighlight;
     public bool scaleGhostToGridCell = true;
-    public Color invalidColor = new Color(1f,   0.3f, 0f,   0.5f); // orange = not a tree
+    public Color invalidColor = new Color(1f, 0.3f, 0f, 0.5f); 
 
     [Header("Mode")]
     public ToolMode currentMode = ToolMode.Straight;
-    private bool isHeld = false;
-    private int currentRotationY = 0;
-    private int[] cachedLayers;
+    private bool isHeld         = false;
+    private int  currentRotationY = 0;
+
+    private int[]       cachedLayers;
     private Transform[] cachedTransforms;
-    private float topSurfaceY;
+    private float       topSurfaceY;
+
     private readonly List<Color> ghostBaseColors = new List<Color>();
 
     void Start()
@@ -53,6 +51,7 @@ public class ShovelTool : MonoBehaviour
         switchModeAction?.action.Enable();
 
         CreateGhost();
+
         Collider surfaceCollider = GridManager.Instance.gridSurfaceRenderer.GetComponent<Collider>();
         topSurfaceY = surfaceCollider.bounds.max.y;
     }
@@ -64,7 +63,6 @@ public class ShovelTool : MonoBehaviour
             rotateAction.action.Enable();
             rotateAction.action.performed += OnRotatePerformed;
         }
-
         if (switchModeAction != null && switchModeAction.action != null)
         {
             switchModeAction.action.Enable();
@@ -79,7 +77,6 @@ public class ShovelTool : MonoBehaviour
             rotateAction.action.performed -= OnRotatePerformed;
             rotateAction.action.Disable();
         }
-
         if (switchModeAction != null && switchModeAction.action != null)
         {
             switchModeAction.action.performed -= OnSwitchModePerformed;
@@ -95,7 +92,6 @@ public class ShovelTool : MonoBehaviour
             shovelGrab.selectExited.RemoveListener(OnRelease);
             shovelGrab.activated.RemoveListener(OnActivated);
         }
-
         if (ghostHighlight != null) Destroy(ghostHighlight);
     }
 
@@ -112,6 +108,7 @@ public class ShovelTool : MonoBehaviour
         SetHeldRaycastIgnored(false);
         ghostHighlight.SetActive(false);
     }
+
     void OnActivated(ActivateEventArgs args) => TryBuild();
 
     void SetHeldRaycastIgnored(bool ignored)
@@ -119,7 +116,7 @@ public class ShovelTool : MonoBehaviour
         if (ignored)
         {
             cachedTransforms = GetComponentsInChildren<Transform>(true);
-            cachedLayers = new int[cachedTransforms.Length];
+            cachedLayers     = new int[cachedTransforms.Length];
             for (int i = 0; i < cachedTransforms.Length; i++)
             {
                 cachedLayers[i] = cachedTransforms[i].gameObject.layer;
@@ -128,108 +125,191 @@ public class ShovelTool : MonoBehaviour
         }
         else
         {
-            if (cachedTransforms == null || cachedLayers == null)
-                return;
-
+            if (cachedTransforms == null || cachedLayers == null) return;
             for (int i = 0; i < cachedTransforms.Length; i++)
             {
-                if (cachedTransforms[i] == null)
-                    continue;
-
-                cachedTransforms[i].gameObject.layer = cachedLayers[i];
+                if (cachedTransforms[i] != null)
+                    cachedTransforms[i].gameObject.layer = cachedLayers[i];
             }
         }
     }
 
     void Update()
     {
-        if (!isHeld)
-            return;
+        if (!isHeld) return;
 
-        // Desktop prototype mode switching
-        if (Keyboard.current != null && Keyboard.current.pKey.wasPressedThisFrame)
+        if (Keyboard.current != null)
         {
-            SwitchMode();
-        }
-        if (Keyboard.current != null && Keyboard.current.tKey.wasPressedThisFrame)
-        {
-            TryBuild();
-        }
-        if (Keyboard.current != null && Keyboard.current.mKey.wasPressedThisFrame)
-        {
-            RotateGhost();
+            if (Keyboard.current.pKey.wasPressedThisFrame) SwitchMode();
+            if (Keyboard.current.tKey.wasPressedThisFrame) TryBuild();
+            if (Keyboard.current.mKey.wasPressedThisFrame) RotateGhost();
         }
 
         UpdateGhostPosition();
     }
 
-    void OnRotatePerformed(InputAction.CallbackContext ctx)
-    {
-        if (!isHeld)
-            return;
+    void OnRotatePerformed(InputAction.CallbackContext ctx)     { if (isHeld) RotateGhost();  }
+    void OnSwitchModePerformed(InputAction.CallbackContext ctx) { if (isHeld) SwitchMode();   }
 
-        RotateGhost();
-    }
-
-    void OnSwitchModePerformed(InputAction.CallbackContext ctx)
-    {
-        if (!isHeld)
-            return;
-
-        SwitchMode();
-    }
-
-    // ── same mouse-ray pattern as GridSystem.UpdateGhostPosition ──────────────
     void UpdateGhostPosition()
     {
         if (Mouse.current == null || Camera.main == null || ghostHighlight == null) return;
 
         Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
+        if (!Physics.Raycast(ray, out RaycastHit hit)) return;
 
-        if (Physics.Raycast(ray, out RaycastHit hit))
-        {
-            Vector3 snapped = new Vector3(
-                Mathf.Round(hit.point.x / gridSize) * gridSize,
-                topSurfaceY,
-                Mathf.Round(hit.point.z / gridSize) * gridSize
-            );
-            //ghostHighlight.transform.position = snapped;
-            Vector3 offset = new Vector3(gridSize / 2f, 0f, gridSize / 2f);
-            //ghostHighlight.transform.position = snapped + offset; // offset needed for path prefabs only
-            ghostHighlight.transform.position = snapped; // offset needed for path prefabs only
+        Vector3 snapped = new Vector3(
+            Mathf.Round(hit.point.x / gridSize) * gridSize,
+            topSurfaceY,
+            Mathf.Round(hit.point.z / gridSize) * gridSize);
 
-            ghostHighlight.transform.rotation = Quaternion.Euler(0f, currentRotationY, 0f);
+        ghostHighlight.transform.position = snapped;
+        ghostHighlight.transform.rotation = Quaternion.Euler(0f, currentRotationY, 0f);
 
-            Vector2Int cell = GridManager.Instance.WorldToGrid(snapped);
+        Vector2Int cell = GridManager.Instance.WorldToGrid(snapped);
 
-            if (!GridManager.Instance.IsWithinGridSurfaceBuffered(snapped, gridSize / 2f))
-                ApplyGhostBaseTransparency(0.0f);
-            else if (GridManager.Instance.IsInBounds(cell) && !GridManager.Instance.IsOccupied(cell))
-                ApplyGhostBaseTransparency(0.5f);
-            else
-                SetGhostColor(invalidColor);
-        }
+        // Ghost is visible at 50% opacity inside the grid, hidden outside
+        if (!GridManager.Instance.IsWithinGridSurfaceBuffered(snapped, gridSize / 2f))
+            ApplyGhostBaseTransparency(0f);
+        else
+            ApplyGhostBaseTransparency(0.5f);
     }
+    bool CanConnect(Vector2Int cell)
+    {
+        if (PathChecker.Instance == null) return true; // fail-open if PathChecker missing
+
+        PathNode candidate = currentMode == ToolMode.Straight
+            ? PathNode.Straight(currentRotationY)
+            : PathNode.Corner(currentRotationY);
+
+        foreach (Vector2Int dir in PathDirections.All)
+        {
+            Vector2Int neighbour = cell + dir;
+
+            if (!GridManager.Instance.TryGetCell(neighbour, out GridCell data)) continue;
+            if (data.type != CellType.Path && data.type != CellType.Start)      continue;
+
+            // Candidate must face the neighbour
+            if (!candidate.HasExit(dir)) continue;
+
+            // Neighbour must face back
+            if (!PathChecker.Instance.HasExitToward(neighbour, PathDirections.Opposite(dir))) continue;
+
+            return true;
+        }
+
+        return false;
+    }
+
+    void TryBuild()
+    {
+        if (ghostHighlight == null || !ghostHighlight.activeSelf) return;
+
+        if (GameManager.Instance != null && !GameManager.Instance.IsPlaying)
+        {
+            Debug.Log("[ShovelTool] Cannot place — game not started yet.");
+            return;
+        }
+
+        Vector2Int cell = GridManager.Instance.WorldToGrid(ghostHighlight.transform.position);
+        Debug.Log($"[ShovelTool] Trying to build at cell {cell}");
+
+        if (!GridManager.Instance.IsInBounds(cell) || GridManager.Instance.IsOccupied(cell))
+        {
+            Debug.LogWarning($"[ShovelTool] Cell {cell} is out of bounds or already occupied.");
+            return;
+        }
+
+        if (!CanConnect(cell))
+        {
+            // Yellow flash feedback + console log
+            if (PathChecker.Instance != null)
+                PathChecker.Instance.ReportInvalidPlacement(cell, ghostHighlight);
+            else
+                Debug.LogWarning($"[ShovelTool] INVALID placement at {cell} — " +
+                                 "no valid directional connection to an adjacent Start or Path cell.");
+            return;
+        }
+
+        GameObject prefab = currentMode == ToolMode.Straight ? straightPrefab : cornerPrefab;
+        Vector3    pos    = ghostHighlight.transform.position;
+        Quaternion rot    = Quaternion.Euler(0f, currentRotationY, 0f);
+
+        GameObject placedObject = CreateCenteredWrapper(prefab, $"{prefab.name}_PlacedRoot");
+        FitToSingleGridCell(placedObject);
+        placedObject.transform.rotation = rot;
+        placedObject.transform.position = pos;
+
+        // Register in GridManager so occupancy checks work
+        GridManager.Instance.TryPlace(cell, CellType.Path, placedObject);
+
+        PathNode node = currentMode == ToolMode.Straight
+            ? PathNode.Straight(currentRotationY)
+            : PathNode.Corner(currentRotationY);
+
+        if (PathChecker.Instance != null)
+        {
+            PathChecker.Instance.RegisterNode(cell, node, placedObject);
+
+            // Run BFS — if Start→Finish is now connected, triggers win condition
+            PathChecker.Instance.CheckPath();
+        }
+
+        Debug.Log($"[ShovelTool] Placed {currentMode} at cell {cell}, rotation {currentRotationY}°");
+    }
+
 
     void RotateGhost()
     {
         currentRotationY = (currentRotationY + 90) % 360;
-
         if (ghostHighlight != null)
-        {
             ghostHighlight.transform.rotation = Quaternion.Euler(0f, currentRotationY, 0f);
+        Debug.Log("[ShovelTool] Rotated ghost to " + currentRotationY + "°");
+    }
+
+    void SwitchMode()
+    {
+        currentMode = currentMode == ToolMode.Straight ? ToolMode.Corner : ToolMode.Straight;
+
+        FindAnyObjectByType<ToolModeUI>()?.UpdateModeText();
+
+        if (ghostHighlight != null) Destroy(ghostHighlight);
+
+        CreateGhost();
+        UpdateGhostPosition();
+        ghostHighlight.SetActive(isHeld);
+
+        Debug.Log("[ShovelTool] Switched mode to " + currentMode);
+    }
+
+    private void SwitchMode(InputAction.CallbackContext ctx) => SwitchMode();
+
+    void CreateGhost()
+    {
+        GameObject ghostPrefab = currentMode == ToolMode.Straight ? straightPrefab : cornerPrefab;
+        ghostHighlight = CreateCenteredWrapper(ghostPrefab, $"{ghostPrefab.name}_GhostRoot");
+
+        foreach (Collider col in ghostHighlight.GetComponentsInChildren<Collider>())
+            col.enabled = false;
+
+        foreach (Renderer r in ghostHighlight.GetComponentsInChildren<Renderer>())
+        {
+            r.shadowCastingMode = ShadowCastingMode.Off;
+            r.receiveShadows    = false;
         }
 
-        Debug.Log("Rotated ghost to " + currentRotationY + " degrees");
+        ScaleGhostToCell(ghostHighlight);
+        CacheGhostBaseColours();
+        ApplyGhostBaseTransparency(0.5f);
+        ghostHighlight.SetActive(false);
     }
 
     GameObject CreateCenteredWrapper(GameObject prefab, string wrapperName)
     {
         GameObject wrapper = new GameObject(wrapperName);
-        GameObject visual = Instantiate(prefab, wrapper.transform);
+        GameObject visual  = Instantiate(prefab, wrapper.transform);
         visual.transform.localPosition = Vector3.zero;
         visual.transform.localRotation = Quaternion.identity;
-
         CenterVisualUnderRoot(wrapper.transform, visual.transform);
         return wrapper;
     }
@@ -237,18 +317,18 @@ public class ShovelTool : MonoBehaviour
     void CenterVisualUnderRoot(Transform root, Transform visual)
     {
         Renderer[] renderers = root.GetComponentsInChildren<Renderer>();
-        if (renderers == null || renderers.Length == 0)
-            return;
+        if (renderers == null || renderers.Length == 0) return;
 
-        Bounds combined = new Bounds();
-        bool hasBounds = false;
+        Bounds    combined   = new Bounds();
+        bool      hasBounds  = false;
         Matrix4x4 worldToRoot = root.worldToLocalMatrix;
 
         foreach (Renderer renderer in renderers)
         {
-            Bounds bounds = renderer.bounds;
-            Vector3 center = bounds.center;
+            Bounds  bounds  = renderer.bounds;
+            Vector3 center  = bounds.center;
             Vector3 extents = bounds.extents;
+
             Vector3[] corners =
             {
                 new Vector3(center.x - extents.x, center.y - extents.y, center.z - extents.z),
@@ -261,177 +341,56 @@ public class ShovelTool : MonoBehaviour
                 new Vector3(center.x + extents.x, center.y + extents.y, center.z + extents.z)
             };
 
-            for (int i = 0; i < corners.Length; i++)
+            foreach (Vector3 corner in corners)
             {
-                Vector3 localPoint = worldToRoot.MultiplyPoint3x4(corners[i]);
-                if (!hasBounds)
-                {
-                    combined = new Bounds(localPoint, Vector3.zero);
-                    hasBounds = true;
-                }
-                else
-                {
-                    combined.Encapsulate(localPoint);
-                }
+                Vector3 localPoint = worldToRoot.MultiplyPoint3x4(corner);
+                if (!hasBounds) { combined = new Bounds(localPoint, Vector3.zero); hasBounds = true; }
+                else            { combined.Encapsulate(localPoint); }
             }
         }
 
-        if (!hasBounds)
-            return;
-
+        if (!hasBounds) return;
         Vector3 centerOffset = combined.center;
         visual.localPosition -= new Vector3(centerOffset.x, 0f, centerOffset.z);
     }
 
-    void TryBuild()
-    {
-        if (ghostHighlight == null || !ghostHighlight.activeSelf) return;
-
-        //Vector2Int cell = GridManager.Instance.WorldToGrid(ghostHighlight.transform.position - new Vector3(gridSize / 2f, 0f, gridSize / 2f)); // reverse offset to get correct cell
-        Vector2Int cell = GridManager.Instance.WorldToGrid(ghostHighlight.transform.position); 
-        Debug.Log($"Trying to build at cell {cell}");
-        if (GridManager.Instance.IsInBounds(cell) && !GridManager.Instance.IsOccupied(cell))
-        {
-            GameObject prefab = currentMode == ToolMode.Straight
-            ? straightPrefab
-            : cornerPrefab;
-            Vector3 placementPosition = ghostHighlight.transform.position;
-            Quaternion placementRotation = Quaternion.Euler(0f, currentRotationY, 0f);
-            Debug.Log($"Placing path at position={placementPosition}, cell={cell}");
-
-            GameObject placedObject = CreateCenteredWrapper(prefab, $"{prefab.name}_PlacedRoot");
-            FitToSingleGridCell(placedObject);
-            placedObject.transform.rotation = placementRotation;
-            placedObject.transform.position = placementPosition;
-            GridManager.Instance.TryPlace(cell, CellType.Path, placedObject);
-        }
-    }
-    void SwitchMode()
-    {
-        currentMode = currentMode == ToolMode.Straight
-            ? ToolMode.Corner
-            : ToolMode.Straight;
-
-        FindAnyObjectByType<ToolModeUI>()?.UpdateModeText();
-
-        if (ghostHighlight != null)
-            Destroy(ghostHighlight);
-
-        CreateGhost();
-        UpdateGhostPosition();
-        ghostHighlight.SetActive(isHeld);
-
-        // if (!isHeld)
-        //     ghostHighlight.SetActive(false);
-
-        Debug.Log("Switched mode to " + currentMode);
-    }
-        private void SwitchMode(InputAction.CallbackContext ctx)
-    {
-        SwitchMode();
-    }
-
-    static void SetMaterialColor(Material mat, Color color)
-    {
-        if (mat == null)
-            return;
-
-        if (mat.HasProperty("_BaseColor"))
-            mat.SetColor("_BaseColor", color);
-        if (mat.HasProperty("_Color"))
-            mat.SetColor("_Color", color);
-
-        mat.color = color;
-    }
-
-    static void ConfigureMaterialForTransparency(Material mat)
-    {
-        if (mat == null)
-            return;
-
-        // URP Lit: set Surface Type to Transparent (Alpha blend).
-        if (mat.HasProperty("_Surface"))
-        {
-            mat.SetFloat("_Surface", 1f);
-            if (mat.HasProperty("_Blend"))
-                mat.SetFloat("_Blend", 0f); // Alpha
-            if (mat.HasProperty("_AlphaClip"))
-                mat.SetFloat("_AlphaClip", 0f);
-            if (mat.HasProperty("_QueueControl"))
-                mat.SetFloat("_QueueControl", 1f); // UserOverride
-            if (mat.HasProperty("_ZWriteControl"))
-                mat.SetFloat("_ZWriteControl", 0f);
-            if (mat.HasProperty("_ZWrite"))
-                mat.SetFloat("_ZWrite", 0f);
-
-            if (mat.HasProperty("_SrcBlend"))
-                mat.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
-            if (mat.HasProperty("_DstBlend"))
-                mat.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
-            if (mat.HasProperty("_SrcBlendAlpha"))
-                mat.SetFloat("_SrcBlendAlpha", (float)BlendMode.One);
-            if (mat.HasProperty("_DstBlendAlpha"))
-                mat.SetFloat("_DstBlendAlpha", (float)BlendMode.OneMinusSrcAlpha);
-
-            mat.SetOverrideTag("RenderType", "Transparent");
-            mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
-            mat.DisableKeyword("_ALPHATEST_ON");
-            mat.EnableKeyword("_ALPHABLEND_ON");
-            mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
-            mat.renderQueue = 3000;
-        }
-    }
-
     void FitToSingleGridCell(GameObject obj)
     {
-        if (obj == null || GridManager.Instance == null)
-            return;
+        if (obj == null || GridManager.Instance == null) return;
 
         Renderer[] renderers = obj.GetComponentsInChildren<Renderer>();
-        if (renderers == null || renderers.Length == 0)
-            return;
+        if (renderers == null || renderers.Length == 0) return;
 
         Bounds bounds = renderers[0].bounds;
-        for (int i = 1; i < renderers.Length; i++)
-        {
-            bounds.Encapsulate(renderers[i].bounds);
-        }
+        for (int i = 1; i < renderers.Length; i++) bounds.Encapsulate(renderers[i].bounds);
 
         float maxWidthXZ = Mathf.Max(bounds.size.x, bounds.size.z);
-        float cellSize = GridManager.Instance.gridSize;
-        if (cellSize <= 0f || maxWidthXZ <= 0f)
-            return;
+        float cellSize   = GridManager.Instance.gridSize;
+        if (cellSize <= 0f || maxWidthXZ <= 0f) return;
 
         float targetMaxWidth = cellSize * 1f;
-        if (maxWidthXZ <= targetMaxWidth)
-            return;
+        if (maxWidthXZ <= targetMaxWidth) return;
 
-        float scaleFactor = targetMaxWidth / maxWidthXZ;
-        obj.transform.localScale = obj.transform.localScale * scaleFactor;
+        obj.transform.localScale *= targetMaxWidth / maxWidthXZ;
     }
 
     void ScaleGhostToCell(GameObject target)
     {
         Debug.Log("GridSize: " + gridSize);
-        if (target == null || !scaleGhostToGridCell || gridSize <= 0.0001f)
-            return;
+        if (target == null || !scaleGhostToGridCell || gridSize <= 0.0001f) return;
 
         Renderer[] renderers = target.GetComponentsInChildren<Renderer>();
-        if (renderers == null || renderers.Length == 0)
-            return;
+        if (renderers == null || renderers.Length == 0) return;
 
-        Bounds combined = new Bounds();
-        bool hasBounds = false;
-
+        Bounds    combined       = new Bounds();
+        bool      hasBounds      = false;
         Matrix4x4 rootWorldToLocal = target.transform.worldToLocalMatrix;
 
         foreach (Renderer renderer in renderers)
         {
-            if (renderer == null)
-                continue;
-
-            Bounds lb = renderer.localBounds;
-            Vector3 center = lb.center;
+            if (renderer == null) continue;
+            Bounds  lb      = renderer.localBounds;
+            Vector3 center  = lb.center;
             Vector3 extents = lb.extents;
 
             Vector3[] corners =
@@ -446,52 +405,66 @@ public class ShovelTool : MonoBehaviour
                 new Vector3(center.x + extents.x, center.y + extents.y, center.z + extents.z)
             };
 
-            Matrix4x4 rendererLocalToRootLocal = rootWorldToLocal * renderer.transform.localToWorldMatrix;
-            for (int i = 0; i < corners.Length; i++)
+            Matrix4x4 toRoot = rootWorldToLocal * renderer.transform.localToWorldMatrix;
+            foreach (Vector3 corner in corners)
             {
-                Vector3 p = rendererLocalToRootLocal.MultiplyPoint3x4(corners[i]);
-                if (!hasBounds)
-                {
-                    combined = new Bounds(p, Vector3.zero);
-                    hasBounds = true;
-                }
-                else
-                {
-                    combined.Encapsulate(p);
-                }
+                Vector3 p = toRoot.MultiplyPoint3x4(corner);
+                if (!hasBounds) { combined = new Bounds(p, Vector3.zero); hasBounds = true; }
+                else            { combined.Encapsulate(p); }
             }
         }
 
-        if (!hasBounds)
-            return;
-
+        if (!hasBounds) return;
         float footprint = Mathf.Max(combined.size.x, combined.size.z);
-        if (footprint <= 0.0001f)
-            return;
+        if (footprint <= 0.0001f) return;
 
-        float scale = gridSize / footprint;
-        target.transform.localScale = target.transform.localScale * scale;
+        target.transform.localScale *= gridSize / footprint;
+    }
+
+    static void SetMaterialColor(Material mat, Color color)
+    {
+        if (mat == null) return;
+        if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", color);
+        if (mat.HasProperty("_Color"))     mat.SetColor("_Color",     color);
+        mat.color = color;
+    }
+
+    static void ConfigureMaterialForTransparency(Material mat)
+    {
+        if (mat == null) return;
+
+        if (mat.HasProperty("_Surface"))
+        {
+            mat.SetFloat("_Surface", 1f);
+            if (mat.HasProperty("_Blend"))         mat.SetFloat("_Blend",         0f);
+            if (mat.HasProperty("_AlphaClip"))     mat.SetFloat("_AlphaClip",     0f);
+            if (mat.HasProperty("_QueueControl"))  mat.SetFloat("_QueueControl",  1f);
+            if (mat.HasProperty("_ZWriteControl")) mat.SetFloat("_ZWriteControl", 0f);
+            if (mat.HasProperty("_ZWrite"))        mat.SetFloat("_ZWrite",        0f);
+            if (mat.HasProperty("_SrcBlend"))      mat.SetFloat("_SrcBlend",      (float)BlendMode.SrcAlpha);
+            if (mat.HasProperty("_DstBlend"))      mat.SetFloat("_DstBlend",      (float)BlendMode.OneMinusSrcAlpha);
+            if (mat.HasProperty("_SrcBlendAlpha")) mat.SetFloat("_SrcBlendAlpha", (float)BlendMode.One);
+            if (mat.HasProperty("_DstBlendAlpha")) mat.SetFloat("_DstBlendAlpha", (float)BlendMode.OneMinusSrcAlpha);
+
+            mat.SetOverrideTag("RenderType", "Transparent");
+            mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            mat.DisableKeyword("_ALPHATEST_ON");
+            mat.EnableKeyword("_ALPHABLEND_ON");
+            mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+            mat.renderQueue = 3000;
+        }
     }
 
     void ApplyGhostColour(Color color)
     {
-        if (ghostHighlight == null)
-            return;
-
-        Renderer[] renderers = ghostHighlight.GetComponentsInChildren<Renderer>();
-        foreach (Renderer renderer in renderers)
+        if (ghostHighlight == null) return;
+        foreach (Renderer renderer in ghostHighlight.GetComponentsInChildren<Renderer>())
         {
-            Material[] materials = renderer.materials;
-            for (int i = 0; i < materials.Length; i++)
+            foreach (Material mat in renderer.materials)
             {
-                Material mat = materials[i];
-                if (mat == null)
-                    continue;
-
+                if (mat == null) continue;
                 ConfigureMaterialForTransparency(mat);
-                Color c = color;
-                c.a = color.a; // keep inspector alpha
-                SetMaterialColor(mat, c);
+                SetMaterialColor(mat, color);
             }
         }
     }
@@ -499,47 +472,31 @@ public class ShovelTool : MonoBehaviour
     void CacheGhostBaseColours()
     {
         ghostBaseColors.Clear();
+        if (ghostHighlight == null) return;
 
-        if (ghostHighlight == null)
-            return;
-
-        Renderer[] renderers = ghostHighlight.GetComponentsInChildren<Renderer>();
-        foreach (Renderer renderer in renderers)
+        foreach (Renderer renderer in ghostHighlight.GetComponentsInChildren<Renderer>())
         {
-            Material[] materials = renderer.materials;
-            for (int i = 0; i < materials.Length; i++)
+            foreach (Material mat in renderer.materials)
             {
-                Material mat = materials[i];
-                if (mat == null)
-                    continue;
-
-                Color baseColor = mat.HasProperty("_BaseColor")
+                if (mat == null) continue;
+                ghostBaseColors.Add(mat.HasProperty("_BaseColor")
                     ? mat.GetColor("_BaseColor")
-                    : mat.color;
-                ghostBaseColors.Add(baseColor);
+                    : mat.color);
             }
         }
     }
 
     void ApplyGhostBaseTransparency(float alpha)
     {
-        if (ghostHighlight == null)
-            return;
+        if (ghostHighlight == null) return;
 
-        Renderer[] renderers = ghostHighlight.GetComponentsInChildren<Renderer>();
         int colorIndex = 0;
-
-        foreach (Renderer renderer in renderers)
+        foreach (Renderer renderer in ghostHighlight.GetComponentsInChildren<Renderer>())
         {
-            Material[] materials = renderer.materials;
-            for (int i = 0; i < materials.Length; i++)
+            foreach (Material mat in renderer.materials)
             {
-                Material mat = materials[i];
-                if (mat == null)
-                    continue;
-
+                if (mat == null) continue;
                 ConfigureMaterialForTransparency(mat);
-
                 Color baseColor = colorIndex < ghostBaseColors.Count ? ghostBaseColors[colorIndex] : mat.color;
                 baseColor.a = alpha;
                 SetMaterialColor(mat, baseColor);
@@ -548,33 +505,5 @@ public class ShovelTool : MonoBehaviour
         }
     }
 
-    // ── ghost setup ──
-    void CreateGhost()
-    {
-        GameObject ghostPrefab = currentMode == ToolMode.Straight ? straightPrefab : cornerPrefab;
-        ghostHighlight = CreateCenteredWrapper(ghostPrefab, $"{ghostPrefab.name}_GhostRoot");
-
-        foreach (Collider col in ghostHighlight.GetComponentsInChildren<Collider>())
-        {
-            col.enabled = false;
-        }
-
-        Renderer[] renderers = ghostHighlight.GetComponentsInChildren<Renderer>();
-        foreach (Renderer renderer in renderers)
-        {
-            renderer.shadowCastingMode = ShadowCastingMode.Off;
-            renderer.receiveShadows = false;
-        }
-
-        ScaleGhostToCell(ghostHighlight);
-        CacheGhostBaseColours();
-        ApplyGhostBaseTransparency(0.5f);
-
-        ghostHighlight.SetActive(false);
-    }
-
-    void SetGhostColor(Color color)
-    {
-        ApplyGhostColour(color);
-    }
+    void SetGhostColor(Color color) => ApplyGhostColour(color);
 }
