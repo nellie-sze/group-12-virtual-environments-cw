@@ -81,4 +81,14 @@ public class GameManager : MonoBehaviour
 
     // is the game currently accepting input?
     public bool IsPlaying => CurrentState == GameState.Playing;
+
+    // True once the game has reached a terminal state (won or lost).
+    public bool IsGameOver => CurrentState == GameState.Lost || CurrentState == GameState.Won;
+
+    // Called by VillagerAgent when a villager dies in lava.
+    public void OnVillagerDied()
+    {
+        if (CurrentState != GameState.Playing) return;
+        EnterState(GameState.Lost);
+    }
 }
