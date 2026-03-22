@@ -1376,6 +1376,41 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 7290265295817051041, guid: f2d44976f09b5df40b4d00077fec932a, type: 3}
   m_PrefabInstance: {fileID: 1995168927}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &779831921
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 779831922}
+  m_Layer: 5
+  m_Name: HeartsAnchor
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &779831922
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 779831921}
+  m_LocalRotation: {x: -0.07397519, y: -0, z: -0, w: 0.9972601}
+  m_LocalPosition: {x: 0, y: 0, z: 38.78526}
+  m_LocalScale: {x: 0.3333333, y: 0.33333334, z: 0.33333334}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 775987241}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -11.666666, y: 14.065664}
+  m_SizeDelta: {x: 150, y: 60}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!4 &806615348 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4252784401376168, guid: 22a3fd8d3e59a1149bdcd775c0e87241, type: 3}
@@ -1567,7 +1602,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: -8.485, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 23, y: 16.4}
+  m_AnchoredPosition: {x: 0, y: 20}
   m_SizeDelta: {x: 10, y: 10}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &989625656
@@ -1655,7 +1690,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 60, y: 0}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1022358347
@@ -1705,8 +1740,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 36
-  m_fontSizeBase: 36
+  m_fontSize: 32
+  m_fontSizeBase: 32
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -1744,7 +1779,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: 123.867645, w: 0}
+  m_margin: {x: 0, y: 0, z: -128.72076, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -3678,23 +3713,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1865761470
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1865761462}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GraphicRaycaster
-  m_IgnoreReversedGraphics: 1
-  m_BlockingObjects: 0
-  m_BlockingMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
 --- !u!222 &1865761463
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -3809,6 +3827,23 @@ RectTransform:
   m_AnchoredPosition: {x: 2, y: 0.74118143}
   m_SizeDelta: {x: 5, y: 3}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1865761470
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1865761462}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GraphicRaycaster
+  m_IgnoreReversedGraphics: 1
+  m_BlockingObjects: 0
+  m_BlockingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!1001 &1925563522
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4016,6 +4051,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7290265295817051041, guid: f2d44976f09b5df40b4d00077fec932a, type: 3}
       insertIndex: -1
       addedObject: {fileID: 227514230}
+    - targetCorrespondingSourceObject: {fileID: 7290265295817051041, guid: f2d44976f09b5df40b4d00077fec932a, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 779831922}
     - targetCorrespondingSourceObject: {fileID: 7290265295817051041, guid: f2d44976f09b5df40b4d00077fec932a, type: 3}
       insertIndex: -1
       addedObject: {fileID: 982164618}
@@ -4310,6 +4348,7 @@ GameObject:
   - component: {fileID: 2070249553}
   - component: {fileID: 2070249554}
   - component: {fileID: 2070249555}
+  - component: {fileID: 2070249556}
   m_Layer: 0
   m_Name: Game Manager
   m_TagString: Untagged
@@ -4413,6 +4452,7 @@ MonoBehaviour:
   countdownTimer: {fileID: 2070249553}
   endGameAnimator: {fileID: 0}
   instructionsUI: {fileID: 1865761465}
+  livesManager: {fileID: 2070249556}
   obstacleSpawner: {fileID: 1829848787}
   lavaSpawner: {fileID: 578569725}
   villagerSpawner: {fileID: 1722277511}
@@ -4431,6 +4471,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PathBlockManager
   straightPrefab: {fileID: 318373990914543345, guid: 97e623eb280a5234fb28e1687e0fb9ca, type: 3}
   cornerPrefab: {fileID: 5071392686214402512, guid: b284af1cee672eb4aa527ef1fa8cecb0, type: 3}
+--- !u!114 &2070249556
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2070249546}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LivesManager
+  maxLives: 3
+  heartPrefab: {fileID: 4842717674226929461, guid: fe0c8a5cf0449464686f2dbfab27fc34, type: 3}
+  heartsAnchor: {fileID: 779831922}
+  heartSpacing: 2.5
 --- !u!4 &2089147408 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4003897846794392, guid: cd87e5026d1695148aabe96121c526ef, type: 3}
