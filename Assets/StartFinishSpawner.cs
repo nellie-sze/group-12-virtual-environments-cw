@@ -75,13 +75,15 @@ public class StartFinishSpawner : MonoBehaviour
         Vector2Int startCell, finishCell;
         if (Random.value < 0.5f)
         {
-            startCell  = new Vector2Int(gridMin.x, Random.Range(gridMin.y, gridMax.y + 1));
-            finishCell = new Vector2Int(gridMax.x, Random.Range(gridMin.y, gridMax.y + 1));
+            // Left/right edges — exclude corners by clamping Y away from gridMin.y and gridMax.y
+            startCell  = new Vector2Int(gridMin.x, Random.Range(gridMin.y + 1, gridMax.y));
+            finishCell = new Vector2Int(gridMax.x, Random.Range(gridMin.y + 1, gridMax.y));
         }
         else
         {
-            startCell  = new Vector2Int(Random.Range(gridMin.x, gridMax.x + 1), gridMin.y);
-            finishCell = new Vector2Int(Random.Range(gridMin.x, gridMax.x + 1), gridMax.y);
+            // Top/bottom edges — exclude corners by clamping X away from gridMin.x and gridMax.x
+            startCell  = new Vector2Int(Random.Range(gridMin.x + 1, gridMax.x), gridMin.y);
+            finishCell = new Vector2Int(Random.Range(gridMin.x + 1, gridMax.x), gridMax.y);
         }
 
         var msg = new NetMessage
