@@ -72,6 +72,8 @@ public class InstructionsUI : MonoBehaviour
 
     void Start()
     {
+        Debug.Log($"[InstructionsUI] Start on '{name}'. activeInHierarchy={gameObject.activeInHierarchy}, panelRootActive={(panelRoot != null ? panelRoot.activeSelf.ToString() : "null")}, startButtonAssigned={(startButton != null)}");
+
         if (titleText != null && !string.IsNullOrEmpty(title)) titleText.text = title;
         if (objectiveText != null && !string.IsNullOrEmpty(objective)) objectiveText.text = objective;
         if (controlsText != null && !string.IsNullOrEmpty(controls))  controlsText.text  = controls;
@@ -88,7 +90,14 @@ public class InstructionsUI : MonoBehaviour
         }
 
         if (startButton != null)
+        {
             startButton.onClick.AddListener(OnStartButtonPressed);
+            Debug.Log($"[InstructionsUI] Added runtime OnClick listener to '{startButton.name}'.");
+        }
+        else
+        {
+            Debug.LogWarning($"[InstructionsUI] No startButton assigned on '{name}'.");
+        }
 
         if (canvasGroup != null) canvasGroup.alpha = 0f;
         if (panelRoot != null) panelRoot.SetActive(true);
@@ -100,6 +109,8 @@ public class InstructionsUI : MonoBehaviour
 
     public void OnStartButtonPressed()
     {
+        Debug.Log($"[InstructionsUI] OnStartButtonPressed on '{name}'. activeInHierarchy={gameObject.activeInHierarchy}, enabled={enabled}, fadeOutDuration={fadeOutDuration}");
+
         // Disable button immediately so it can't be pressed twice during fade
         if (startButton != null) startButton.interactable = false;
 
@@ -113,8 +124,11 @@ public class InstructionsUI : MonoBehaviour
     /// </summary>
     public void ForceHide()
     {
+        Debug.Log($"[InstructionsUI] ForceHide on '{name}'. activeSelf={gameObject.activeSelf}, activeInHierarchy={gameObject.activeInHierarchy}, enabled={enabled}, panelRootActive={(panelRoot != null ? panelRoot.activeSelf.ToString() : "null")}, canvasAlpha={(canvasGroup != null ? canvasGroup.alpha.ToString("0.00") : "null")}");
+
         if (!isActiveAndEnabled)
         {
+            Debug.Log($"[InstructionsUI] ForceHide falling back to CompleteHideImmediate because object is not active and enabled on '{name}'.");
             CompleteHideImmediate();
             return;
         }
@@ -127,14 +141,18 @@ public class InstructionsUI : MonoBehaviour
 
     IEnumerator HideAfterFade()
     {
+        Debug.Log($"[InstructionsUI] HideAfterFade waiting {fadeOutDuration:0.00}s on '{name}'.");
         yield return new WaitForSeconds(fadeOutDuration);
+        Debug.Log($"[InstructionsUI] HideAfterFade completing hide on '{name}'.");
         CompleteHideImmediate();
     }
 
     IEnumerator FadeOutThenNotify()
     {
+        Debug.Log($"[InstructionsUI] FadeOutThenNotify begin on '{name}'.");
         yield return StartCoroutine(FadeTo(0f, fadeOutDuration));
 
+        Debug.Log($"[InstructionsUI] FadeOutThenNotify finished fade on '{name}', notifying GameManager.");
         CompleteHideImmediate();
 
         if (GameManager.Instance != null)
@@ -146,7 +164,13 @@ public class InstructionsUI : MonoBehaviour
 
     IEnumerator FadeTo(float targetAlpha, float duration)
     {
-        if (canvasGroup == null) yield break;
+        if (canvasGroup == null)
+        {
+            Debug.LogWarning($"[InstructionsUI] FadeTo aborted on '{name}' because canvasGroup is null.");
+            yield break;
+        }
+
+        Debug.Log($"[InstructionsUI] FadeTo start on '{name}'. from={canvasGroup.alpha:0.00} to={targetAlpha:0.00} duration={duration:0.00}");
 
         float startAlpha = canvasGroup.alpha;
         float elapsed = 0f;
@@ -159,10 +183,12 @@ public class InstructionsUI : MonoBehaviour
         }
 
         canvasGroup.alpha = targetAlpha;
+        Debug.Log($"[InstructionsUI] FadeTo complete on '{name}'. alpha={canvasGroup.alpha:0.00}");
     }
 
     void CompleteHideImmediate()
     {
+        Debug.Log($"[InstructionsUI] CompleteHideImmediate on '{name}'. panelRootExists={panelRoot != null}, panelRootActiveBefore={(panelRoot != null ? panelRoot.activeSelf.ToString() : "null")}");
         if (canvasGroup != null) canvasGroup.alpha = 0f;
         if (panelRoot != null) panelRoot.SetActive(false);
     }

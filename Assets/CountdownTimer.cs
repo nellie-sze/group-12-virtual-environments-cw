@@ -23,6 +23,7 @@ public class CountdownTimer : MonoBehaviour
     void Start()
     {
         timeRemaining = totalTime;
+        Debug.Log($"[CountdownTimer] Start. totalTime={totalTime:0.00}, timerText={(timerText != null ? timerText.name : "null")}");
 
         // Keep the display blank until the game starts — StartTimer() reveals it.
         if (timerText != null) timerText.text = "";
@@ -65,17 +66,35 @@ public class CountdownTimer : MonoBehaviour
         if (GameManager.Instance != null)
             GameManager.Instance.OnTimerEnd();
         else
-            Debug.LogWarning("[CountdownTimer] GameManager.Instance is null — add a GameManager to the scene.");
+            Debug.LogWarning("[CountdownTimer] GameManager.Instance is null - add a GameManager to the scene.");
     }
 
-    public void StartTimer() { isRunning = true; UpdateDisplay(); }
-    public void StopTimer() => isRunning = false;
-    public void ResetTimer() { timeRemaining = totalTime; isRunning = false; UpdateDisplay(); }
+    public void StartTimer()
+    {
+        isRunning = true;
+        UpdateDisplay();
+        Debug.Log($"[CountdownTimer] StartTimer called. timeRemaining={timeRemaining:0.00}, timeScale={Time.timeScale:0.00}, enabled={enabled}, gameObjectActive={gameObject.activeInHierarchy}");
+    }
+
+    public void StopTimer()
+    {
+        isRunning = false;
+        Debug.Log($"[CountdownTimer] StopTimer called. timeRemaining={timeRemaining:0.00}, timeScale={Time.timeScale:0.00}");
+    }
+
+    public void ResetTimer()
+    {
+        timeRemaining = totalTime;
+        isRunning = false;
+        UpdateDisplay();
+        Debug.Log($"[CountdownTimer] ResetTimer called. timeRemaining reset to {timeRemaining:0.00}");
+    }
 
     public void ShowEndGame()
     {
         isRunning = false;
         if (timerText != null) timerText.text = "END GAME";
+        Debug.Log("[CountdownTimer] ShowEndGame called.");
     }
 
     // Remaining time as a 0–1 fraction.

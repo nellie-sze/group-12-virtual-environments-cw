@@ -62,6 +62,8 @@ public class GameManager : MonoBehaviour
         if (villagerSpawner == null) villagerSpawner = FindFirstObjectByType<VillagerSpawner>();
         if (startFinishSpawner == null) startFinishSpawner = FindFirstObjectByType<StartFinishSpawner>();
 
+        Debug.Log($"[GameManager] Start. countdownTimer={(countdownTimer != null ? countdownTimer.name : "null")}, instructionsUI={(instructionsUI != null ? instructionsUI.name : "null")}, livesManager={(livesManager != null ? livesManager.name : "null")}, obstacleSpawner={(obstacleSpawner != null ? obstacleSpawner.name : "null")}, lavaSpawner={(lavaSpawner != null ? lavaSpawner.name : "null")}, villagerSpawner={(villagerSpawner != null ? villagerSpawner.name : "null")}, startFinishSpawner={(startFinishSpawner != null ? startFinishSpawner.name : "null")}");
+
         EnterState(GameState.Waiting);
     }
 
@@ -69,14 +71,16 @@ public class GameManager : MonoBehaviour
     public void ProcessMessage(ReferenceCountedSceneGraphMessage message)
     {
         var msg = message.FromJson<GameMessage>();
+        Debug.Log($"[GameManager] ProcessMessage type={msg.type}, includesSpawn={msg.includesSpawn}, currentState={CurrentState}");
         if (msg.type == "StartGame")
             DoStartGame(spawnObjects: msg.includesSpawn);
     }
 
     void EnterState(GameState next)
     {
+        Debug.Log($"[GameManager] EnterState request {CurrentState} -> {next}. timeScale={Time.timeScale:0.00}");
         CurrentState = next;
-        Debug.Log($"[GameManager] → {next}");
+        Debug.Log($"[GameManager] State is now {next}");
 
         switch (next)
         {
@@ -84,22 +88,25 @@ public class GameManager : MonoBehaviour
                 break;
 
             case GameState.Playing:
+                Debug.Log($"[GameManager] Entering Playing. countdownTimer={(countdownTimer != null ? countdownTimer.name : "null")}, livesManager={(livesManager != null ? livesManager.name : "null")}");
                 if (countdownTimer != null) countdownTimer.StartTimer();
                 _decayCoroutine = StartCoroutine(BlockDecayLoop());
                 break;
 
             case GameState.Won:
+                Debug.Log("[GameManager] Entering Won. Stopping timer and playing win sequence.");
                 if (_decayCoroutine != null) { StopCoroutine(_decayCoroutine); _decayCoroutine = null; }
                 if (countdownTimer != null) countdownTimer.StopTimer();
                 if (endGameAnimator != null) endGameAnimator.PlayWinSequence();
-                Debug.Log("[GameManager] Players WIN — path complete!");
+                Debug.Log("[GameManager] Players WIN - path complete!");
                 break;
 
             case GameState.Lost:
+                Debug.Log("[GameManager] Entering Lost. Stopping timer / showing end game / playing lose sequence.");
                 if (_decayCoroutine != null) { StopCoroutine(_decayCoroutine); _decayCoroutine = null; }
                 if (countdownTimer != null) countdownTimer.ShowEndGame();
                 if (endGameAnimator != null) endGameAnimator.PlayLoseSequence();
-                Debug.Log("[GameManager] Players LOSE — time ran out or lives depleted!");
+                Debug.Log("[GameManager] Players LOSE - time ran out or lives depleted!");
                 break;
         }
     }
@@ -107,19 +114,33 @@ public class GameManager : MonoBehaviour
     // All peers call this. Each spawner uses leader election so only one peer actually spawns.
     private void DoStartGame(bool spawnObjects)
     {
-        if (CurrentState != GameState.Waiting) return;
+        Debug.Log($"[GameManager] DoStartGame called. currentState={CurrentState}, spawnObjects={spawnObjects}, instructionsUIActive={(instructionsUI != null ? instructionsUI.gameObject.activeInHierarchy.ToString() : "null")}");
+        if (CurrentState != GameState.Waiting)
+        {
+            Debug.Log("[GameManager] DoStartGame ignored because state is not Waiting.");
+            return;
+        }
 
         // Dismiss instructions panel on this peer if still visible
         if (instructionsUI != null && instructionsUI.gameObject.activeInHierarchy)
+        {
+            Debug.Log("[GameManager] DoStartGame calling instructionsUI.ForceHide().");
             instructionsUI.ForceHide();
+        }
+        else
+        {
+            Debug.Log("[GameManager] DoStartGame skipped ForceHide because instructions UI is null or already inactive.");
+        }
 
         EnterState(GameState.Playing);
 
         // All peers initialise the lives display locally (hearts are non-networked objects)
+        Debug.Log($"[GameManager] Initialising lives. livesManagerAssigned={(livesManager != null)}");
         if (livesManager != null) livesManager.InitLives();
 
         if (spawnObjects)
         {
+            Debug.Log("[GameManager] DoStartGame spawning scene objects.");
             // All peers call SpawnAll/Spawn. Leader election inside each spawner
             // ensures only the leader (lowest UUID) actually runs the spawn logic.
             if (startFinishSpawner != null) startFinishSpawner.SpawnAll();
@@ -127,22 +148,33 @@ public class GameManager : MonoBehaviour
             if (lavaSpawner != null) lavaSpawner.SpawnAll();
             if (villagerSpawner != null) villagerSpawner.Spawn();
         }
+        else
+        {
+            Debug.Log("[GameManager] DoStartGame skipping object spawn on this peer.");
+        }
     }
 
     // Called by InstructionsUI when the local player presses "Start".
     // Broadcasts to all peers so everyone starts simultaneously.
     public void OnInstructionsDismissed()
     {
-        if (CurrentState != GameState.Waiting) return;
-        // Tell all other peers to start — they each run leader election to decide who actually spawns
+        Debug.Log($"[GameManager] OnInstructionsDismissed called. currentState={CurrentState}");
+        if (CurrentState != GameState.Waiting)
+        {
+            Debug.Log("[GameManager] OnInstructionsDismissed ignored because state is not Waiting.");
+            return;
+        }
+        // Tell all other peers to start - they each run leader election to decide who actually spawns
+        Debug.Log("[GameManager] Broadcasting StartGame message to peers.");
         _net.SendJson(new GameMessage { type = "StartGame", includesSpawn = true });
-        // The presser handles spawning locally — objects replicate to peers via Ubiq
+        // The presser handles spawning locally - objects replicate to peers via Ubiq
         DoStartGame(spawnObjects: true);
     }
 
     // Called by PathChecker.OnPathComplete() when BFS confirms the full path.
     public void OnPathComplete()
     {
+        Debug.Log($"[GameManager] OnPathComplete called. currentState={CurrentState}");
         if (CurrentState != GameState.Playing) return;
         EnterState(GameState.Won);
     }
@@ -150,6 +182,7 @@ public class GameManager : MonoBehaviour
     // Called by CountdownTimer when time reaches zero.
     public void OnTimerEnd()
     {
+        Debug.Log($"[GameManager] OnTimerEnd called. currentState={CurrentState}");
         if (CurrentState != GameState.Playing) return;
         EnterState(GameState.Lost);
     }
@@ -177,7 +210,7 @@ public class GameManager : MonoBehaviour
             if (pathCells.Count == 0) continue;
 
             var cell = pathCells[UnityEngine.Random.Range(0, pathCells.Count)];
-            Debug.Log($"[GameManager] Block decay — removing path block at {cell}");
+            Debug.Log($"[GameManager] Block decay - removing path block at {cell}");
             PathBlockManager.Instance.RequestRemove(cell);
         }
     }
@@ -197,6 +230,7 @@ public class GameManager : MonoBehaviour
     // only when the last life is gone.
     public void OnVillagerDied()
     {
+        Debug.Log($"[GameManager] OnVillagerDied called. currentState={CurrentState}, livesManagerAssigned={(livesManager != null)}");
         if (CurrentState != GameState.Playing) return;
 
         if (livesManager != null)
@@ -208,8 +242,8 @@ public class GameManager : MonoBehaviour
     // Called by LivesManager when all lives have been consumed.
     public void OnAllLivesLost()
     {
+        Debug.Log($"[GameManager] OnAllLivesLost called. currentState={CurrentState}");
         if (CurrentState != GameState.Playing) return;
         EnterState(GameState.Lost);
     }
-
 }
