@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(ls:*)",
-      "Bash(grep -rl \"Universal Render Pipeline/Lit\\\\|fileID: 4800000\\\\|UniversalForward\" C:Group-12-Virtual-Environments-CWAssets --include=*.mat)",
-      "Bash(grep -r \"spawnButton\\\\|SpawnButton\\\\|spawn_button\\\\|Spawn.*button\\\\|button.*spawn\" C:/Group-12-Virtual-Environments-CW/Assets --include=*.cs -i)"
-    ]
-  }
-}
