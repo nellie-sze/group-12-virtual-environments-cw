@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Ubiq.Spawning;
 using Ubiq.Rooms;
+using Ubiq.Messaging;
 
 public class LavaSpawner : MonoBehaviour
 {
@@ -17,6 +18,13 @@ public class LavaSpawner : MonoBehaviour
 
     NetworkSpawnManager spawnManager;
 
+    private NetworkContext context;
+    private RoomClient roomClient;
+    private bool hasSpawned;
+    private string lastRequestId;
+
+    private struct SpawnAllRequestMessage { public string requestId; }
+
     // Possible patch sizes: (width, height) in grid cells
     private static readonly Vector2Int[] patchSizes = new Vector2Int[]
     {
@@ -28,6 +36,9 @@ public class LavaSpawner : MonoBehaviour
 
     void Start()
     {
+        context = NetworkScene.Register(this);
+        roomClient = FindFirstObjectByType<RoomClient>();
+
         spawnManager = NetworkSpawnManager.Find(this);
 
         var localManager = GetComponent<NetworkSpawnManager>();
@@ -45,6 +56,12 @@ public class LavaSpawner : MonoBehaviour
         {
             spawnManager.OnSpawned.AddListener(OnNetworkSpawned);
         }
+    }
+
+    public void ProcessMessage(ReferenceCountedSceneGraphMessage message)
+    {
+        var m = message.FromJson<SpawnAllRequestMessage>();
+        HandleSpawnRequest(m.requestId);
     }
 
     void OnDestroy()
@@ -77,6 +94,24 @@ public class LavaSpawner : MonoBehaviour
     }
 
     public void SpawnAll()
+    {
+        var requestId = System.Guid.NewGuid().ToString("N");
+        HandleSpawnRequest(requestId);
+        context.SendJson(new SpawnAllRequestMessage { requestId = requestId });
+    }
+
+    private void HandleSpawnRequest(string requestId)
+    {
+        if (hasSpawned) return;
+        if (!string.IsNullOrEmpty(lastRequestId) && lastRequestId == requestId) return;
+        lastRequestId = requestId;
+        if (!IsLeaderPeer()) return;
+
+        hasSpawned = true;
+        DoSpawnAll();
+    }
+
+    private void DoSpawnAll()
     {
         if (lavaPrefab == null)
         {
@@ -113,6 +148,19 @@ public class LavaSpawner : MonoBehaviour
         }
 
         Debug.Log($"LavaSpawner: Placed {placed}/{lavaCellCount} lava patches.");
+    }
+
+    private bool IsLeaderPeer()
+    {
+        if (roomClient == null || roomClient.Me == null) return true;
+
+        var leaderUuid = roomClient.Me.uuid;
+        foreach (var p in roomClient.Peers)
+        {
+            if (string.CompareOrdinal(p.uuid, leaderUuid) < 0)
+                leaderUuid = p.uuid;
+        }
+        return roomClient.Me.uuid == leaderUuid;
     }
 
     bool TrySpawnPatch(Vector2Int size)
@@ -172,10 +220,15 @@ public class LavaSpawner : MonoBehaviour
                 var sync = obj.GetComponent<NetworkedSpawnedTransform>();
                 if (sync != null)
                 {
+                    sync.SetOwner(true);
                     sync.RequestInitialSend();
                 }
 
-                if (!GridManager.Instance.TryPlace(cell, CellType.Lava, obj))
+                if (GridManager.Instance.TryPlace(cell, CellType.Lava, obj))
+                {
+                    obj.GetComponent<ObstacleAgent>()?.MarkAsRegisteredByLeader();
+                }
+                else
                 {
                     Debug.LogWarning($"LavaSpawner: TryPlace failed at {cell} — despawning.");
                     spawnManager.Despawn(obj);

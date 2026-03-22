@@ -184,6 +184,19 @@ public class GridManager : MonoBehaviour
 
     public bool IsOccupied(Vector2Int cell) => cells.ContainsKey(cell);
 
+    /// Removes all GridManager entries that point to this object WITHOUT destroying it.
+    /// Used by ObstacleSpawner.HandleRemove — destruction is handled separately by NSM.Despawn or Destroy.
+    public void ClearCellsForObject(GameObject obj)
+    {
+        if (obj == null) return;
+        var toRemove = new List<Vector2Int>();
+        foreach (var kvp in cells)
+            if (kvp.Value.placedObject == obj)
+                toRemove.Add(kvp.Key);
+        foreach (var k in toRemove)
+            cells.Remove(k);
+    }
+
     public bool TryGetCell(Vector2Int cell, out GridCell data) =>
         cells.TryGetValue(cell, out data);
 

@@ -155,7 +155,7 @@ public class PickaxeTool : MonoBehaviour
 
         Vector2Int cell = GridManager.Instance.WorldToGrid(ghostHighlight.transform.position);
         if (GridManager.Instance.TryGetCell(cell, out var data) && data.type == CellType.Rock)
-            GridManager.Instance.TryRemove(cell);
+            ObstacleSpawner.Instance.RequestRemove(cell);
     }
 
     static void SetMaterialColor(Material mat, Color color)

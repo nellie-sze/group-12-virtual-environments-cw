@@ -9,6 +9,18 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 5049251572175882318, guid: 46d12e9cca173224db6e308450892b60, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 3.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5049251572175882318, guid: 46d12e9cca173224db6e308450892b60, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 3.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5049251572175882318, guid: 46d12e9cca173224db6e308450892b60, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 3.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5049251572175882318, guid: 46d12e9cca173224db6e308450892b60, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
@@ -55,5 +67,26 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7894814012600593311, guid: 46d12e9cca173224db6e308450892b60, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3254718460934685007}
   m_SourcePrefab: {fileID: 100100000, guid: 46d12e9cca173224db6e308450892b60, type: 3}
+--- !u!1 &8567095677938957659 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7894814012600593311, guid: 46d12e9cca173224db6e308450892b60, type: 3}
+  m_PrefabInstance: {fileID: 1978333288367937220}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &3254718460934685007
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8567095677938957659}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffb8b310ba38e6d4a9132efb902d34c7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ObstacleAgent
+  obstacleType: 3

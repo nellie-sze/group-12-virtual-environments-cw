@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 4373080667063482952}
   - component: {fileID: 4373080667063482953}
   - component: {fileID: -1557037012878779171}
+  - component: {fileID: 6978339980708859469}
   m_Layer: 0
   m_Name: Net_Lava
   m_TagString: Untagged
@@ -103,3 +104,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9f27f6e76705f624d864e8762af4f1ee, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkedSpawnedTransform
+--- !u!114 &6978339980708859469
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4373080667063482954}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffb8b310ba38e6d4a9132efb902d34c7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ObstacleAgent
+  obstacleType: 2

@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1978518202168046147}
   - component: {fileID: 5979941351289997464}
+  - component: {fileID: -8586966295901637353}
   m_Layer: 0
   m_Name: Net_Rock1
   m_TagString: Untagged
@@ -27,7 +28,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.5, y: 1.5, z: 1.5}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3367515409070334724}
@@ -45,6 +46,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9f27f6e76705f624d864e8762af4f1ee, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkedSpawnedTransform
+--- !u!114 &-8586966295901637353
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1236191318538652637}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffb8b310ba38e6d4a9132efb902d34c7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ObstacleAgent
+  obstacleType: 4
 --- !u!1001 &8573668461139380610
 PrefabInstance:
   m_ObjectHideFlags: 0
