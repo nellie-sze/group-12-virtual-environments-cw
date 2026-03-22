@@ -333,11 +333,13 @@ public class GridSystem : MonoBehaviour
             return;
         }
 
-        // Instantiate the real block at the ghost's position/rotation
-        GameObject prefab = currentMode == ToolMode.Straight ? straightPrefab : cornerPrefab;
-        GameObject placed = Instantiate(prefab,
-                                        ghostObject.transform.position,
-                                        Quaternion.Euler(0f, currentRotationY, 0f));
+        // Spawn the real block over the network via PathBlockManager.
+        bool isStraight = currentMode == ToolMode.Straight;
+        GameObject placed = PathBlockManager.Instance.RequestPlace(
+            ghostObject.transform.position,
+            Quaternion.Euler(0f, currentRotationY, 0f),
+            isStraight);
+        if (placed == null) return;
 
         // Register all cells occupied by this block in GridManager
         List<Vector3> cellWorldPositions = GetCellsForPlacedObject(placed);

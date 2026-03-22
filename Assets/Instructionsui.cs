@@ -72,9 +72,9 @@ public class InstructionsUI : MonoBehaviour
 
     void Start()
     {
-        if (titleText    != null) titleText.text    = title;
-        if (objectiveText != null) objectiveText.text = objective;
-        if (controlsText != null) controlsText.text = controls;
+        if (titleText     != null && !string.IsNullOrEmpty(title))     titleText.text     = title;
+        if (objectiveText != null && !string.IsNullOrEmpty(objective)) objectiveText.text = objective;
+        if (controlsText  != null && !string.IsNullOrEmpty(controls))  controlsText.text  = controls;
 
         // Show the time limit if CountdownTimer is in the scene
         if (timeLimitText != null && CountdownTimer.Instance != null)
@@ -105,6 +105,24 @@ public class InstructionsUI : MonoBehaviour
 
         if (fadeCoroutine != null) StopCoroutine(fadeCoroutine);
         fadeCoroutine = StartCoroutine(FadeOutThenNotify());
+    }
+
+    /// <summary>
+    /// Called by GameManager on peers that did not press the button themselves,
+    /// so their instructions panel is also dismissed when the game starts.
+    /// </summary>
+    public void ForceHide()
+    {
+        if (startButton != null) startButton.interactable = false;
+        if (fadeCoroutine != null) StopCoroutine(fadeCoroutine);
+        fadeCoroutine = StartCoroutine(FadeTo(0f, fadeOutDuration));
+        StartCoroutine(HideAfterFade());
+    }
+
+    IEnumerator HideAfterFade()
+    {
+        yield return new WaitForSeconds(fadeOutDuration);
+        if (panelRoot != null) panelRoot.SetActive(false);
     }
 
     IEnumerator FadeOutThenNotify()

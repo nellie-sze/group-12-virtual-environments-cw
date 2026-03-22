@@ -58,7 +58,7 @@ public class CountdownTimer : MonoBehaviour
 
     void OnTimerEnd()
     {
-        if (timerText != null) timerText.text = "0:00";
+        if (timerText != null) timerText.text = "END GAME";
         Debug.Log("[CountdownTimer] Time's up!");
 
         // Delegate to GameManager — it decides whether to trigger lose state

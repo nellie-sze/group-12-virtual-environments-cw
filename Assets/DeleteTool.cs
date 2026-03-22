@@ -152,7 +152,7 @@ public class DeleteTool : MonoBehaviour
 
         Vector2Int cell = GridManager.Instance.WorldToGrid(ghostHighlight.transform.position);
         if (GridManager.Instance.TryGetCell(cell, out var data) && data.type == CellType.Path)
-            GridManager.Instance.TryRemove(cell);
+            PathBlockManager.Instance.RequestRemove(cell);
     }
 
     void CreateGhost()

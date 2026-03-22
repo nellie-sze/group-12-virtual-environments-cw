@@ -158,7 +158,7 @@ public class AxeTool : MonoBehaviour
         Debug.Log($"Trying to chop at cell {cell}");
         if (GridManager.Instance.TryGetCell(cell, out var data)
             && (data.type == CellType.Tree || data.type == CellType.Flower))
-            GridManager.Instance.TryRemove(cell);
+            ObstacleSpawner.Instance.RequestRemove(cell);
     }
 
     static void SetMaterialColor(Material mat, Color color)

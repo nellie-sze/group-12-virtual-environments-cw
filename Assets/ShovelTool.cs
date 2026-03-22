@@ -245,17 +245,14 @@ public class ShovelTool : MonoBehaviour
             return;
         }
 
-        GameObject prefab = currentMode == ToolMode.Straight
-        ? straightPrefab
-        : cornerPrefab;
-        Vector3 placementPosition = ghostHighlight.transform.position;
+        bool isStraight = currentMode == ToolMode.Straight;
+        Vector3    placementPosition = ghostHighlight.transform.position;
         Quaternion placementRotation = Quaternion.Euler(0f, currentRotationY, 0f);
         Debug.Log($"Placing path at position={placementPosition}, cell={cell}");
 
-        GameObject placedObject = CreateCenteredWrapper(prefab, $"{prefab.name}_PlacedRoot");
-        FitToSingleGridCell(placedObject);
-        placedObject.transform.rotation = placementRotation;
-        placedObject.transform.position = placementPosition;
+        GameObject placedObject = PathBlockManager.Instance.RequestPlace(placementPosition, placementRotation, isStraight);
+        if (placedObject == null) return;
+
         GridManager.Instance.TryPlace(cell, CellType.Path, placedObject);
 
         PathNode node = currentMode == ToolMode.Straight
