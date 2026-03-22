@@ -34,6 +34,8 @@ public class CountdownTimer : MonoBehaviour
 
         timeRemaining -= Time.deltaTime;
 
+        AudioManager.Instance?.UpdateTimerWarning(timeRemaining);
+
         if (timeRemaining <= 0f)
         {
             timeRemaining = 0f;

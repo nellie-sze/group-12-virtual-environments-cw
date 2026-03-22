@@ -240,8 +240,10 @@ public class ShovelTool : MonoBehaviour
             if (PathChecker.Instance != null)
                 PathChecker.Instance.ReportInvalidPlacement(cell, ghostHighlight);
             else
-                Debug.LogWarning($"INVALID placement at {cell} — " +
-                                 "no valid directional connection to an adjacent Start or Path cell.");
+                Debug.LogWarning($"INVALID placement at {cell} — no valid connection.");
+
+            // Sound: invalid placement
+            AudioManager.Instance?.PlayInvalidPlacementSound();
             return;
         }
 
@@ -266,6 +268,10 @@ public class ShovelTool : MonoBehaviour
             // Run BFS — if Start→Finish is now connected, triggers win condition
             PathChecker.Instance.CheckPath();
         }
+        // Sound: path block successfully placed
+        AudioManager.Instance?.PlayPathBuiltSound();
+
+        Debug.Log($"[ShovelTool] Placed {currentMode} at cell {cell}, rotation {currentRotationY}°");
     }
 
 

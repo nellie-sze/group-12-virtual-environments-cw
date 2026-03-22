@@ -52,6 +52,7 @@ public class GameManager : MonoBehaviour
         if (villagerSpawner    == null) villagerSpawner    = FindFirstObjectByType<VillagerSpawner>();
         if (startFinishSpawner == null) startFinishSpawner = FindFirstObjectByType<StartFinishSpawner>();
 
+        // Begin in Waiting state — instructions UI shows itself via its own Start()
         EnterState(GameState.Waiting);
     }
 
@@ -80,13 +81,15 @@ public class GameManager : MonoBehaviour
             case GameState.Won:
                 if (countdownTimer != null) countdownTimer.StopTimer();
                 if (endGameAnimator != null) endGameAnimator.PlayWinSequence();
+                AudioManager.Instance?.PlayWinSound();
                 Debug.Log("[GameManager] Players WIN — path complete!");
                 break;
 
             case GameState.Lost:
                 if (countdownTimer != null) countdownTimer.ShowEndGame();
                 if (endGameAnimator != null) endGameAnimator.PlayLoseSequence();
-                Debug.Log("[GameManager] Players LOSE — time ran out or lives depleted!");
+                AudioManager.Instance?.PlayLoseSound();
+                Debug.Log("[GameManager] Players LOSE — time ran out!");
                 break;
         }
     }

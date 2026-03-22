@@ -347,6 +347,8 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
             releaseRoutine = null;
             HideDropPreview();
 
+            AudioManager.Instance?.PlayVillagerDeathSound(transform.position);
+
             state = VillagerState.Dead;
             SendState(force: true);
             gameObject.SetActive(false);
@@ -430,6 +432,8 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
         Debug.Log($"Villager Die() called on '{gameObject.name}' at cell {cell}");
         state = VillagerState.Dead;
         HideDropPreview();
+
+        AudioManager.Instance?.PlayVillagerDeathSound(transform.position);
         gameObject.SetActive(false);
     }
 
@@ -539,6 +543,7 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
         if (IsCellLava(cell))
         {
             Debug.Log("Game over! Villager fell into lava.");
+            AudioManager.Instance?.PlayVillagerDeathSound(transform.position);
 
             // Send Dead state to remote peers BEFORE deactivating the GameObject.
             state = VillagerState.Dead;
@@ -770,7 +775,7 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
 
         var from = new Vector2Int(m.fromX, m.fromY);
         var to = new Vector2Int(m.toX, m.toY);
-        var durationSeconds = Mathf.Max(0.01f, m.duration);
+        var durationSeconds = Mathf.Max(0.01f, m.duration); /////////////
 
         if (remoteMoveRoutine != null)
         {

@@ -755,6 +755,7 @@ GameObject:
   - component: {fileID: 182153738}
   - component: {fileID: 182153746}
   - component: {fileID: 182153745}
+  - component: {fileID: 182153747}
   m_Layer: 0
   m_Name: Game Manager
   m_TagString: Untagged
@@ -789,7 +790,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 727abfb212d0954489d8aad1e31a7e89, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CountdownTimer
-  totalTime: 120
+  totalTime: 300
   timerText: {fileID: 765686166}
 --- !u!114 &182153739
 MonoBehaviour:
@@ -934,6 +935,30 @@ MonoBehaviour:
   fireworksBurstInterval: 0.5
   fireworksHeight: 1.5
   loseFadeDuration: 1.2
+--- !u!114 &182153747
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 182153736}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 597a0ea4749b84fd380d5e3530a9b69b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AudioManager
+  natureMusic: {fileID: 0}
+  natureMusicVolume: 0.35
+  footstepClips: []
+  footstepVolume: 0.6
+  footstepInterval: 0.45
+  footstepMoveThreshold: 0.2
+  destroyClip: {fileID: 0}
+  destroyVolume: 0.8
+  winClip: {fileID: 0}
+  loseClip: {fileID: 0}
+  endGameVolume: 1
+  xrOrigin: {fileID: 0}
 --- !u!1 &246483329
 GameObject:
   m_ObjectHideFlags: 0
@@ -3535,6 +3560,11 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!4 &1702949198 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1670256625, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
+  m_PrefabInstance: {fileID: 305114150}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1725850512
 GameObject:
   m_ObjectHideFlags: 0
@@ -3672,11 +3702,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1725850512}
   m_CullTransparentMesh: 1
---- !u!4 &1702949198 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 1670256625, guid: f6336ac4ac8b4d34bc5072418cdc62a0, type: 3}
-  m_PrefabInstance: {fileID: 305114150}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1842986966
 PrefabInstance:
   m_ObjectHideFlags: 0

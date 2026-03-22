@@ -216,9 +216,9 @@ public class ScaleAndResetOnGrab : MonoBehaviour
         // Prevent tool drifting when not held 
         if (grab != null && !grab.isSelected)
         {
-        transform.localScale = originalScale;
-        transform.position = originalPosition;
-        transform.rotation = originalRotation;  
+            transform.localScale = originalScale;
+            transform.position = originalPosition;
+            transform.rotation = originalRotation;  
         }
 
         // If we lose ownership (e.g., conflict resolution), force release locally so the lock winner controls motion.
@@ -283,6 +283,8 @@ public class ScaleAndResetOnGrab : MonoBehaviour
 
         transform.localScale = originalScale * grabScaleMultiplier;
         forceSend = true; // replicate scale change immediately
+        // Sound: object picked up
+        AudioManager.Instance?.PlayPickupSound();
         Debug.Log("shovel grabbed");
     }
 
