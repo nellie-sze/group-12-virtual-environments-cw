@@ -1370,8 +1370,8 @@ MonoBehaviour:
   rotateAction: {fileID: 2098551019}
   switchModeAction: {fileID: 1450678727}
   surfaceEpsilon: 0.001
-  straightPrefab: {fileID: 318373990914543345, guid: 97e623eb280a5234fb28e1687e0fb9ca, type: 3}
-  cornerPrefab: {fileID: 5071392686214402512, guid: b284af1cee672eb4aa527ef1fa8cecb0, type: 3}
+  straightPrefab: {fileID: 318373990914543345, guid: 5ff3f8c984107f2429bd10d3d251a747, type: 3}
+  cornerPrefab: {fileID: 5071392686214402512, guid: ef4a935774f22ac44afcb53fc9ed0062, type: 3}
   scaleGhostToGridCell: 1
   useMouseCursor: 0
   invalidColor: {r: 1, g: 0.3, b: 0, a: 0.5}
