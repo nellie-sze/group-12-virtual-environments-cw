@@ -17,7 +17,7 @@ public class AxeTool : MonoBehaviour
     public bool useMouseCursor = false;
 
     [Header("Ghost Colours")]
-    private Color validColor = new Color(0f, 1f, 0f, 0.5f); // green  = hovering a tree
+    private Color validColor = new Color(0f, 1f, 0f, 0.5f); // green = hovering a tree
     private Color invalidColor = new Color(1f, 0.3f, 0f, 0.5f); // orange = not a tree
 
     private bool isHeld = false;
@@ -51,7 +51,7 @@ public class AxeTool : MonoBehaviour
         if (ghostHighlight != null) Destroy(ghostHighlight);
     }
 
-    void OnGrab(SelectEnterEventArgs args)   { isHeld = true;  SetHeldRaycastIgnored(true);  ghostHighlight.SetActive(true);  }
+    void OnGrab(SelectEnterEventArgs args) { isHeld = true; SetHeldRaycastIgnored(true); ghostHighlight.SetActive(true);  }
     void OnRelease(SelectExitEventArgs args) { isHeld = false; SetHeldRaycastIgnored(false); ghostHighlight.SetActive(false); }
     void OnActivated(ActivateEventArgs args) => TryChop();
 
@@ -60,7 +60,7 @@ public class AxeTool : MonoBehaviour
         if (ignored)
         {
             cachedTransforms = GetComponentsInChildren<Transform>(true);
-            cachedLayers     = new int[cachedTransforms.Length];
+            cachedLayers = new int[cachedTransforms.Length];
             for (int i = 0; i < cachedTransforms.Length; i++)
             {
                 cachedLayers[i] = cachedTransforms[i].gameObject.layer;
@@ -96,7 +96,7 @@ public class AxeTool : MonoBehaviour
             if (direction.sqrMagnitude < 0.0001f)
                 return;
 
-            ray = new Ray(origin, direction);        
+            ray = new Ray(origin, direction);
         }
         else if (Mouse.current != null && Camera.main != null && ghostHighlight != null)
         {
@@ -149,7 +149,7 @@ public class AxeTool : MonoBehaviour
     {
         if (mat == null) return;
         if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", color);
-        if (mat.HasProperty("_Color"))     mat.SetColor("_Color",     color);
+        if (mat.HasProperty("_Color")) mat.SetColor("_Color", color);
         mat.color = color;
     }
 
@@ -159,13 +159,13 @@ public class AxeTool : MonoBehaviour
         if (mat.HasProperty("_Surface"))
         {
             mat.SetFloat("_Surface", 1f);
-            if (mat.HasProperty("_Blend"))         mat.SetFloat("_Blend",         0f);
-            if (mat.HasProperty("_AlphaClip"))     mat.SetFloat("_AlphaClip",     0f);
-            if (mat.HasProperty("_QueueControl"))  mat.SetFloat("_QueueControl",  1f);
+            if (mat.HasProperty("_Blend")) mat.SetFloat("_Blend", 0f);
+            if (mat.HasProperty("_AlphaClip")) mat.SetFloat("_AlphaClip", 0f);
+            if (mat.HasProperty("_QueueControl")) mat.SetFloat("_QueueControl", 1f);
             if (mat.HasProperty("_ZWriteControl")) mat.SetFloat("_ZWriteControl", 0f);
-            if (mat.HasProperty("_ZWrite"))        mat.SetFloat("_ZWrite",        0f);
-            if (mat.HasProperty("_SrcBlend"))      mat.SetFloat("_SrcBlend",      (float)BlendMode.SrcAlpha);
-            if (mat.HasProperty("_DstBlend"))      mat.SetFloat("_DstBlend",      (float)BlendMode.OneMinusSrcAlpha);
+            if (mat.HasProperty("_ZWrite")) mat.SetFloat("_ZWrite", 0f);
+            if (mat.HasProperty("_SrcBlend")) mat.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+            if (mat.HasProperty("_DstBlend")) mat.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
             if (mat.HasProperty("_SrcBlendAlpha")) mat.SetFloat("_SrcBlendAlpha", (float)BlendMode.One);
             if (mat.HasProperty("_DstBlendAlpha")) mat.SetFloat("_DstBlendAlpha", (float)BlendMode.OneMinusSrcAlpha);
             mat.SetOverrideTag("RenderType", "Transparent");
@@ -183,15 +183,15 @@ public class AxeTool : MonoBehaviour
         Renderer[] renderers = target.GetComponentsInChildren<Renderer>();
         if (renderers == null || renderers.Length == 0) return;
 
-        Bounds    combined       = new Bounds();
-        bool      hasBounds      = false;
+        Bounds combined = new Bounds();
+        bool hasBounds = false;
         Matrix4x4 rootWorldToLocal = target.transform.worldToLocalMatrix;
 
         foreach (Renderer renderer in renderers)
         {
             if (renderer == null) continue;
-            Bounds  lb      = renderer.localBounds;
-            Vector3 center  = lb.center;
+            Bounds lb = renderer.localBounds;
+            Vector3 center = lb.center;
             Vector3 extents = lb.extents;
             Vector3[] corners =
             {
@@ -209,7 +209,7 @@ public class AxeTool : MonoBehaviour
             {
                 Vector3 p = toRoot.MultiplyPoint3x4(corner);
                 if (!hasBounds) { combined = new Bounds(p, Vector3.zero); hasBounds = true; }
-                else            { combined.Encapsulate(p); }
+                else { combined.Encapsulate(p); }
             }
         }
 

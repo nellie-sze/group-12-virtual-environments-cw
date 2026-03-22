@@ -52,7 +52,7 @@ public class DeleteTool : MonoBehaviour
         if (ghostHighlight != null) Destroy(ghostHighlight);
     }
 
-    void OnGrab(SelectEnterEventArgs args)   { isHeld = true;  SetHeldRaycastIgnored(true);  ghostHighlight.SetActive(true);  }
+    void OnGrab(SelectEnterEventArgs args) { isHeld = true; SetHeldRaycastIgnored(true); ghostHighlight.SetActive(true);  }
     void OnRelease(SelectExitEventArgs args) { isHeld = false; SetHeldRaycastIgnored(false); ghostHighlight.SetActive(false); }
     void OnActivated(ActivateEventArgs args) => TryDelete();
 
@@ -61,7 +61,7 @@ public class DeleteTool : MonoBehaviour
         if (ignored)
         {
             cachedTransforms = GetComponentsInChildren<Transform>(true);
-            cachedLayers     = new int[cachedTransforms.Length];
+            cachedLayers = new int[cachedTransforms.Length];
             for (int i = 0; i < cachedTransforms.Length; i++)
             {
                 cachedLayers[i] = cachedTransforms[i].gameObject.layer;
@@ -95,7 +95,7 @@ public class DeleteTool : MonoBehaviour
             if (direction.sqrMagnitude < 0.0001f)
                 return;
 
-            ray = new Ray(origin, direction);        
+            ray = new Ray(origin, direction);
         }
         else if (Mouse.current != null && Camera.main != null && ghostHighlight != null)
         {
@@ -158,13 +158,13 @@ public class DeleteTool : MonoBehaviour
         if (mat.HasProperty("_Surface"))
         {
             mat.SetFloat("_Surface", 1f);
-            if (mat.HasProperty("_Blend"))         mat.SetFloat("_Blend", 0f);
-            if (mat.HasProperty("_AlphaClip"))     mat.SetFloat("_AlphaClip", 0f);
-            if (mat.HasProperty("_QueueControl"))  mat.SetFloat("_QueueControl",1f);
+            if (mat.HasProperty("_Blend")) mat.SetFloat("_Blend", 0f);
+            if (mat.HasProperty("_AlphaClip")) mat.SetFloat("_AlphaClip", 0f);
+            if (mat.HasProperty("_QueueControl")) mat.SetFloat("_QueueControl",1f);
             if (mat.HasProperty("_ZWriteControl")) mat.SetFloat("_ZWriteControl", 0f);
-            if (mat.HasProperty("_ZWrite"))        mat.SetFloat("_ZWrite",0f);
-            if (mat.HasProperty("_SrcBlend"))      mat.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
-            if (mat.HasProperty("_DstBlend"))      mat.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
+            if (mat.HasProperty("_ZWrite")) mat.SetFloat("_ZWrite",0f);
+            if (mat.HasProperty("_SrcBlend")) mat.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+            if (mat.HasProperty("_DstBlend")) mat.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
             if (mat.HasProperty("_SrcBlendAlpha")) mat.SetFloat("_SrcBlendAlpha", (float)BlendMode.One);
             if (mat.HasProperty("_DstBlendAlpha")) mat.SetFloat("_DstBlendAlpha", (float)BlendMode.OneMinusSrcAlpha);
             mat.SetOverrideTag("RenderType", "Transparent");

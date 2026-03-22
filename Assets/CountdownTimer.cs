@@ -6,7 +6,7 @@ public class CountdownTimer : MonoBehaviour
     public static CountdownTimer Instance { get; private set; }
 
     [Header("Settings")]
-    public float totalTime = 300f; // 5 minutes
+    public float totalTime = 120f; // 2 minutes
 
     [Header("UI")]
     public TMP_Text timerText;
@@ -69,16 +69,15 @@ public class CountdownTimer : MonoBehaviour
     }
 
     public void StartTimer() { isRunning = true; UpdateDisplay(); }
-    public void StopTimer()  => isRunning = false;
+    public void StopTimer() => isRunning = false;
     public void ResetTimer() { timeRemaining = totalTime; isRunning = false; UpdateDisplay(); }
 
-    /// <summary>Stops the timer and displays the end-game text.</summary>
     public void ShowEndGame()
     {
         isRunning = false;
         if (timerText != null) timerText.text = "END GAME";
     }
 
-    /// Remaining time as a 0–1 fraction.
+    // Remaining time as a 0–1 fraction.
     public float FractionRemaining => totalTime > 0f ? timeRemaining / totalTime : 0f;
 }
