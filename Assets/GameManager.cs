@@ -67,7 +67,7 @@ public class GameManager : MonoBehaviour
     void EnterState(GameState next)
     {
         CurrentState = next;
-        Debug.Log($"[GameManager] → {next}");
+        Debug.Log($"[GameManager] -> {next}");
 
         switch (next)
         {

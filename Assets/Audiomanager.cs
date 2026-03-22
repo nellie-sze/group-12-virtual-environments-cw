@@ -1,33 +1,8 @@
 using UnityEngine;
 
-/// <summary>
-/// Central audio singleton. Owns all AudioSources and exposes a clean API
-/// so every other script only needs one line to play a sound.
-///
-/// Setup in Unity:
-///   1. Add this script to the Game Manager GameObject.
-///   2. Drag AudioClip assets into each field in the Inspector.
-///   3. Assign xrOrigin to the XR Origin transform for footstep positioning.
-///
-/// Clip suggestions (freesound.org / Unity Asset Store):
-///   natureMusic       — looping birdsong / river ambience
-///   footstepClips     — 3-4 short grass footstep variants
-///   treeDestroyClip   — wood crack / leaf rustle
-///   rockDestroyClip   — stone smash / rubble
-///   pathDeleteClip    — soft thud / dirt scrape
-///   pathBuiltClip     — satisfying click / stone place
-///   invalidClip       — short negative blip / buzz
-///   pickupClip        — soft whoosh / pop
-///   villagerDeathClip — short cry / splash
-///   timerWarningClip  — ticking / heartbeat loop (assign a short loopable clip)
-///   winClip           — triumphant fanfare
-///   loseClip          — low drone / sad horn sting
-/// </summary>
 public class AudioManager : MonoBehaviour
 {
     public static AudioManager Instance { get; private set; }
-
-    // ── Inspector ─────────────────────────────────────────────────────────────
 
     [Header("Background Music")]
     public AudioClip natureMusic;
@@ -35,9 +10,9 @@ public class AudioManager : MonoBehaviour
 
     [Header("Footsteps")]
     public AudioClip[] footstepClips;
-    [Range(0f, 1f)] public float footstepVolume    = 0.6f;
-    public float footstepInterval                  = 0.45f;
-    public float footstepMoveThreshold             = 0.2f;
+    [Range(0f, 1f)] public float footstepVolume = 0.6f;
+    public float footstepInterval = 0.45f;
+    public float footstepMoveThreshold = 0.2f;
 
     [Header("Destroy Sounds")]
     [Tooltip("Played when a tree or flower is chopped.")]
@@ -85,19 +60,14 @@ public class AudioManager : MonoBehaviour
     [Header("References")]
     public Transform xrOrigin;
 
-    // ── Private state ─────────────────────────────────────────────────────────
 
     private AudioSource musicSource;
     private AudioSource footstepSource;
     private AudioSource timerWarningSource;  // looping warning tick
 
-    private float footstepTimer      = 0f;
-    private int   lastFootstepIndex  = -1;
-    private bool  warningPlaying     = false;
-
-    // ─────────────────────────────────────────────────────────────────────────
-    //  Lifecycle
-    // ─────────────────────────────────────────────────────────────────────────
+    private float footstepTimer = 0f;
+    private int lastFootstepIndex = -1;
+    private bool warningPlaying = false;
 
     void Awake()
     {
@@ -107,7 +77,6 @@ public class AudioManager : MonoBehaviour
 
     void Start()
     {
-        // Music source — 2D looping
         musicSource              = gameObject.AddComponent<AudioSource>();
         musicSource.clip         = natureMusic;
         musicSource.loop         = true;
@@ -117,7 +86,6 @@ public class AudioManager : MonoBehaviour
         if (natureMusic != null) musicSource.Play();
         else Debug.LogWarning("[AudioManager] natureMusic clip not assigned.");
 
-        // Footstep source — 2D one-shot
         footstepSource              = gameObject.AddComponent<AudioSource>();
         footstepSource.loop         = false;
         footstepSource.volume       = footstepVolume;
@@ -138,10 +106,6 @@ public class AudioManager : MonoBehaviour
     {
         HandleFootsteps();
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    //  Footsteps
-    // ─────────────────────────────────────────────────────────────────────────
 
     void HandleFootsteps()
     {
@@ -182,10 +146,10 @@ public class AudioManager : MonoBehaviour
         {
             var kb = UnityEngine.InputSystem.Keyboard.current;
             float x = 0f, y = 0f;
-            if (kb.wKey.isPressed || kb.upArrowKey.isPressed)    y =  1f;
+            if (kb.wKey.isPressed || kb.upArrowKey.isPressed)    y = 1f;
             if (kb.sKey.isPressed || kb.downArrowKey.isPressed)  y = -1f;
             if (kb.aKey.isPressed || kb.leftArrowKey.isPressed)  x = -1f;
-            if (kb.dKey.isPressed || kb.rightArrowKey.isPressed) x =  1f;
+            if (kb.dKey.isPressed || kb.rightArrowKey.isPressed) x = 1f;
             return new Vector2(x, y).magnitude;
         }
         return 0f;
@@ -203,40 +167,35 @@ public class AudioManager : MonoBehaviour
         footstepSource.Play();
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    //  Public API
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /// Played by AxeTool when a tree/flower is successfully chopped.
+    // Played by AxeTool when a tree/flower is successfully chopped.
     public void PlayTreeDestroySound(Vector3 worldPos)
         => PlayAtPoint(treeDestroyClip, worldPos, destroyVolume);
 
-    /// Played by PickaxeTool when a rock is successfully smashed.
+    // Played by PickaxeTool when a rock is successfully smashed.
     public void PlayRockDestroySound(Vector3 worldPos)
         => PlayAtPoint(rockDestroyClip, worldPos, destroyVolume);
 
-    /// Played by DeleteTool when a path block is deleted.
+    // Played by DeleteTool when a path block is deleted.
     public void PlayPathDeleteSound(Vector3 worldPos)
         => PlayAtPoint(pathDeleteClip, worldPos, destroyVolume);
 
-    /// Played by ShovelTool after a path block is successfully placed.
+    // Played by ShovelTool after a path block is successfully placed.
     public void PlayPathBuiltSound()
         => PlayOnMusicSource(pathBuiltClip, pathBuiltVolume);
 
-    /// Played by ShovelTool / PathChecker when a placement is rejected.
+    // Played by ShovelTool / PathChecker when a placement is rejected.
     public void PlayInvalidPlacementSound()
         => PlayOnMusicSource(invalidPlacementClip, invalidVolume);
 
-    /// Played by ScaleAndResetOnGrab (or any tool) when grabbed.
+    // Played by ScaleAndResetOnGrab (or any tool) when grabbed.
     public void PlayPickupSound()
         => PlayOnMusicSource(pickupClip, pickupVolume);
 
-    /// Played by VillagerAgent.Die().
+    // Played by VillagerAgent.Die().
     public void PlayVillagerDeathSound(Vector3 worldPos)
         => PlayAtPoint(villagerDeathClip, worldPos, villagerDeathVolume);
 
-    /// Called by CountdownTimer every Update with the remaining seconds.
-    /// Fades the warning tick in when time is low and out when game ends.
+    // Called by CountdownTimer every Update with the remaining seconds.
     public void UpdateTimerWarning(float timeRemaining)
     {
         if (timerWarningClip == null || timerWarningSource == null) return;
@@ -255,14 +214,14 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    /// Stop the timer warning (called on game end).
+    // Stop the timer warning (called on game end).
     public void StopTimerWarning()
     {
         if (timerWarningSource != null) timerWarningSource.volume = 0f;
         warningPlaying = false;
     }
 
-    /// Played by GameManager on win.
+    // Played by GameManager on win.
     public void PlayWinSound()
     {
         StopTimerWarning();
@@ -270,7 +229,7 @@ public class AudioManager : MonoBehaviour
         else Debug.LogWarning("[AudioManager] winClip not assigned.");
     }
 
-    /// Played by GameManager on lose.
+    // Played by GameManager on lose.
     public void PlayLoseSound()
     {
         StopTimerWarning();
@@ -278,18 +237,14 @@ public class AudioManager : MonoBehaviour
         else Debug.LogWarning("[AudioManager] loseClip not assigned.");
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    //  Helpers
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /// Fire-and-forget 3D positional audio (uses a temporary AudioSource at worldPos).
+    // Fire-and-forget 3D positional audio (uses a temporary AudioSource at worldPos).
     static void PlayAtPoint(AudioClip clip, Vector3 worldPos, float volume)
     {
         if (clip == null) return;
         AudioSource.PlayClipAtPoint(clip, worldPos, volume);
     }
 
-    /// 2D one-shot through the music source (UI/feedback sounds have no position).
+    // 2D one-shot through the music source (UI/feedback sounds have no position).
     void PlayOnMusicSource(AudioClip clip, float volume)
     {
         if (clip == null || musicSource == null) return;
@@ -298,13 +253,13 @@ public class AudioManager : MonoBehaviour
 
     System.Collections.IEnumerator FadeMusicAndPlayClip(AudioClip clip)
     {
-        float startVol  = musicSource.volume;
-        float elapsed   = 0f;
-        float fadeDur   = 1f;
+        float startVol = musicSource.volume;
+        float elapsed = 0f;
+        float fadeDur = 1f;
 
         while (elapsed < fadeDur)
         {
-            elapsed           += Time.deltaTime;
+            elapsed += Time.deltaTime;
             musicSource.volume = Mathf.Lerp(startVol, startVol * 0.2f, elapsed / fadeDur);
             yield return null;
         }

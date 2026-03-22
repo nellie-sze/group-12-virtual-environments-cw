@@ -265,7 +265,7 @@ public class ShovelTool : MonoBehaviour
         {
             PathChecker.Instance.RegisterNode(cell, node, placedObject);
 
-            // Run BFS — if Start→Finish is now connected, triggers win condition
+            // Run BFS — if Start -> Finish is now connected, triggers win condition
             PathChecker.Instance.CheckPath();
         }
         // Sound: path block successfully placed

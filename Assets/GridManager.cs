@@ -101,7 +101,7 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    // World XZ position → grid coordinate
+    // World XZ position -> grid coordinate
     public Vector2Int WorldToGrid(Vector3 worldPos)
     {
         return new Vector2Int(
@@ -110,7 +110,7 @@ public class GridManager : MonoBehaviour
         );
     }
 
-    // Grid coordinate → world position at surface height
+    // Grid coordinate -> world position at surface height
     public Vector3 GridToWorld(Vector2Int cell)
     {
         return new Vector3(cell.x * gridSize, surfaceY, cell.y * gridSize);
