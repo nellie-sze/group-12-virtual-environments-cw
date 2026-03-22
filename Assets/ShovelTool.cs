@@ -18,7 +18,7 @@ public class ShovelTool : MonoBehaviour
     [Tooltip("Small vertical offset to keep the placed object above the surface and avoid z-fighting.")]
     public float surfaceEpsilon = 0.001f;
 
-    [Header("Prefabs")]
+    [Header("Ghost Prefabs")]
     public GameObject straightPrefab;
     public GameObject cornerPrefab;
 
@@ -37,6 +37,7 @@ public class ShovelTool : MonoBehaviour
     private int[]       cachedLayers;
     private Transform[] cachedTransforms;
     private float       topSurfaceY;
+    private Collider    surfaceCollider;
 
     private readonly List<Color> ghostBaseColors = new List<Color>();
 
@@ -54,8 +55,12 @@ public class ShovelTool : MonoBehaviour
 
         CreateGhost();
 
-        Collider surfaceCollider = GridManager.Instance.gridSurfaceRenderer.GetComponent<Collider>();
-        topSurfaceY = surfaceCollider.bounds.max.y;
+        if (GridManager.Instance != null && GridManager.Instance.gridSurfaceRenderer != null)
+        {
+            surfaceCollider = GridManager.Instance.gridSurfaceRenderer.GetComponent<Collider>();
+            if (surfaceCollider != null)
+                topSurfaceY = surfaceCollider.bounds.max.y;
+        }
     }
 
     void OnEnable()
@@ -175,7 +180,7 @@ public class ShovelTool : MonoBehaviour
             return;
         }
 
-        if (Physics.Raycast(ray, out RaycastHit hit))
+        if (surfaceCollider != null && surfaceCollider.Raycast(ray, out RaycastHit hit, 100f))
         {
             Vector3 snapped = new Vector3(
                 Mathf.Round(hit.point.x / gridSize) * gridSize,
@@ -194,6 +199,10 @@ public class ShovelTool : MonoBehaviour
                 ApplyGhostBaseTransparency(0.5f);
             else
                 SetGhostColor(invalidColor);
+        }
+        else if (ghostHighlight != null)
+        {
+            ApplyGhostBaseTransparency(0.0f);
         }
     }
 
@@ -324,10 +333,22 @@ public class ShovelTool : MonoBehaviour
     {
         GameObject wrapper = new GameObject(wrapperName);
         GameObject visual  = Instantiate(prefab, wrapper.transform);
+        StripGhostOnlyComponents(visual);
         visual.transform.localPosition = Vector3.zero;
         visual.transform.localRotation = Quaternion.identity;
         CenterVisualUnderRoot(wrapper.transform, visual.transform);
         return wrapper;
+    }
+
+    void StripGhostOnlyComponents(GameObject ghostVisual)
+    {
+        if (ghostVisual == null) return;
+
+        foreach (var networked in ghostVisual.GetComponentsInChildren<NetworkedSpawnedTransform>(true))
+            Destroy(networked);
+
+        foreach (var agent in ghostVisual.GetComponentsInChildren<PathBlockAgent>(true))
+            Destroy(agent);
     }
 
     void CenterVisualUnderRoot(Transform root, Transform visual)
