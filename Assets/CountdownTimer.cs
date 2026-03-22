@@ -23,11 +23,9 @@ public class CountdownTimer : MonoBehaviour
     void Start()
     {
         timeRemaining = totalTime;
-        UpdateDisplay();
 
-        // Do NOT call StartTimer() here.
-        // GameManager.OnInstructionsDismissed() -> EnterState(Playing) -> StartTimer()
-        // This ensures the timer only starts once the instructions are dismissed.
+        // Keep the display blank until the game starts — StartTimer() reveals it.
+        if (timerText != null) timerText.text = "";
     }
 
     void Update()
@@ -58,7 +56,7 @@ public class CountdownTimer : MonoBehaviour
 
     void OnTimerEnd()
     {
-        if (timerText != null) timerText.text = "END GAME";
+        ShowEndGame();
         Debug.Log("[CountdownTimer] Time's up!");
 
         // Delegate to GameManager — it decides whether to trigger lose state
@@ -68,9 +66,16 @@ public class CountdownTimer : MonoBehaviour
             Debug.LogWarning("[CountdownTimer] GameManager.Instance is null — add a GameManager to the scene.");
     }
 
-    public void StartTimer() => isRunning = true;
+    public void StartTimer() { isRunning = true; UpdateDisplay(); }
     public void StopTimer()  => isRunning = false;
     public void ResetTimer() { timeRemaining = totalTime; isRunning = false; UpdateDisplay(); }
+
+    /// <summary>Stops the timer and displays the end-game text.</summary>
+    public void ShowEndGame()
+    {
+        isRunning = false;
+        if (timerText != null) timerText.text = "END GAME";
+    }
 
     /// Remaining time as a 0–1 fraction.
     public float FractionRemaining => totalTime > 0f ? timeRemaining / totalTime : 0f;

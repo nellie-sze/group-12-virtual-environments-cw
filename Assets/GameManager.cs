@@ -19,6 +19,10 @@ public class GameManager : MonoBehaviour
     [Tooltip("The instructions UI controller shown at game start.")]
     public InstructionsUI instructionsUI;
 
+    [Header("Lives")]
+    [Tooltip("Manages the shared heart lives display. Auto-found if left empty.")]
+    public LivesManager livesManager;
+
     [Header("Spawners")]
     [Tooltip("Auto-found if left empty.")]
     public ObstacleSpawner    obstacleSpawner;
@@ -41,7 +45,8 @@ public class GameManager : MonoBehaviour
     {
         _net = NetworkScene.Register(this);
 
-        // Auto-find spawners if not assigned in Inspector
+        // Auto-find systems if not assigned in Inspector
+        if (livesManager       == null) livesManager       = FindFirstObjectByType<LivesManager>();
         if (obstacleSpawner    == null) obstacleSpawner    = FindFirstObjectByType<ObstacleSpawner>();
         if (lavaSpawner        == null) lavaSpawner        = FindFirstObjectByType<LavaSpawner>();
         if (villagerSpawner    == null) villagerSpawner    = FindFirstObjectByType<VillagerSpawner>();
@@ -79,9 +84,9 @@ public class GameManager : MonoBehaviour
                 break;
 
             case GameState.Lost:
-                if (countdownTimer != null) countdownTimer.StopTimer();
+                if (countdownTimer != null) countdownTimer.ShowEndGame();
                 if (endGameAnimator != null) endGameAnimator.PlayLoseSequence();
-                Debug.Log("[GameManager] Players LOSE — time ran out!");
+                Debug.Log("[GameManager] Players LOSE — time ran out or lives depleted!");
                 break;
         }
     }
@@ -96,6 +101,9 @@ public class GameManager : MonoBehaviour
             instructionsUI.ForceHide();
 
         EnterState(GameState.Playing);
+
+        // All peers initialise the lives display locally (hearts are non-networked objects)
+        if (livesManager != null) livesManager.InitLives();
 
         if (spawnObjects)
         {
@@ -137,7 +145,20 @@ public class GameManager : MonoBehaviour
     public bool IsGameOver => CurrentState == GameState.Lost || CurrentState == GameState.Won;
 
     // Called by VillagerAgent when a villager dies in lava.
+    // Delegates to LivesManager which deducts a life and triggers game over
+    // only when the last life is gone.
     public void OnVillagerDied()
+    {
+        if (CurrentState != GameState.Playing) return;
+
+        if (livesManager != null)
+            livesManager.LoseLife();
+        else
+            EnterState(GameState.Lost); // fallback if no LivesManager in scene
+    }
+
+    // Called by LivesManager when all lives have been consumed.
+    public void OnAllLivesLost()
     {
         if (CurrentState != GameState.Playing) return;
         EnterState(GameState.Lost);
