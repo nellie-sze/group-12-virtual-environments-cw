@@ -149,6 +149,7 @@ public class GridManager : MonoBehaviour
     {
         if (cells.ContainsKey(cell)) return false;
         cells[cell] = new GridCell { type = type, placedObject = obj };
+        Debug.Log($"[GridManager] Placed {type} at {cell} (world {GridToWorld(cell)})");
         return true;
     }
 
@@ -156,6 +157,7 @@ public class GridManager : MonoBehaviour
     public bool TryRemove(Vector2Int cell)
     {
         if (!cells.TryGetValue(cell, out var data)) return false;
+        CellType type = data.type; // Cache type for logging after potential removal
 
         if (data.placedObject != null)
         {
@@ -175,7 +177,7 @@ public class GridManager : MonoBehaviour
         {
             cells.Remove(cell);
         }
-
+        Debug.Log($"[GridManager] Removed {type} at {cell} (world {GridToWorld(cell)})");
         return true;
     }
 

@@ -104,13 +104,13 @@ public class PathChecker : MonoBehaviour
         }
 
         Vector3 worldPos = GridManager.Instance.GridToWorld(cell);
-        Debug.Log($"[PathChecker] VALID block placed.\n" + $"Grid: {cell}\n" + $"World: {worldPos}\n" + $"Open sides: {string.Join(", ", node.openSides)}");
+        Debug.Log($"[PathChecker] VALID path placed.\n" + $"Grid: {cell}\n" + $"World: {worldPos}\n" + $"Open sides: {string.Join(", ", node.openSides)}");
     }
 
     public void ReportInvalidPlacement(Vector2Int cell, GameObject ghostObject = null)
     {
         Vector3 worldPos = GridManager.Instance.GridToWorld(cell);
-        Debug.LogWarning($"[PathChecker] INVALID placement at grid {cell} world {worldPos}\n" + $"Reason: block has no valid directional connection to an adjacent " + $"Start or Path cell in the current rotation.");
+        Debug.LogWarning($"[PathChecker] INVALID path placement attempted at grid {cell} world {worldPos}\n" + $"Reason: block has no valid directional connection to an adjacent " + $"Start or Path cell in the current rotation.");
     }
 
     public void UnregisterNode(Vector2Int cell)
@@ -118,7 +118,7 @@ public class PathChecker : MonoBehaviour
         pathNodes.Remove(cell);
         cellObjects.Remove(cell);
         originalColors.Remove(cell);
-        Debug.Log($"[PathChecker] Node unregistered at {cell}");
+        Debug.Log($"[PathChecker] Node removed at {cell}");
     }
 
     public bool HasExitToward(Vector2Int cell, Vector2Int direction) =>
