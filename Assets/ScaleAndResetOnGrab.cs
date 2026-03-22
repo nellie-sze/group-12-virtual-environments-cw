@@ -213,8 +213,8 @@ public class ScaleAndResetOnGrab : MonoBehaviour
 
     private void LateUpdate()
     {
-        // Prevent tool drifting when not held 
-        if (grab != null && !grab.isSelected)
+        // Prevent tool drifting when idle locally, but do not stomp a valid remote lease.
+        if (grab != null && !grab.isSelected && !IsLeaseValid())
         {
             transform.localScale = originalScale;
             transform.position = originalPosition;

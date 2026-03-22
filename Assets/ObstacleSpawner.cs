@@ -10,7 +10,7 @@ public class ObstacleSpawner : MonoBehaviour
 
     [Header("Placement")]
     [Tooltip("Buffer from the grid edge (matches GridSystem's placement radius check)")]
-    public float edgeBufferRadius = 0.5f;
+    public float edgeBufferRadius = 0.2f;
     private NetworkSpawnManager spawnManager;
     private bool isSpawning;
 
@@ -41,6 +41,10 @@ public class ObstacleSpawner : MonoBehaviour
     public int flowerCount = 5;
 
     public bool spawnOnStart;
+
+    private const float GridFitMargin = 0.95f;
+    private const float FlowerScaleMultiplier = 0.33f;
+    private const float TreePostFitMultiplier = 1.6f;
 
     void Awake()
     {
@@ -184,22 +188,55 @@ public class ObstacleSpawner : MonoBehaviour
     {
         if (obj == null || GridManager.Instance == null) return;
 
+        if (IsSpawnedFromPrefabSet(obj, flowerPrefabs))
+        {
+            obj.transform.localScale *= FlowerScaleMultiplier;
+            return;
+        }
+
+        float maxWidthXZ = GetMaxWidthXZ(obj);
+        float cellSize = GridManager.Instance.gridSize;
+        if (cellSize <= 0f || maxWidthXZ <= 0f) return;
+
+        ShrinkToTargetWidth(obj, maxWidthXZ, cellSize * GridFitMargin);
+
+        if (IsSpawnedFromPrefabSet(obj, treePrefabs))
+        {
+            obj.transform.localScale *= TreePostFitMultiplier;
+        }
+    }
+
+    private float GetMaxWidthXZ(GameObject obj)
+    {
         var renderers = obj.GetComponentsInChildren<Renderer>();
-        if (renderers == null || renderers.Length == 0) return;
+        if (renderers == null || renderers.Length == 0) return 0f;
 
         Bounds bounds = renderers[0].bounds;
         for (int i = 1; i < renderers.Length; i++)
             bounds.Encapsulate(renderers[i].bounds);
 
-        float maxWidthXZ = Mathf.Max(bounds.size.x, bounds.size.z);
-        float cellSize   = GridManager.Instance.gridSize;
-        if (cellSize <= 0f || maxWidthXZ <= 0f) return;
+        return Mathf.Max(bounds.size.x, bounds.size.z);
+    }
 
-        float targetMaxWidth = cellSize * 0.95f;
-        if (maxWidthXZ <= targetMaxWidth) return;
+    private void ShrinkToTargetWidth(GameObject obj, float currentMaxWidthXZ, float targetMaxWidthXZ)
+    {
+        if (currentMaxWidthXZ <= targetMaxWidthXZ) return;
 
-        float scaleFactor = targetMaxWidth / maxWidthXZ;
-        obj.transform.localScale = obj.transform.localScale * scaleFactor;
+        float scaleFactor = targetMaxWidthXZ / currentMaxWidthXZ;
+        obj.transform.localScale *= scaleFactor;
+    }
+
+    private bool IsSpawnedFromPrefabSet(GameObject obj, GameObject[] prefabSet)
+    {
+        if (obj == null || prefabSet == null) return false;
+
+        foreach (var prefab in prefabSet)
+        {
+            if (prefab != null && obj.name.StartsWith(prefab.name))
+                return true;
+        }
+
+        return false;
     }
 
     void SpawnN(GameObject[] prefabs, CellType type, int count)
@@ -223,7 +260,8 @@ public class ObstacleSpawner : MonoBehaviour
             GameObject obj = spawnManager.SpawnWithPeerScope(prefab);
             if (obj == null) continue;
 
-            obj.transform.SetPositionAndRotation(pos, Quaternion.identity);
+            Quaternion rotation = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+            obj.transform.SetPositionAndRotation(pos, rotation);
             FitToSingleGridCell(obj);
 
             var sync = obj.GetComponent<NetworkedSpawnedTransform>();
