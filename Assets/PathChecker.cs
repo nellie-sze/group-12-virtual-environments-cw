@@ -104,18 +104,13 @@ public class PathChecker : MonoBehaviour
         }
 
         Vector3 worldPos = GridManager.Instance.GridToWorld(cell);
-        Debug.Log($"[PathChecker] VALID block placed.\n" +
-                  $"  Grid  : {cell}\n" +
-                  $"  World : {worldPos}\n" +
-                  $"  Open sides : {string.Join(", ", node.openSides)}");
+        Debug.Log($"[PathChecker] VALID block placed.\n" + $"Grid: {cell}\n" + $"World: {worldPos}\n" + $"Open sides: {string.Join(", ", node.openSides)}");
     }
 
     public void ReportInvalidPlacement(Vector2Int cell, GameObject ghostObject = null)
     {
         Vector3 worldPos = GridManager.Instance.GridToWorld(cell);
-        Debug.LogWarning($"[PathChecker] INVALID placement at grid {cell}  world {worldPos}\n" +
-                         $"  Reason: block has no valid directional connection to an adjacent " +
-                         $"Start or Path cell in the current rotation.");
+        Debug.LogWarning($"[PathChecker] INVALID placement at grid {cell} world {worldPos}\n" + $"Reason: block has no valid directional connection to an adjacent " + $"Start or Path cell in the current rotation.");
     }
 
     public void UnregisterNode(Vector2Int cell)
@@ -241,8 +236,7 @@ public class PathChecker : MonoBehaviour
         return false;
     }
 
-    private void OnPathComplete(Vector2Int startCell, Vector2Int finishCell,
-                                Dictionary<Vector2Int, Vector2Int> parent)
+    private void OnPathComplete(Vector2Int startCell, Vector2Int finishCell,  Dictionary<Vector2Int, Vector2Int> parent)
     {
         // Walk back from finish to start via the parent map
         Vector2Int step = finishCell;

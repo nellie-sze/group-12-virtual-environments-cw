@@ -118,8 +118,7 @@ public class GridManager : MonoBehaviour
 
     public bool IsInBounds(Vector2Int cell)
     {
-        return cell.x >= gridMin.x && cell.x <= gridMax.x &&
-               cell.y >= gridMin.y && cell.y <= gridMax.y;
+        return cell.x >= gridMin.x && cell.x <= gridMax.x && cell.y >= gridMin.y && cell.y <= gridMax.y;
     }
 
     // World position check against the surface bounds (XZ only).
@@ -131,10 +130,8 @@ public class GridManager : MonoBehaviour
         }
 
         Bounds bounds = gridSurfaceRenderer.bounds;
-        return worldPos.x >= bounds.min.x &&
-               worldPos.x <= bounds.max.x &&
-               worldPos.z >= bounds.min.z &&
-               worldPos.z <= bounds.max.z;
+        return worldPos.x >= bounds.min.x && worldPos.x <= bounds.max.x &&
+            worldPos.z >= bounds.min.z && worldPos.z <= bounds.max.z;
     }
 
     // Matches GridSystem's "radius" placement buffer (prevents overhang at edges).
@@ -184,8 +181,8 @@ public class GridManager : MonoBehaviour
 
     public bool IsOccupied(Vector2Int cell) => cells.ContainsKey(cell);
 
-    /// Removes all GridManager entries that point to this object WITHOUT destroying it.
-    /// Used by ObstacleSpawner.HandleRemove — destruction is handled separately by NSM.Despawn or Destroy.
+    // Removes all GridManager entries that point to this object WITHOUT destroying it.
+    // Used by ObstacleSpawner.HandleRemove — destruction is handled separately by NSM.Despawn or Destroy.
     public void ClearCellsForObject(GameObject obj)
     {
         if (obj == null) return;

@@ -28,9 +28,9 @@ public class GameManager : MonoBehaviour
 
     [Header("Spawners")]
     [Tooltip("Auto-found if left empty.")]
-    public ObstacleSpawner    obstacleSpawner;
-    public LavaSpawner        lavaSpawner;
-    public VillagerSpawner    villagerSpawner;
+    public ObstacleSpawner obstacleSpawner;
+    public LavaSpawner lavaSpawner;
+    public VillagerSpawner villagerSpawner;
     public StartFinishSpawner startFinishSpawner;
 
     [Header("Block Decay")]
@@ -56,10 +56,10 @@ public class GameManager : MonoBehaviour
         _roomClient = FindFirstObjectByType<RoomClient>();
 
         // Auto-find systems if not assigned in Inspector
-        if (livesManager       == null) livesManager       = FindFirstObjectByType<LivesManager>();
-        if (obstacleSpawner    == null) obstacleSpawner    = FindFirstObjectByType<ObstacleSpawner>();
-        if (lavaSpawner        == null) lavaSpawner        = FindFirstObjectByType<LavaSpawner>();
-        if (villagerSpawner    == null) villagerSpawner    = FindFirstObjectByType<VillagerSpawner>();
+        if (livesManager == null) livesManager = FindFirstObjectByType<LivesManager>();
+        if (obstacleSpawner == null) obstacleSpawner = FindFirstObjectByType<ObstacleSpawner>();
+        if (lavaSpawner == null) lavaSpawner = FindFirstObjectByType<LavaSpawner>();
+        if (villagerSpawner == null) villagerSpawner = FindFirstObjectByType<VillagerSpawner>();
         if (startFinishSpawner == null) startFinishSpawner = FindFirstObjectByType<StartFinishSpawner>();
 
         EnterState(GameState.Waiting);
@@ -123,9 +123,9 @@ public class GameManager : MonoBehaviour
             // All peers call SpawnAll/Spawn. Leader election inside each spawner
             // ensures only the leader (lowest UUID) actually runs the spawn logic.
             if (startFinishSpawner != null) startFinishSpawner.SpawnAll();
-            if (obstacleSpawner    != null) obstacleSpawner.SpawnAll();
-            if (lavaSpawner        != null) lavaSpawner.SpawnAll();
-            if (villagerSpawner    != null) villagerSpawner.Spawn();
+            if (obstacleSpawner != null) obstacleSpawner.SpawnAll();
+            if (lavaSpawner != null) lavaSpawner.SpawnAll();
+            if (villagerSpawner != null) villagerSpawner.Spawn();
         }
     }
 
@@ -154,7 +154,7 @@ public class GameManager : MonoBehaviour
         EnterState(GameState.Lost);
     }
 
-    public bool IsPlaying  => CurrentState == GameState.Playing;
+    public bool IsPlaying => CurrentState == GameState.Playing;
     public bool IsGameOver => CurrentState == GameState.Lost || CurrentState == GameState.Won;
 
     // ── Block decay ───────────────────────────────────────────────────────────
