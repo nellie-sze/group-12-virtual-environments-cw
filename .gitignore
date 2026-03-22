@@ -98,3 +98,12 @@ InitTestScene*.unity*
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
 .claude/
+
+# macOS metadata
+.DS_Store
+
+# Visual Studio auto-generated solution files
+*.slnx
+
+# Visual Studio upgrade logs
+UpgradeLog*.htm
