@@ -1,6 +1,9 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using Ubiq.Messaging;
+using Ubiq.Rooms;
 
 public class GameManager : MonoBehaviour
 {
@@ -30,7 +33,13 @@ public class GameManager : MonoBehaviour
     public VillagerSpawner    villagerSpawner;
     public StartFinishSpawner startFinishSpawner;
 
+    [Header("Block Decay")]
+    [Tooltip("Seconds between each random path-block removal during gameplay.")]
+    public float blockDecayInterval = 20f;
+
     private NetworkContext _net;
+    private RoomClient _roomClient;
+    private Coroutine _decayCoroutine;
 
     [Serializable]
     private struct GameMessage { public string type; public bool includesSpawn; }
@@ -43,7 +52,8 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        _net = NetworkScene.Register(this);
+        _net        = NetworkScene.Register(this);
+        _roomClient = FindFirstObjectByType<RoomClient>();
 
         // Auto-find systems if not assigned in Inspector
         if (livesManager       == null) livesManager       = FindFirstObjectByType<LivesManager>();
@@ -75,15 +85,18 @@ public class GameManager : MonoBehaviour
 
             case GameState.Playing:
                 if (countdownTimer != null) countdownTimer.StartTimer();
+                _decayCoroutine = StartCoroutine(BlockDecayLoop());
                 break;
 
             case GameState.Won:
+                if (_decayCoroutine != null) { StopCoroutine(_decayCoroutine); _decayCoroutine = null; }
                 if (countdownTimer != null) countdownTimer.StopTimer();
                 if (endGameAnimator != null) endGameAnimator.PlayWinSequence();
                 Debug.Log("[GameManager] Players WIN — path complete!");
                 break;
 
             case GameState.Lost:
+                if (_decayCoroutine != null) { StopCoroutine(_decayCoroutine); _decayCoroutine = null; }
                 if (countdownTimer != null) countdownTimer.ShowEndGame();
                 if (endGameAnimator != null) endGameAnimator.PlayLoseSequence();
                 Debug.Log("[GameManager] Players LOSE — time ran out or lives depleted!");
@@ -143,6 +156,41 @@ public class GameManager : MonoBehaviour
 
     public bool IsPlaying  => CurrentState == GameState.Playing;
     public bool IsGameOver => CurrentState == GameState.Lost || CurrentState == GameState.Won;
+
+    // ── Block decay ───────────────────────────────────────────────────────────
+
+    private IEnumerator BlockDecayLoop()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(blockDecayInterval);
+
+            // Only the leader peer picks and broadcasts the removal.
+            if (!IsLeaderPeer()) continue;
+            if (GridManager.Instance == null || PathBlockManager.Instance == null) continue;
+
+            var pathCells = new List<Vector2Int>();
+            foreach (var kvp in GridManager.Instance.GetAllCells())
+                if (kvp.Value.type == CellType.Path)
+                    pathCells.Add(kvp.Key);
+
+            if (pathCells.Count == 0) continue;
+
+            var cell = pathCells[UnityEngine.Random.Range(0, pathCells.Count)];
+            Debug.Log($"[GameManager] Block decay — removing path block at {cell}");
+            PathBlockManager.Instance.RequestRemove(cell);
+        }
+    }
+
+    private bool IsLeaderPeer()
+    {
+        if (_roomClient == null || _roomClient.Me == null) return true;
+        var leaderId = _roomClient.Me.uuid;
+        foreach (var p in _roomClient.Peers)
+            if (string.CompareOrdinal(p.uuid, leaderId) < 0)
+                leaderId = p.uuid;
+        return _roomClient.Me.uuid == leaderId;
+    }
 
     // Called by VillagerAgent when a villager dies in lava.
     // Delegates to LivesManager which deducts a life and triggers game over
