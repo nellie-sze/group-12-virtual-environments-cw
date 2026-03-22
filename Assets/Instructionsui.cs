@@ -113,6 +113,12 @@ public class InstructionsUI : MonoBehaviour
     /// </summary>
     public void ForceHide()
     {
+        if (!isActiveAndEnabled)
+        {
+            CompleteHideImmediate();
+            return;
+        }
+
         if (startButton != null) startButton.interactable = false;
         if (fadeCoroutine != null) StopCoroutine(fadeCoroutine);
         fadeCoroutine = StartCoroutine(FadeTo(0f, fadeOutDuration));
@@ -122,14 +128,14 @@ public class InstructionsUI : MonoBehaviour
     IEnumerator HideAfterFade()
     {
         yield return new WaitForSeconds(fadeOutDuration);
-        if (panelRoot != null) panelRoot.SetActive(false);
+        CompleteHideImmediate();
     }
 
     IEnumerator FadeOutThenNotify()
     {
         yield return StartCoroutine(FadeTo(0f, fadeOutDuration));
 
-        if (panelRoot != null) panelRoot.SetActive(false);
+        CompleteHideImmediate();
 
         if (GameManager.Instance != null)
             GameManager.Instance.OnInstructionsDismissed();
@@ -153,5 +159,11 @@ public class InstructionsUI : MonoBehaviour
         }
 
         canvasGroup.alpha = targetAlpha;
+    }
+
+    void CompleteHideImmediate()
+    {
+        if (canvasGroup != null) canvasGroup.alpha = 0f;
+        if (panelRoot != null) panelRoot.SetActive(false);
     }
 }

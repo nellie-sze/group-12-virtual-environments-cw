@@ -92,7 +92,7 @@ public class GameManager : MonoBehaviour
         if (CurrentState != GameState.Waiting) return;
 
         // Dismiss instructions panel on this peer if still visible
-        if (instructionsUI != null)
+        if (instructionsUI != null && instructionsUI.gameObject.activeInHierarchy)
             instructionsUI.ForceHide();
 
         EnterState(GameState.Playing);
