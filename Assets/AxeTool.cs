@@ -9,6 +9,7 @@ public class AxeTool : MonoBehaviour
     [Header("Tool")]
     public XRGrabInteractable axeGrab;
     public float gridSize;
+
     [Header("Ghost Prefab")]
     public GameObject ghostPrefab;
     public bool scaleGhostToGridCell = true;
@@ -16,15 +17,14 @@ public class AxeTool : MonoBehaviour
     public bool useMouseCursor = false;
 
     [Header("Ghost Colours")]
-    private Color validColor   = new Color(0f,   1f,   0f,   0.5f); // green  = hovering a tree
-    private Color invalidColor = new Color(1f,   0.3f, 0f,   0.5f); // orange = not a tree
+    private Color validColor = new Color(0f, 1f, 0f, 0.5f); // green  = hovering a tree
+    private Color invalidColor = new Color(1f, 0.3f, 0f, 0.5f); // orange = not a tree
 
     private bool isHeld = false;
     private GameObject ghostHighlight;
     private int[] cachedLayers;
     private Transform[] cachedTransforms;
     private float topSurfaceY;
-
 
     void Start()
     {
@@ -51,19 +51,8 @@ public class AxeTool : MonoBehaviour
         if (ghostHighlight != null) Destroy(ghostHighlight);
     }
 
-    void OnGrab(SelectEnterEventArgs args)
-    {
-        isHeld = true;
-        SetHeldRaycastIgnored(true);
-        ghostHighlight.SetActive(true);
-    }
-
-    void OnRelease(SelectExitEventArgs args)
-    {
-        isHeld = false;
-        SetHeldRaycastIgnored(false);
-        ghostHighlight.SetActive(false);
-    }
+    void OnGrab(SelectEnterEventArgs args)   { isHeld = true;  SetHeldRaycastIgnored(true);  ghostHighlight.SetActive(true);  }
+    void OnRelease(SelectExitEventArgs args) { isHeld = false; SetHeldRaycastIgnored(false); ghostHighlight.SetActive(false); }
     void OnActivated(ActivateEventArgs args) => TryChop();
 
     void SetHeldRaycastIgnored(bool ignored)
@@ -71,43 +60,34 @@ public class AxeTool : MonoBehaviour
         if (ignored)
         {
             cachedTransforms = GetComponentsInChildren<Transform>(true);
-            cachedLayers = new int[cachedTransforms.Length];
+            cachedLayers     = new int[cachedTransforms.Length];
             for (int i = 0; i < cachedTransforms.Length; i++)
             {
                 cachedLayers[i] = cachedTransforms[i].gameObject.layer;
-                cachedTransforms[i].gameObject.layer = 2; // Ignore Raycast
+                cachedTransforms[i].gameObject.layer = 2;
             }
         }
         else
         {
-            if (cachedTransforms == null || cachedLayers == null)
-                return;
-
+            if (cachedTransforms == null || cachedLayers == null) return;
             for (int i = 0; i < cachedTransforms.Length; i++)
-            {
-                if (cachedTransforms[i] == null)
-                    continue;
-
-                cachedTransforms[i].gameObject.layer = cachedLayers[i];
-            }
+                if (cachedTransforms[i] != null)
+                    cachedTransforms[i].gameObject.layer = cachedLayers[i];
         }
     }
 
     void Update()
     {
         if (!isHeld) return;
-
-        // Desktop fallback: T key
-        if (Keyboard.current != null && Keyboard.current.tKey.wasPressedThisFrame)
-            TryChop();
-
+        if (Keyboard.current != null && Keyboard.current.tKey.wasPressedThisFrame) TryChop();
         UpdateGhostPosition();
     }
 
-    // ── same mouse-ray pattern as GridSystem.UpdateGhostPosition ──────────────
     void UpdateGhostPosition()
     {
-        Ray ray;
+        if (Mouse.current == null || Camera.main == null || ghostHighlight == null) return;
+
+        Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
         if(!useMouseCursor && ghostHighlight != null && GridManager.Instance != null && Camera.main != null)
         {
             Vector3 origin = Camera.main.transform.position;
@@ -133,17 +113,16 @@ public class AxeTool : MonoBehaviour
             Vector3 snapped = new Vector3(
                 Mathf.Round(hit.point.x / gridSize) * gridSize,
                 topSurfaceY,
-                Mathf.Round(hit.point.z / gridSize) * gridSize
-            );
+                Mathf.Round(hit.point.z / gridSize) * gridSize);
 
             ghostHighlight.transform.position = snapped;
 
             Vector2Int cell = GridManager.Instance.WorldToGrid(hit.point);
             if (!GridManager.Instance.IsWithinGridSurfaceBuffered(ghostHighlight.transform.position, gridSize / 2f))
-                SetGhostColor(new Color(1f,   1f,   1f,   0f));
+                SetGhostColor(new Color(1f, 1f, 1f, 0f));
             else if (GridManager.Instance.IsInBounds(cell)
-                    && GridManager.Instance.TryGetCell(cell, out var data)
-                    && (data.type == CellType.Tree || data.type == CellType.Flower))
+                  && GridManager.Instance.TryGetCell(cell, out var data)
+                  && (data.type == CellType.Tree || data.type == CellType.Flower))
                 SetGhostColor(validColor);
             else
                 SetGhostColor(invalidColor);
@@ -156,53 +135,39 @@ public class AxeTool : MonoBehaviour
 
         Vector2Int cell = GridManager.Instance.WorldToGrid(ghostHighlight.transform.position);
         Debug.Log($"Trying to chop at cell {cell}");
+
         if (GridManager.Instance.TryGetCell(cell, out var data)
             && (data.type == CellType.Tree || data.type == CellType.Flower))
+        {
+            // Play destroy sound at the cell's world position before removing it
+            AudioManager.Instance?.PlayTreeDestroySound(GridManager.Instance.GridToWorld(cell));
             ObstacleSpawner.Instance.RequestRemove(cell);
+        }
     }
 
     static void SetMaterialColor(Material mat, Color color)
     {
-        if (mat == null)
-            return;
-
-        if (mat.HasProperty("_BaseColor"))
-            mat.SetColor("_BaseColor", color);
-        if (mat.HasProperty("_Color"))
-            mat.SetColor("_Color", color);
-
+        if (mat == null) return;
+        if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", color);
+        if (mat.HasProperty("_Color"))     mat.SetColor("_Color",     color);
         mat.color = color;
     }
 
     static void ConfigureMaterialForTransparency(Material mat)
     {
-        if (mat == null)
-            return;
-
-        // URP Lit: set Surface Type to Transparent (Alpha blend).
+        if (mat == null) return;
         if (mat.HasProperty("_Surface"))
         {
             mat.SetFloat("_Surface", 1f);
-            if (mat.HasProperty("_Blend"))
-                mat.SetFloat("_Blend", 0f); // Alpha
-            if (mat.HasProperty("_AlphaClip"))
-                mat.SetFloat("_AlphaClip", 0f);
-            if (mat.HasProperty("_QueueControl"))
-                mat.SetFloat("_QueueControl", 1f); // UserOverride
-            if (mat.HasProperty("_ZWriteControl"))
-                mat.SetFloat("_ZWriteControl", 0f);
-            if (mat.HasProperty("_ZWrite"))
-                mat.SetFloat("_ZWrite", 0f);
-
-            if (mat.HasProperty("_SrcBlend"))
-                mat.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
-            if (mat.HasProperty("_DstBlend"))
-                mat.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
-            if (mat.HasProperty("_SrcBlendAlpha"))
-                mat.SetFloat("_SrcBlendAlpha", (float)BlendMode.One);
-            if (mat.HasProperty("_DstBlendAlpha"))
-                mat.SetFloat("_DstBlendAlpha", (float)BlendMode.OneMinusSrcAlpha);
-
+            if (mat.HasProperty("_Blend"))         mat.SetFloat("_Blend",         0f);
+            if (mat.HasProperty("_AlphaClip"))     mat.SetFloat("_AlphaClip",     0f);
+            if (mat.HasProperty("_QueueControl"))  mat.SetFloat("_QueueControl",  1f);
+            if (mat.HasProperty("_ZWriteControl")) mat.SetFloat("_ZWriteControl", 0f);
+            if (mat.HasProperty("_ZWrite"))        mat.SetFloat("_ZWrite",        0f);
+            if (mat.HasProperty("_SrcBlend"))      mat.SetFloat("_SrcBlend",      (float)BlendMode.SrcAlpha);
+            if (mat.HasProperty("_DstBlend"))      mat.SetFloat("_DstBlend",      (float)BlendMode.OneMinusSrcAlpha);
+            if (mat.HasProperty("_SrcBlendAlpha")) mat.SetFloat("_SrcBlendAlpha", (float)BlendMode.One);
+            if (mat.HasProperty("_DstBlendAlpha")) mat.SetFloat("_DstBlendAlpha", (float)BlendMode.OneMinusSrcAlpha);
             mat.SetOverrideTag("RenderType", "Transparent");
             mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
             mat.DisableKeyword("_ALPHATEST_ON");
@@ -214,90 +179,58 @@ public class AxeTool : MonoBehaviour
 
     void ScaleGhostToCell(GameObject target)
     {
-        if (target == null || !scaleGhostToGridCell || gridSize <= 0.0001f)
-            return;
-
+        if (target == null || !scaleGhostToGridCell || gridSize <= 0.0001f) return;
         Renderer[] renderers = target.GetComponentsInChildren<Renderer>();
-        if (renderers == null || renderers.Length == 0)
-            return;
+        if (renderers == null || renderers.Length == 0) return;
 
-        Bounds combined = new Bounds();
-        bool hasBounds = false;
-
+        Bounds    combined       = new Bounds();
+        bool      hasBounds      = false;
         Matrix4x4 rootWorldToLocal = target.transform.worldToLocalMatrix;
 
         foreach (Renderer renderer in renderers)
         {
-            if (renderer == null)
-                continue;
-
-            Bounds lb = renderer.localBounds;
-            Vector3 center = lb.center;
+            if (renderer == null) continue;
+            Bounds  lb      = renderer.localBounds;
+            Vector3 center  = lb.center;
             Vector3 extents = lb.extents;
-
             Vector3[] corners =
             {
-                new Vector3(center.x - extents.x, center.y - extents.y, center.z - extents.z),
-                new Vector3(center.x - extents.x, center.y - extents.y, center.z + extents.z),
-                new Vector3(center.x - extents.x, center.y + extents.y, center.z - extents.z),
-                new Vector3(center.x - extents.x, center.y + extents.y, center.z + extents.z),
-                new Vector3(center.x + extents.x, center.y - extents.y, center.z - extents.z),
-                new Vector3(center.x + extents.x, center.y - extents.y, center.z + extents.z),
-                new Vector3(center.x + extents.x, center.y + extents.y, center.z - extents.z),
-                new Vector3(center.x + extents.x, center.y + extents.y, center.z + extents.z)
+                new Vector3(center.x-extents.x, center.y-extents.y, center.z-extents.z),
+                new Vector3(center.x-extents.x, center.y-extents.y, center.z+extents.z),
+                new Vector3(center.x-extents.x, center.y+extents.y, center.z-extents.z),
+                new Vector3(center.x-extents.x, center.y+extents.y, center.z+extents.z),
+                new Vector3(center.x+extents.x, center.y-extents.y, center.z-extents.z),
+                new Vector3(center.x+extents.x, center.y-extents.y, center.z+extents.z),
+                new Vector3(center.x+extents.x, center.y+extents.y, center.z-extents.z),
+                new Vector3(center.x+extents.x, center.y+extents.y, center.z+extents.z)
             };
-
-            Matrix4x4 rendererLocalToRootLocal = rootWorldToLocal * renderer.transform.localToWorldMatrix;
-            for (int i = 0; i < corners.Length; i++)
+            Matrix4x4 toRoot = rootWorldToLocal * renderer.transform.localToWorldMatrix;
+            foreach (Vector3 corner in corners)
             {
-                Vector3 p = rendererLocalToRootLocal.MultiplyPoint3x4(corners[i]);
-                if (!hasBounds)
-                {
-                    combined = new Bounds(p, Vector3.zero);
-                    hasBounds = true;
-                }
-                else
-                {
-                    combined.Encapsulate(p);
-                }
+                Vector3 p = toRoot.MultiplyPoint3x4(corner);
+                if (!hasBounds) { combined = new Bounds(p, Vector3.zero); hasBounds = true; }
+                else            { combined.Encapsulate(p); }
             }
         }
 
-        if (!hasBounds)
-            return;
-
+        if (!hasBounds) return;
         float footprint = Mathf.Max(combined.size.x, combined.size.z);
-        if (footprint <= 0.0001f)
-            return;
-
-        float scale = gridSize / footprint;
-        target.transform.localScale = target.transform.localScale * scale;
+        if (footprint <= 0.0001f) return;
+        target.transform.localScale *= gridSize / footprint;
     }
 
     void ApplyGhostColour(Color color)
     {
-        if (ghostHighlight == null)
-            return;
-
-        Renderer[] renderers = ghostHighlight.GetComponentsInChildren<Renderer>();
-        foreach (Renderer renderer in renderers)
-        {
-            Material[] materials = renderer.materials;
-            for (int i = 0; i < materials.Length; i++)
+        if (ghostHighlight == null) return;
+        foreach (Renderer renderer in ghostHighlight.GetComponentsInChildren<Renderer>())
+            foreach (Material mat in renderer.materials)
             {
-                Material mat = materials[i];
-                if (mat == null)
-                    continue;
-
+                if (mat == null) continue;
                 ConfigureMaterialForTransparency(mat);
-                Color c = color;
-                c.a = color.a; // keep inspector alpha
-                SetMaterialColor(mat, c);
+                SetMaterialColor(mat, color);
             }
-        }
     }
 
-    // ── ghost setup ──
     void CreateGhost()
     {
         ghostHighlight = ghostPrefab != null
@@ -305,18 +238,12 @@ public class AxeTool : MonoBehaviour
             : GameObject.CreatePrimitive(PrimitiveType.Cube);
 
         foreach (Collider col in ghostHighlight.GetComponentsInChildren<Collider>())
-        {
             col.enabled = false;
-        }
 
         ScaleGhostToCell(ghostHighlight);
         ApplyGhostColour(invalidColor);
-
         ghostHighlight.SetActive(false);
     }
 
-    void SetGhostColor(Color color)
-    {
-        ApplyGhostColour(color);
-    }
+    void SetGhostColor(Color color) => ApplyGhostColour(color);
 }

@@ -353,7 +353,7 @@ public class GridSystem : MonoBehaviour
 
         PathChecker.Instance.RegisterNode(primaryCell, node, placed);
 
-        // Run BFS to check if Start → Finish is now fully connected
+        // Run BFS to check if Start -> Finish is now fully connected
         PathChecker.Instance.CheckPath();
     }
 

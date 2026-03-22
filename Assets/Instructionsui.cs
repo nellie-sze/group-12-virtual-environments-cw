@@ -72,16 +72,16 @@ public class InstructionsUI : MonoBehaviour
 
     void Start()
     {
-        if (titleText     != null && !string.IsNullOrEmpty(title))     titleText.text     = title;
+        if (titleText != null && !string.IsNullOrEmpty(title)) titleText.text = title;
         if (objectiveText != null && !string.IsNullOrEmpty(objective)) objectiveText.text = objective;
-        if (controlsText  != null && !string.IsNullOrEmpty(controls))  controlsText.text  = controls;
+        if (controlsText != null && !string.IsNullOrEmpty(controls))  controlsText.text  = controls;
 
         // Show the time limit if CountdownTimer is in the scene
         if (timeLimitText != null && CountdownTimer.Instance != null)
         {
-            int totalSecs  = Mathf.RoundToInt(CountdownTimer.Instance.totalTime);
-            int mins       = totalSecs / 60;
-            int secs       = totalSecs % 60;
+            int totalSecs = Mathf.RoundToInt(CountdownTimer.Instance.totalTime);
+            int mins = totalSecs / 60;
+            int secs = totalSecs % 60;
             timeLimitText.text = secs == 0
                 ? $"You have {mins} minute{(mins == 1 ? "" : "s")}!"
                 : $"You have {mins}:{secs:00} minutes!";
@@ -91,7 +91,7 @@ public class InstructionsUI : MonoBehaviour
             startButton.onClick.AddListener(OnStartButtonPressed);
 
         if (canvasGroup != null) canvasGroup.alpha = 0f;
-        if (panelRoot   != null) panelRoot.SetActive(true);
+        if (panelRoot != null) panelRoot.SetActive(true);
 
         if (fadeCoroutine != null) StopCoroutine(fadeCoroutine);
         fadeCoroutine = StartCoroutine(FadeTo(1f, fadeInDuration));
@@ -149,11 +149,11 @@ public class InstructionsUI : MonoBehaviour
         if (canvasGroup == null) yield break;
 
         float startAlpha = canvasGroup.alpha;
-        float elapsed    = 0f;
+        float elapsed = 0f;
 
         while (elapsed < duration)
         {
-            elapsed          += Time.deltaTime;
+            elapsed += Time.deltaTime;
             canvasGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, elapsed / duration);
             yield return null;
         }
