@@ -36,6 +36,7 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
     private Coroutine loop;
     private Coroutine releaseRoutine;
     private Coroutine remoteMoveRoutine;
+    private Coroutine pathFollowRoutine;
     private Rigidbody rb;
     private Collider cachedCollider;
 
@@ -302,6 +303,12 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
             releaseRoutine = null;
         }
 
+        if (pathFollowRoutine != null)
+        {
+            StopCoroutine(pathFollowRoutine);
+            pathFollowRoutine = null;
+        }
+
         // Avoid warnings with kinematic rigidbodies.
         if (rb != null && !rb.isKinematic)
         {
@@ -350,6 +357,44 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
             yield break;
         }
 
+        // Dropped onto a path cell — follow the path forward.
+        if (isAuthority && IsPathCell(rawCell))
+        {
+            Vector3 worldPos = grid.CellToWorld(rawCell, 0f);
+            Vector2Int gmCell = GridManager.Instance.WorldToGrid(worldPos);
+            var gmPath = PathChecker.Instance.GetPathFrom(gmCell);
+
+            if (gmPath.Count > 0)
+            {
+                // Convert GridManager path to BoardGrid cells
+                var boardPath = new List<Vector2Int>();
+                foreach (var gm in gmPath)
+                {
+                    Vector3 wp = GridManager.Instance.GridToWorld(gm);
+                    boardPath.Add(grid.Clamp(grid.WorldToCell(wp)));
+                }
+
+                cell = boardPath[0];
+                SnapToCell(cell);
+
+                if (rb != null && !rb.isKinematic)
+                {
+                    rb.linearVelocity = Vector3.zero;
+                    rb.angularVelocity = Vector3.zero;
+                }
+
+                state = VillagerState.Idle;
+                releaseRoutine = null;
+                HideDropPreview();
+
+                if (isAuthority)
+                    SendState(force: true);
+
+                pathFollowRoutine = StartCoroutine(FollowPathCoroutine(boardPath));
+                yield break;
+            }
+        }
+
         // Dropped onto a blocked cell (tree/rock/path) — redirect to nearest valid cell.
         if (!IsCellWalkable(rawCell))
             rawCell = FindNearestWalkableCell(rawCell);
@@ -388,16 +433,9 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
         gameObject.SetActive(false);
     }
 
-    // ── Grid-bridging walkability helpers ────────────────────────────
-    // These query GridManager live every call (no caching) so they
-    // always reflect the current board state, including runtime-placed
-    // path blocks, removed trees/rocks, and newly spawned lava.
-
-    /// <summary>
-    /// Returns true if the BoardGrid cell can be entered by a villager.
-    /// Blocked: Tree, Rock, Path. Walkable: Empty, Flower, Start, Finish, Lava.
-    /// Lava is walkable (entering it triggers death separately).
-    /// </summary>
+    // Returns true if the BoardGrid cell can be entered by a villager.
+    // Blocked: Tree, Rock, Path. Walkable: Empty, Flower, Start, Finish, Lava.
+    // Lava is walkable (entering it triggers death separately).
     bool IsCellWalkable(Vector2Int boardCell)
     {
         if (!grid.InBounds(boardCell))
@@ -423,9 +461,7 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
         }
     }
 
-    /// <summary>
-    /// Returns true if the BoardGrid cell overlaps a GridManager Lava cell.
-    /// </summary>
+    // Returns true if the BoardGrid cell overlaps a GridManager Lava cell.
     bool IsCellLava(Vector2Int boardCell)
     {
         if (GridManager.Instance == null)
@@ -440,10 +476,25 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
         return false;
     }
 
-    /// <summary>
-    /// BFS outward from 'from' to find the nearest walkable, non-lava cell.
-    /// Used when dropping a villager onto a blocked cell.
-    /// </summary>
+    // Returns true if the BoardGrid cell is a path/start/finish cell with a
+    // registered PathNode, meaning the villager can follow the path from here.
+    bool IsPathCell(Vector2Int boardCell)
+    {
+        if (GridManager.Instance == null || PathChecker.Instance == null)
+            return false;
+
+        Vector3 worldPos = grid.CellToWorld(boardCell, 0f);
+        Vector2Int gmCell = GridManager.Instance.WorldToGrid(worldPos);
+
+        if (!GridManager.Instance.TryGetCell(gmCell, out GridCell data))
+            return false;
+
+        return (data.type == CellType.Start || data.type == CellType.Path || data.type == CellType.Finish)
+            && PathChecker.Instance.HasNode(gmCell);
+    }
+
+    // BFS outward from 'from' to find the nearest walkable, non-lava cell.
+    // Used when dropping a villager onto a blocked cell.
     Vector2Int FindNearestWalkableCell(Vector2Int from)
     {
         if (grid.InBounds(from) && IsCellWalkable(from) && !IsCellLava(from))
@@ -478,10 +529,8 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
         return grid.Clamp(from);
     }
 
-    /// <summary>
-    /// If the villager's current cell is lava, trigger death and game over.
-    /// Only runs on the authority peer; remotes receive the Dead state via network.
-    /// </summary>
+    // If the villager's current cell is lava, trigger death and game over.
+    // Only runs on the authority peer; remotes receive the Dead state via network.
     void CheckLavaAndDie()
     {
         if (state == VillagerState.Dead) return;
@@ -501,6 +550,41 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
             if (GameManager.Instance != null)
                 GameManager.Instance.OnVillagerDied();
         }
+    }
+
+    IEnumerator FollowPathCoroutine(List<Vector2Int> pathBoardCells)
+    {
+        for (int i = 0; i < pathBoardCells.Count; i++)
+        {
+            if (state == VillagerState.Held || state == VillagerState.Dead)
+            {
+                pathFollowRoutine = null;
+                yield break;
+            }
+
+            if (GameManager.Instance != null && GameManager.Instance.IsGameOver)
+            {
+                state = VillagerState.Idle;
+                pathFollowRoutine = null;
+                yield break;
+            }
+
+            var target = pathBoardCells[i];
+            if (target == cell) continue; // skip current position
+
+            yield return MoveToCell(target);
+
+            if (state == VillagerState.Dead || state == VillagerState.Held)
+            {
+                pathFollowRoutine = null;
+                yield break;
+            }
+        }
+
+        // Path ended — resume normal wandering
+        pathFollowRoutine = null;
+        state = VillagerState.Idle;
+        StartWanderLoop();
     }
 
     float GetHalfHeight()
@@ -534,11 +618,14 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
         dropPreview.transform.position = previewPos;
         dropPreview.transform.localScale = new Vector3(grid.cellSize, previewThickness, grid.cellSize);
 
-        // Color feedback: red = lava (death), yellow = blocked (will redirect), white = safe.
+        // Color feedback: cyan = path (will follow), red = lava (death),
+        // yellow = blocked (will redirect), white = safe.
         var renderer = dropPreview.GetComponent<Renderer>();
         if (renderer != null)
         {
-            if (IsCellLava(previewCell))
+            if (IsPathCell(previewCell))
+                renderer.material.color = Color.cyan;
+            else if (IsCellLava(previewCell))
                 renderer.material.color = Color.red;
             else if (!IsCellWalkable(previewCell))
                 renderer.material.color = Color.yellow;

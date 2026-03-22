@@ -4,10 +4,10 @@ using UnityEngine;
 
 public static class PathDirections
 {
-    public static readonly Vector2Int North = new Vector2Int( 0,  1);
-    public static readonly Vector2Int South = new Vector2Int( 0, -1);
-    public static readonly Vector2Int East  = new Vector2Int( 1,  0);
-    public static readonly Vector2Int West  = new Vector2Int(-1,  0);
+    public static readonly Vector2Int North = new Vector2Int(0, 1);
+    public static readonly Vector2Int South = new Vector2Int(0, -1);
+    public static readonly Vector2Int East = new Vector2Int(1, 0);
+    public static readonly Vector2Int West = new Vector2Int(-1, 0);
 
     public static readonly Vector2Int[] All = { North, South, East, West };
 
@@ -21,10 +21,10 @@ public class PathNode
     public static PathNode Straight(int rotationY)
     {
         var node = new PathNode();
-        int r    = ((rotationY % 360) + 360) % 360;
+        int r = ((rotationY % 360) + 360) % 360;
 
-        if (r == 0 || r == 180) { node.openSides.Add(PathDirections.East);  node.openSides.Add(PathDirections.West);  }
-        else                    { node.openSides.Add(PathDirections.North); node.openSides.Add(PathDirections.South); }
+        if (r == 0 || r == 180) { node.openSides.Add(PathDirections.East); node.openSides.Add(PathDirections.West); }
+        else { node.openSides.Add(PathDirections.North); node.openSides.Add(PathDirections.South); }
 
         return node;
     }
@@ -32,14 +32,14 @@ public class PathNode
     public static PathNode Corner(int rotationY)
     {
         var node = new PathNode();
-        int r    = ((rotationY % 360) + 360) % 360;
+        int r = ((rotationY % 360) + 360) % 360;
 
         switch (r)
         {
-            case   0: node.openSides.Add(PathDirections.West);  node.openSides.Add(PathDirections.South); break;
-            case  90: node.openSides.Add(PathDirections.West);  node.openSides.Add(PathDirections.North); break;
-            case 180: node.openSides.Add(PathDirections.East);  node.openSides.Add(PathDirections.North); break;
-            case 270: node.openSides.Add(PathDirections.East);  node.openSides.Add(PathDirections.South); break;
+            case 0: node.openSides.Add(PathDirections.West); node.openSides.Add(PathDirections.South); break;
+            case 90: node.openSides.Add(PathDirections.West); node.openSides.Add(PathDirections.North); break;
+            case 180: node.openSides.Add(PathDirections.East); node.openSides.Add(PathDirections.North); break;
+            case 270: node.openSides.Add(PathDirections.East); node.openSides.Add(PathDirections.South); break;
         }
 
         return node;
@@ -61,21 +61,21 @@ public class PathChecker : MonoBehaviour
 
     [Header("Placement Feedback Colours")]
     [Tooltip("Applied to a block when it is placed with a valid connection.")]
-    public Color validPlacementColor   = new Color(0.27f, 0.53f, 1.00f, 1f); // blue
+    public Color validPlacementColor = new Color(0.27f, 0.53f, 1.00f, 1f); // blue
 
     [Tooltip("Flashed on the ghost when a placement is rejected.")]
     public Color invalidPlacementColor = new Color(1.00f, 0.85f, 0.00f, 1f); // yellow
 
     [Tooltip("Applied to every block on the winning path.")]
-    public Color pathCompleteColor     = new Color(0.00f, 1.00f, 0.50f, 1f); // green
+    public Color pathCompleteColor = new Color(0.00f, 1.00f, 0.50f, 1f); // green
 
     [Tooltip("Seconds the yellow flash stays on the ghost. 0 = don't flash.")]
-    public float invalidFlashDuration  = 1.5f;
+    public float invalidFlashDuration = 1.5f;
 
     // cell -> PathNode (open-side data)
-    private readonly Dictionary<Vector2Int, PathNode>    pathNodes      = new Dictionary<Vector2Int, PathNode>();
+    private readonly Dictionary<Vector2Int, PathNode> pathNodes = new Dictionary<Vector2Int, PathNode>();
     // cell -> placed GameObject (for recolouring)
-    private readonly Dictionary<Vector2Int, GameObject>  cellObjects    = new Dictionary<Vector2Int, GameObject>();
+    private readonly Dictionary<Vector2Int, GameObject> cellObjects = new Dictionary<Vector2Int, GameObject>();
     // cell -> cached original material colours (so we can restore after a flash)
     private readonly Dictionary<Vector2Int, List<Color>> originalColors = new Dictionary<Vector2Int, List<Color>>();
 
@@ -99,7 +99,7 @@ public class PathChecker : MonoBehaviour
 
         if (placedObject != null)
         {
-            cellObjects[cell]    = placedObject;
+            cellObjects[cell] = placedObject;
             originalColors[cell] = CacheColors(placedObject);
         }
 
@@ -129,6 +129,59 @@ public class PathChecker : MonoBehaviour
     public bool HasExitToward(Vector2Int cell, Vector2Int direction) =>
         pathNodes.TryGetValue(cell, out var node) && node.HasExit(direction);
 
+    // Returns true if the cell has a registered PathNode (is part of the path network).
+    public bool HasNode(Vector2Int cell) => pathNodes.ContainsKey(cell);
+
+    // Chain-traverses the connected path from Start to the furthest reachable cell.
+    // Returns an ordered list of GridManager cell coordinates.
+    public List<Vector2Int> GetOrderedPath()
+    {
+        if (GridManager.Instance == null) return new List<Vector2Int>();
+
+        Vector2Int startCell = default;
+        bool foundStart = false;
+        foreach (var kvp in GridManager.Instance.GetAllCells())
+        {
+            if (kvp.Value.type == CellType.Start) { startCell = kvp.Key; foundStart = true; break; }
+        }
+        if (!foundStart) return new List<Vector2Int>();
+
+        var path = new List<Vector2Int> { startCell };
+        Vector2Int current = startCell;
+        Vector2Int previous = new Vector2Int(int.MinValue, int.MinValue);
+
+        while (true)
+        {
+            bool found = false;
+            foreach (var dir in PathDirections.All)
+            {
+                Vector2Int next = current + dir;
+                if (next == previous) continue;
+                if (AreMutuallyConnected(current, next))
+                {
+                    path.Add(next);
+                    previous = current;
+                    current = next;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) break;
+        }
+
+        return path;
+    }
+
+    // Returns the subpath starting from fromCell to the end of the connected path.
+    // If fromCell is not on the path, returns an empty list.
+    public List<Vector2Int> GetPathFrom(Vector2Int fromCell)
+    {
+        var fullPath = GetOrderedPath();
+        int index = fullPath.IndexOf(fromCell);
+        if (index < 0) return new List<Vector2Int>();
+        return fullPath.GetRange(index, fullPath.Count - index);
+    }
+
     /// True if cellA faces cellB AND cellB faces back toward cellA (mutual connection).
     public bool AreMutuallyConnected(Vector2Int cellA, Vector2Int cellB)
     {
@@ -144,8 +197,8 @@ public class PathChecker : MonoBehaviour
 
         foreach (var kvp in GridManager.Instance.GetAllCells())
         {
-            if (kvp.Value.type == CellType.Start)  { startCell  = kvp.Key; foundStart  = true; }
-            if (kvp.Value.type == CellType.Finish)  { finishCell = kvp.Key; foundFinish = true; }
+            if (kvp.Value.type == CellType.Start) { startCell = kvp.Key; foundStart = true; }
+            if (kvp.Value.type == CellType.Finish) { finishCell = kvp.Key; foundFinish = true; }
             if (foundStart && foundFinish) break;
         }
 
@@ -156,9 +209,9 @@ public class PathChecker : MonoBehaviour
         }
 
         // BFS — parent map lets us retrace the winning path for highlighting
-        var parent  = new Dictionary<Vector2Int, Vector2Int>();
+        var parent = new Dictionary<Vector2Int, Vector2Int>();
         var visited = new HashSet<Vector2Int> { startCell };
-        var queue   = new Queue<Vector2Int>();
+        var queue = new Queue<Vector2Int>();
         queue.Enqueue(startCell);
 
         while (queue.Count > 0)
@@ -215,13 +268,13 @@ public class PathChecker : MonoBehaviour
             foreach (Material mat in rend.materials)
             {
                 if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", color);
-                if (mat.HasProperty("_Color"))     mat.SetColor("_Color",     color);
+                if (mat.HasProperty("_Color")) mat.SetColor("_Color", color);
                 mat.color = color;
             }
         }
     }
 
-    /// Highlight a registered grid cell's object by coordinate.
+    // Highlight a registered grid cell's object by coordinate.
     private void HighlightCell(Vector2Int cell, Color color)
     {
         if (cellObjects.TryGetValue(cell, out var obj))
@@ -236,9 +289,9 @@ public class PathChecker : MonoBehaviour
         foreach (Renderer rend in obj.GetComponentsInChildren<Renderer>())
             foreach (Material mat in rend.materials)
             {
-                if      (mat.HasProperty("_BaseColor")) colors.Add(mat.GetColor("_BaseColor"));
-                else if (mat.HasProperty("_Color"))     colors.Add(mat.GetColor("_Color"));
-                else                                    colors.Add(mat.color);
+                if (mat.HasProperty("_BaseColor")) colors.Add(mat.GetColor("_BaseColor"));
+                else if (mat.HasProperty("_Color")) colors.Add(mat.GetColor("_Color"));
+                else colors.Add(mat.color);
             }
 
         return colors;
@@ -246,7 +299,7 @@ public class PathChecker : MonoBehaviour
 
     private void RestoreColors(Vector2Int cell)
     {
-        if (!cellObjects.TryGetValue(cell, out var obj))     return;
+        if (!cellObjects.TryGetValue(cell, out var obj)) return;
         if (!originalColors.TryGetValue(cell, out var cols)) return;
         if (obj == null) return;
 
@@ -257,7 +310,7 @@ public class PathChecker : MonoBehaviour
                 if (idx >= cols.Count) break;
                 Color c = cols[idx++];
                 if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", c);
-                if (mat.HasProperty("_Color"))     mat.SetColor("_Color",     c);
+                if (mat.HasProperty("_Color")) mat.SetColor("_Color", c);
                 mat.color = c;
             }
     }
