@@ -1296,80 +1296,10 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3291232947170354309, guid: d64208b47190f0d4a9694f3d7db2daec, type: 3}
   m_PrefabInstance: {fileID: 1542743552}
   m_PrefabAsset: {fileID: 0}
---- !u!1001 &674605848
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 775987241}
-    m_Modifications:
-    - target: {fileID: 718920920538893737, guid: 520771063084f164eb68ea0e99414c35, type: 3}
-      propertyPath: grid
-      value: 
-      objectReference: {fileID: 633496689}
-    - target: {fileID: 1456126334729322108, guid: 520771063084f164eb68ea0e99414c35, type: 3}
-      propertyPath: m_InteractionManager
-      value: 
-      objectReference: {fileID: 576153283}
-    - target: {fileID: 5983313118969206678, guid: 520771063084f164eb68ea0e99414c35, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: -9.857
-      objectReference: {fileID: 0}
-    - target: {fileID: 5983313118969206678, guid: 520771063084f164eb68ea0e99414c35, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 1.93391
-      objectReference: {fileID: 0}
-    - target: {fileID: 5983313118969206678, guid: 520771063084f164eb68ea0e99414c35, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: -8.83034
-      objectReference: {fileID: 0}
-    - target: {fileID: 5983313118969206678, guid: 520771063084f164eb68ea0e99414c35, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5983313118969206678, guid: 520771063084f164eb68ea0e99414c35, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5983313118969206678, guid: 520771063084f164eb68ea0e99414c35, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5983313118969206678, guid: 520771063084f164eb68ea0e99414c35, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5983313118969206678, guid: 520771063084f164eb68ea0e99414c35, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5983313118969206678, guid: 520771063084f164eb68ea0e99414c35, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5983313118969206678, guid: 520771063084f164eb68ea0e99414c35, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 9103908360952733498, guid: 520771063084f164eb68ea0e99414c35, type: 3}
-      propertyPath: m_Name
-      value: Villager
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 520771063084f164eb68ea0e99414c35, type: 3}
 --- !u!4 &677028073 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 657184242161839408, guid: d6878e1999eb4b44a9f5a263af86c185, type: 3}
   m_PrefabInstance: {fileID: 1701092740}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &692981567 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 5983313118969206678, guid: 520771063084f164eb68ea0e99414c35, type: 3}
-  m_PrefabInstance: {fileID: 674605848}
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &775987241 stripped
 Transform:
@@ -4027,9 +3957,6 @@ PrefabInstance:
     - {fileID: 7632845423196715811, guid: f2d44976f09b5df40b4d00077fec932a, type: 3}
     - {fileID: 7290265296473029502, guid: f2d44976f09b5df40b4d00077fec932a, type: 3}
     m_AddedGameObjects:
-    - targetCorrespondingSourceObject: {fileID: 7290265295817051041, guid: f2d44976f09b5df40b4d00077fec932a, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 692981567}
     - targetCorrespondingSourceObject: {fileID: 7290265295817051041, guid: f2d44976f09b5df40b4d00077fec932a, type: 3}
       insertIndex: -1
       addedObject: {fileID: 633496693}
