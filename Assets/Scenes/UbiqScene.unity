@@ -4309,14 +4309,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5cbcd880701e0e9458f939618cc6c84b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StartFinishSpawner
-  startPrefab: {fileID: 6757313786627309563, guid: 559f96a0bd0de754dabce8b5eaa29139, type: 3}
-  startColor: {r: 0.41040555, g: 1, b: 0.33018857, a: 1}
+  startPrefab: {fileID: 6757313786627309563, guid: 42c58c847ea31444a990e29c92c81a64, type: 3}
   finishPrefab: {fileID: 6757313786627309563, guid: 559f96a0bd0de754dabce8b5eaa29139, type: 3}
-  finishColor: {r: 1, g: 0.32893065, b: 0.3226415, a: 1}
   startBlockPrefab: {fileID: 0}
   finishBlockPrefab: {fileID: 0}
-  startBlockColor: {r: 0, g: 0.8, b: 0.2, a: 1}
-  finishBlockColor: {r: 0.9, g: 0.2, b: 0.2, a: 1}
   gridSystem: {fileID: 991322261}
   blockYOffset: -1
 --- !u!114 &2070249549

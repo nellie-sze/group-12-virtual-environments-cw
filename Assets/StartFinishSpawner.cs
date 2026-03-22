@@ -6,18 +6,21 @@ using Ubiq.Messaging;
 
 public class StartFinishSpawner : MonoBehaviour
 {
-    [Header("Flag Markers (existing)")]
+    [Header("Flag Markers")]
+    [Tooltip("Unique prefab for the start flag (must have a different name to the finish prefab).")]
     public GameObject startPrefab;
-    public Color      startColor  = Color.green;
+    public Color      startColor = Color.green;
+
+    [Tooltip("Unique prefab for the finish flag (must have a different name to the start prefab).")]
     public GameObject finishPrefab;
     public Color      finishColor = Color.red;
 
-    [Header("Base Blocks (new — placed directly under each flag)")]
+    [Header("Base Blocks")]
     public GameObject startBlockPrefab;
-    public GameObject finishBlockPrefab;
+    public Color      startBlockColor = new Color(0.0f, 0.8f, 0.2f, 1f);
 
-    public Color startBlockColor  = new Color(0.0f, 0.8f, 0.2f, 1f);
-    public Color finishBlockColor = new Color(0.9f, 0.2f, 0.2f, 1f);
+    public GameObject finishBlockPrefab;
+    public Color      finishBlockColor = new Color(0.9f, 0.2f, 0.2f, 1f);
 
     [Header("References")]
     public GridSystem gridSystem;
@@ -98,7 +101,6 @@ public class StartFinishSpawner : MonoBehaviour
         if (!string.IsNullOrEmpty(lastRequestId) && lastRequestId == m.requestId) return;
         lastRequestId = m.requestId;
 
-        // All peers schedule RegisterSpecialCells after ObstacleAgent's 0.5 s sync + buffer.
         StartCoroutine(RegisterSpecialCellsDelayed(1f));
 
         if (!IsLeaderPeer()) return;
@@ -109,10 +111,10 @@ public class StartFinishSpawner : MonoBehaviour
 
     private void DoSpawn(Vector2Int startCell, Vector2Int finishCell)
     {
-        SpawnMarker(startPrefab,      startColor,      startCell,  CellType.Start);
-        SpawnMarker(finishPrefab,     finishColor,     finishCell, CellType.Finish);
-        SpawnBaseBlock(startBlockPrefab,  startBlockColor,  startCell,  "START");
-        SpawnBaseBlock(finishBlockPrefab, finishBlockColor, finishCell, "FINISH");
+        SpawnMarker(startPrefab,     startColor,      startCell,  CellType.Start);
+        SpawnMarker(finishPrefab,    finishColor,     finishCell, CellType.Finish);
+        SpawnBaseBlock(startBlockPrefab,  startBlockColor,  startCell);
+        SpawnBaseBlock(finishBlockPrefab, finishBlockColor, finishCell);
     }
 
     void SpawnMarker(GameObject prefab, Color color, Vector2Int cell, CellType type)
@@ -144,13 +146,13 @@ public class StartFinishSpawner : MonoBehaviour
             spawnManager.Despawn(obj);
     }
 
-    void SpawnBaseBlock(GameObject prefab, Color color, Vector2Int cell, string label)
+    void SpawnBaseBlock(GameObject prefab, Color color, Vector2Int cell)
     {
         if (prefab == null || spawnManager == null) return;
 
         if (spawnManager.catalogue == null || spawnManager.catalogue.IndexOf(prefab) < 0)
         {
-            Debug.LogWarning($"[StartFinishSpawner] {label} block prefab not in NSM catalogue — using local Instantiate.");
+            Debug.LogWarning($"[StartFinishSpawner] Block prefab not in NSM catalogue — using local Instantiate.");
             var fb = Instantiate(prefab, GridManager.Instance.GridToWorld(cell) + new Vector3(0f, blockYOffset, 0f), Quaternion.identity);
             ApplyColor(fb, color);
             return;
@@ -175,7 +177,8 @@ public class StartFinishSpawner : MonoBehaviour
         if (sync != null)
             sync.SetOwner(origin == NetworkSpawnOrigin.Local);
 
-        // Re-apply runtime colours on remote peers — prefab materials don't carry them.
+        // Re-apply colours on remote peers. Because startPrefab and finishPrefab now have
+        // unique names (e.g. Flag_Start / Flag_Finish) the name check reliably identifies each.
         if (origin == NetworkSpawnOrigin.Remote)
         {
             string n = obj.name.Replace("(Clone)", "").Trim();

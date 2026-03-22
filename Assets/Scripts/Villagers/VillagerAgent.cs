@@ -746,10 +746,8 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
             Debug.Log($"Villager '{gameObject.name}' received Dead state from remote peer.");
             HideDropPreview();
             gameObject.SetActive(false);
-
-            if (GameManager.Instance != null)
-                GameManager.Instance.OnVillagerDied();
-
+            // Do NOT call OnVillagerDied here — the authority peer already called it,
+            // and LivesManager broadcasts the life-loss to all peers via network message.
             return;
         }
 
