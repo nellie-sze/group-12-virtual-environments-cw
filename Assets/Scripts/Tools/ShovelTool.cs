@@ -195,7 +195,7 @@ public class ShovelTool : MonoBehaviour
 
             if (!GridManager.Instance.IsWithinGridSurfaceBuffered(snapped, gridSize / 2f))
                 ApplyGhostBaseTransparency(0.0f);
-            else if (GridManager.Instance.IsInBounds(cell) && !GridManager.Instance.IsOccupied(cell))
+            else if (GridManager.Instance.IsInBounds(cell) && !GridManager.Instance.IsOccupied(cell) && CanConnect(cell))
                 ApplyGhostBaseTransparency(0.5f);
             else
                 SetGhostColor(invalidColor);
@@ -206,13 +206,13 @@ public class ShovelTool : MonoBehaviour
         }
     }
 
-    bool CanConnect(Vector2Int cell)
+    bool CanConnect(Vector2Int cell, int rotationY)
     {
         if (PathChecker.Instance == null) return true; // fail-open if PathChecker missing
 
         PathNode candidate = currentMode == ToolMode.Straight
-            ? PathNode.Straight(currentRotationY)
-            : PathNode.Corner(currentRotationY);
+            ? PathNode.Straight(rotationY)
+            : PathNode.Corner(rotationY);
 
         foreach (Vector2Int dir in PathDirections.All)
         {
@@ -232,6 +232,8 @@ public class ShovelTool : MonoBehaviour
 
         return false;
     }
+
+    bool CanConnect(Vector2Int cell) => CanConnect(cell, currentRotationY);
 
     void TryBuild()
     {
@@ -283,13 +285,45 @@ public class ShovelTool : MonoBehaviour
         Debug.Log($"[ShovelTool] Placed {currentMode} at cell {cell}, rotation {currentRotationY}°");
     }
 
-
     void RotateGhost()
     {
+        if (ghostHighlight == null || !ghostHighlight.activeSelf || GridManager.Instance == null)
+            return;
+
+        Vector2Int cell = GridManager.Instance.WorldToGrid(ghostHighlight.transform.position);
+        int originalRotationY = currentRotationY;
         currentRotationY = (currentRotationY + 90) % 360;
-        if (ghostHighlight != null)
+        
+        if (!CanConnect(cell, currentRotationY))
+        {
+            if (currentMode == ToolMode.Straight)
+            {
+                currentRotationY = originalRotationY;
+                return;
+            }
+            else if (currentMode == ToolMode.Corner)
+            {
+                // Try all 3 other rotations to find a valid one
+                for (int i = 0; i < 3; i++)
+                {
+                    currentRotationY = (currentRotationY + 90) % 360;
+                    if (CanConnect(cell, currentRotationY))
+                    {
+                        ghostHighlight.transform.rotation = Quaternion.Euler(0f, currentRotationY, 0f);
+                        Debug.Log("[ShovelTool] Rotated ghost to " + currentRotationY + "°");
+                        return;
+                    }
+                }
+            }
+        }
+        else if (CanConnect(cell, currentRotationY))
+        {
             ghostHighlight.transform.rotation = Quaternion.Euler(0f, currentRotationY, 0f);
-        Debug.Log("[ShovelTool] Rotated ghost to " + currentRotationY + "°");
+            Debug.Log("[ShovelTool] Rotated ghost to " + currentRotationY + "°");
+            return;
+        }
+        currentRotationY = originalRotationY;
+        return;
     }
 
     void SwitchMode()
