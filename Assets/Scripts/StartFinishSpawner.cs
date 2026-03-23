@@ -9,11 +9,9 @@ public class StartFinishSpawner : MonoBehaviour
     [Header("Flag Markers")]
     [Tooltip("Unique prefab for the start flag (must have a different name to the finish prefab).")]
     public GameObject startPrefab;
-    public Color      startColor = Color.green;
 
     [Tooltip("Unique prefab for the finish flag (must have a different name to the start prefab).")]
     public GameObject finishPrefab;
-    public Color      finishColor = Color.red;
 
     [Header("Base Blocks")]
     public GameObject startBlockPrefab;
@@ -113,13 +111,11 @@ public class StartFinishSpawner : MonoBehaviour
 
     private void DoSpawn(Vector2Int startCell, Vector2Int finishCell)
     {
-        SpawnMarker(startPrefab,     startColor,      startCell,  CellType.Start);
-        SpawnMarker(finishPrefab,    finishColor,     finishCell, CellType.Finish);
-        SpawnBaseBlock(startBlockPrefab,  startBlockColor,  startCell);
-        SpawnBaseBlock(finishBlockPrefab, finishBlockColor, finishCell);
+        SpawnMarker(startPrefab, startCell, CellType.Start);
+        SpawnMarker(finishPrefab, finishCell, CellType.Finish);
     }
 
-    void SpawnMarker(GameObject prefab, Color color, Vector2Int cell, CellType type)
+    void SpawnMarker(GameObject prefab, Vector2Int cell, CellType type)
     {
         if (prefab == null || spawnManager == null) return;
 
@@ -127,7 +123,6 @@ public class StartFinishSpawner : MonoBehaviour
         {
             Debug.LogWarning($"[StartFinishSpawner] {type} prefab not in NSM catalogue — using local Instantiate.");
             var fb = Instantiate(prefab, GridManager.Instance.GridToWorld(cell), Quaternion.identity);
-            ApplyColor(fb, color);
             GridManager.Instance.TryPlace(cell, type, fb);
             return;
         }
@@ -137,8 +132,6 @@ public class StartFinishSpawner : MonoBehaviour
         if (obj == null) return;
 
         obj.transform.SetPositionAndRotation(pos, Quaternion.identity);
-        ApplyColor(obj, color);
-
         var sync = obj.GetComponent<NetworkedSpawnedTransform>();
         if (sync != null) { sync.SetOwner(true); sync.RequestInitialSend(); }
 
@@ -148,7 +141,7 @@ public class StartFinishSpawner : MonoBehaviour
             spawnManager.Despawn(obj);
     }
 
-    void SpawnBaseBlock(GameObject prefab, Color color, Vector2Int cell)
+    void SpawnBaseBlock(GameObject prefab, Vector2Int cell)
     {
         if (prefab == null || spawnManager == null) return;
 
@@ -156,7 +149,6 @@ public class StartFinishSpawner : MonoBehaviour
         {
             Debug.LogWarning($"[StartFinishSpawner] Block prefab not in NSM catalogue — using local Instantiate.");
             var fb = Instantiate(prefab, GridManager.Instance.GridToWorld(cell) + new Vector3(0f, blockYOffset, 0f), Quaternion.identity);
-            ApplyColor(fb, color);
             return;
         }
 
@@ -165,8 +157,6 @@ public class StartFinishSpawner : MonoBehaviour
         if (obj == null) return;
 
         obj.transform.SetPositionAndRotation(pos, Quaternion.identity);
-        ApplyColor(obj, color);
-
         var sync = obj.GetComponent<NetworkedSpawnedTransform>();
         if (sync != null) { sync.SetOwner(true); sync.RequestInitialSend(); }
     }
@@ -179,16 +169,6 @@ public class StartFinishSpawner : MonoBehaviour
         if (sync != null)
             sync.SetOwner(origin == NetworkSpawnOrigin.Local);
 
-        // Re-apply colours on remote peers. Because startPrefab and finishPrefab now have
-        // unique names (e.g. Flag_Start / Flag_Finish) the name check reliably identifies each.
-        if (origin == NetworkSpawnOrigin.Remote)
-        {
-            string n = obj.name.Replace("(Clone)", "").Trim();
-            if      (startPrefab       != null && n == startPrefab.name)       ApplyColor(obj, startColor);
-            else if (finishPrefab      != null && n == finishPrefab.name)      ApplyColor(obj, finishColor);
-            else if (startBlockPrefab  != null && n == startBlockPrefab.name)  ApplyColor(obj, startBlockColor);
-            else if (finishBlockPrefab != null && n == finishBlockPrefab.name) ApplyColor(obj, finishBlockColor);
-        }
     }
 
     private IEnumerator RegisterSpecialCellsDelayed(float delay)
@@ -210,13 +190,4 @@ public class StartFinishSpawner : MonoBehaviour
         return roomClient.Me.uuid == leaderUuid;
     }
 
-    static void ApplyColor(GameObject obj, Color color)
-    {
-        foreach (Renderer rend in obj.GetComponentsInChildren<Renderer>())
-            foreach (Material mat in rend.materials)
-            {
-                if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", color);
-                if (mat.HasProperty("_Color"))     mat.SetColor("_Color",     color);
-            }
-    }
 }

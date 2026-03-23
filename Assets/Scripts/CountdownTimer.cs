@@ -93,7 +93,7 @@ public class CountdownTimer : MonoBehaviour
     public void ShowEndGame()
     {
         isRunning = false;
-        if (timerText != null) timerText.text = "END GAME";
+        if (timerText != null) timerText.text = "GAME OVER";
         Debug.Log("[CountdownTimer] ShowEndGame called.");
     }
 
