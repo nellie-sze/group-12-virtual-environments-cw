@@ -98,6 +98,7 @@ public class GameManager : MonoBehaviour
                 if (_decayCoroutine != null) { StopCoroutine(_decayCoroutine); _decayCoroutine = null; }
                 if (countdownTimer != null) countdownTimer.StopTimer();
                 if (endGameAnimator != null) endGameAnimator.PlayWinSequence();
+                if (AudioManager.Instance != null) AudioManager.Instance.PlayWinSound();
                 Debug.Log("[GameManager] Players WIN - path complete!");
                 break;
 
@@ -106,6 +107,7 @@ public class GameManager : MonoBehaviour
                 if (_decayCoroutine != null) { StopCoroutine(_decayCoroutine); _decayCoroutine = null; }
                 if (countdownTimer != null) countdownTimer.ShowEndGame();
                 if (endGameAnimator != null) endGameAnimator.PlayLoseSequence();
+                if (AudioManager.Instance != null) AudioManager.Instance.PlayLoseSound();
                 Debug.Log("[GameManager] Players LOSE - time ran out or lives depleted!");
                 break;
         }
@@ -212,6 +214,8 @@ public class GameManager : MonoBehaviour
             var cell = pathCells[UnityEngine.Random.Range(0, pathCells.Count)];
             Debug.Log($"[GameManager] Block decay - removing path block at {cell}");
             PathBlockManager.Instance.RequestRemove(cell);
+            if (AudioManager.Instance != null)
+                AudioManager.Instance.PlayPathDeleteSound(GridManager.Instance.GridToWorld(cell));
         }
     }
 
