@@ -45,17 +45,30 @@ public class AudioManager : MonoBehaviour
     public AudioClip villagerDeathClip;
     [Range(0f, 1f)] public float villagerDeathVolume = 0.9f;
 
+    [Tooltip("Played when a villager is picked up.")]
+    public AudioClip villagerPickupClip;
+    [Range(0f, 1f)] public float villagerPickupVolume = 0.8f;
+
     [Header("Timer Warning")]
     [Tooltip("Short loopable clip played when ≤ timerWarningThreshold seconds remain.")]
     public AudioClip timerWarningClip;
-    [Range(0f, 1f)] public float timerWarningVolume   = 0.6f;
+    [Range(0f, 1f)] public float timerWarningVolume = 0.6f;
     [Tooltip("Seconds remaining at which the warning sound starts.")]
-    public float timerWarningThreshold                = 20f;
+    public float timerWarningThreshold = 20f;
 
     [Header("End Game")]
     public AudioClip winClip;
     public AudioClip loseClip;
     [Range(0f, 1f)] public float endGameVolume = 1f;
+
+    [Header("Powerups")]
+    [Tooltip("Played when the water bucket douses a lava cell.")]
+    public AudioClip waterBucketClip;
+    [Range(0f, 1f)] public float waterBucketVolume = 0.85f;
+
+    [Tooltip("Played when the bomb explodes.")]
+    public AudioClip bombClip;
+    [Range(0f, 1f)] public float bombVolume = 1f;
 
     [Header("References")]
     public Transform xrOrigin;
@@ -63,7 +76,7 @@ public class AudioManager : MonoBehaviour
 
     private AudioSource musicSource;
     private AudioSource footstepSource;
-    private AudioSource timerWarningSource;  // looping warning tick
+    private AudioSource timerWarningSource; // looping warning tick
 
     private float footstepTimer = 0f;
     private int lastFootstepIndex = -1;
@@ -77,28 +90,28 @@ public class AudioManager : MonoBehaviour
 
     void Start()
     {
-        musicSource              = gameObject.AddComponent<AudioSource>();
-        musicSource.clip         = natureMusic;
-        musicSource.loop         = true;
-        musicSource.volume       = natureMusicVolume;
+        musicSource = gameObject.AddComponent<AudioSource>();
+        musicSource.clip = natureMusic;
+        musicSource.loop = true;
+        musicSource.volume = natureMusicVolume;
         musicSource.spatialBlend = 0f;
-        musicSource.playOnAwake  = false;
+        musicSource.playOnAwake = false;
         if (natureMusic != null) musicSource.Play();
         else Debug.LogWarning("[AudioManager] natureMusic clip not assigned.");
 
-        footstepSource              = gameObject.AddComponent<AudioSource>();
-        footstepSource.loop         = false;
-        footstepSource.volume       = footstepVolume;
+        footstepSource = gameObject.AddComponent<AudioSource>();
+        footstepSource.loop = false;
+        footstepSource.volume = footstepVolume;
         footstepSource.spatialBlend = 0f;
-        footstepSource.playOnAwake  = false;
+        footstepSource.playOnAwake = false;
 
         // Timer warning source — 2D looping, starts silent
-        timerWarningSource              = gameObject.AddComponent<AudioSource>();
-        timerWarningSource.clip         = timerWarningClip;
-        timerWarningSource.loop         = true;
-        timerWarningSource.volume       = 0f;
+        timerWarningSource = gameObject.AddComponent<AudioSource>();
+        timerWarningSource.clip = timerWarningClip;
+        timerWarningSource.loop = true;
+        timerWarningSource.volume = 0f;
         timerWarningSource.spatialBlend = 0f;
-        timerWarningSource.playOnAwake  = false;
+        timerWarningSource.playOnAwake = false;
         if (timerWarningClip != null) timerWarningSource.Play();
     }
 
@@ -146,9 +159,9 @@ public class AudioManager : MonoBehaviour
         {
             var kb = UnityEngine.InputSystem.Keyboard.current;
             float x = 0f, y = 0f;
-            if (kb.wKey.isPressed || kb.upArrowKey.isPressed)    y = 1f;
-            if (kb.sKey.isPressed || kb.downArrowKey.isPressed)  y = -1f;
-            if (kb.aKey.isPressed || kb.leftArrowKey.isPressed)  x = -1f;
+            if (kb.wKey.isPressed || kb.upArrowKey.isPressed) y = 1f;
+            if (kb.sKey.isPressed || kb.downArrowKey.isPressed) y = -1f;
+            if (kb.aKey.isPressed || kb.leftArrowKey.isPressed) x = -1f;
             if (kb.dKey.isPressed || kb.rightArrowKey.isPressed) x = 1f;
             return new Vector2(x, y).magnitude;
         }
@@ -190,10 +203,22 @@ public class AudioManager : MonoBehaviour
     // Played by ScaleAndResetOnGrab (or any tool) when grabbed.
     public void PlayPickupSound()
         => PlayOnMusicSource(pickupClip, pickupVolume);
+    
+    // Played when a villager is picked up by the player.
+    public void PlayVillagerPickupSound(Vector3 worldPos)
+        => PlayAtPoint(villagerPickupClip, worldPos, villagerPickupVolume);
 
     // Played by VillagerAgent.Die().
     public void PlayVillagerDeathSound(Vector3 worldPos)
         => PlayAtPoint(villagerDeathClip, worldPos, villagerDeathVolume);
+
+    // Played when bucket is used.
+    public void PlayWaterBucketSound(Vector3 worldPos)
+        => PlayAtPoint(waterBucketClip, worldPos, waterBucketVolume);
+    
+    // Played by BombPowerup when the bomb explodes.
+    public void PlayBombSound(Vector3 worldPos)
+        => PlayAtPoint(bombClip, worldPos, bombVolume);
 
     // Called by CountdownTimer every Update with the remaining seconds.
     public void UpdateTimerWarning(float timeRemaining)

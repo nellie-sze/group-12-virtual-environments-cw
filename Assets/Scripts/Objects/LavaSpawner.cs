@@ -6,6 +6,8 @@ using Ubiq.Messaging;
 
 public class LavaSpawner : MonoBehaviour
 {
+    public static LavaSpawner Instance { get; private set; }
+
     [Header("Lava Settings")]
     [Tooltip("Lava tile prefab — must be in the Ubiq Prefab Catalogue")]
     public GameObject lavaPrefab;
@@ -23,7 +25,14 @@ public class LavaSpawner : MonoBehaviour
     private bool hasSpawned;
     private string lastRequestId;
 
-    private struct SpawnAllRequestMessage { public string requestId; }
+    // Extended message — now handles both spawn-all and remove, matching ObstacleSpawner.
+    private struct NetMessage
+    {
+        public string type; // "spawnAll" | "remove"
+        public string requestId; // spawnAll only
+        public int cellX; // remove only
+        public int cellY; // remove only
+    }
 
     // Possible patch sizes: (width, height) in grid cells
     private static readonly Vector2Int[] patchSizes = new Vector2Int[]
@@ -33,6 +42,17 @@ public class LavaSpawner : MonoBehaviour
         new Vector2Int(5, 2),
         new Vector2Int(5, 3),
     };
+
+    void Awake()
+    {
+        // Singleton so WaterBucketPowerup can call LavaSpawner.Instance.RequestRemove
+        if (Instance != null && Instance != this) 
+        { 
+            Destroy(gameObject); 
+            return; 
+        }
+        Instance = this;
+    }
 
     void Start()
     {
@@ -53,15 +73,16 @@ public class LavaSpawner : MonoBehaviour
         }
 
         if (spawnManager != null)
-        {
             spawnManager.OnSpawned.AddListener(OnNetworkSpawned);
-        }
     }
 
     public void ProcessMessage(ReferenceCountedSceneGraphMessage message)
     {
-        var m = message.FromJson<SpawnAllRequestMessage>();
-        HandleSpawnRequest(m.requestId);
+        var m = message.FromJson<NetMessage>();
+        if (m.type == "spawnAll")
+            HandleSpawnRequest(m.requestId);
+        else if (m.type == "remove")
+            HandleRemove(new Vector2Int(m.cellX, m.cellY));
     }
 
     void OnDestroy()
@@ -76,7 +97,6 @@ public class LavaSpawner : MonoBehaviour
     {
         if (obj == null || lavaPrefab == null) return;
 
-        // Only handle lava prefab instances
         var name = obj.name;
         const string cloneSuffix = "(Clone)";
         if (name.EndsWith(cloneSuffix))
@@ -88,16 +108,14 @@ public class LavaSpawner : MonoBehaviour
 
         var sync = obj.GetComponent<NetworkedSpawnedTransform>();
         if (sync != null)
-        {
             sync.SetOwner(origin == NetworkSpawnOrigin.Local);
-        }
     }
 
     public void SpawnAll()
     {
         var requestId = System.Guid.NewGuid().ToString("N");
         HandleSpawnRequest(requestId);
-        context.SendJson(new SpawnAllRequestMessage { requestId = requestId });
+        context.SendJson(new NetMessage { type = "spawnAll", requestId = requestId });
     }
 
     private void HandleSpawnRequest(string requestId)
@@ -106,7 +124,6 @@ public class LavaSpawner : MonoBehaviour
         if (!string.IsNullOrEmpty(lastRequestId) && lastRequestId == requestId) return;
         lastRequestId = requestId;
         if (!IsLeaderPeer()) return;
-
         hasSpawned = true;
         DoSpawnAll();
     }
@@ -138,7 +155,6 @@ public class LavaSpawner : MonoBehaviour
         }
 
         int placed = 0;
-
         for (int i = 0; i < lavaCellCount; i++)
         {
             Vector2Int size = patchSizes[Random.Range(0, patchSizes.Length)];
@@ -150,16 +166,39 @@ public class LavaSpawner : MonoBehaviour
         Debug.Log($"LavaSpawner: Placed {placed}/{lavaCellCount} lava patches.");
     }
 
+    // Remove (networked) — mirrors ObstacleSpawner.RequestRemove 
+    // Broadcasts removal to all peers so GridManager + visuals stay in sync.
+    public void RequestRemove(Vector2Int cell)
+    {
+        HandleRemove(cell);
+        context.SendJson(new NetMessage { type = "remove", cellX = cell.x, cellY = cell.y });
+    }
+
+    private void HandleRemove(Vector2Int cell)
+    {
+        if (GridManager.Instance == null) return;
+        if (!GridManager.Instance.TryGetCell(cell, out var data)) return;
+        if (data.type != CellType.Lava) return; // safety — only remove lava cells
+
+        GameObject obj = data.placedObject;
+
+        // Clear GridManager entry first (same pattern as ObstacleSpawner.HandleRemove)
+        GridManager.Instance.ClearCellsForObject(obj);
+
+        // Leader uses NSM.Despawn; non-leaders destroy directly
+        if (IsLeaderPeer() && spawnManager != null)
+            spawnManager.Despawn(obj);
+        else
+            Destroy(obj);
+    }
+
     private bool IsLeaderPeer()
     {
         if (roomClient == null || roomClient.Me == null) return true;
-
         var leaderUuid = roomClient.Me.uuid;
         foreach (var p in roomClient.Peers)
-        {
             if (string.CompareOrdinal(p.uuid, leaderUuid) < 0)
                 leaderUuid = p.uuid;
-        }
         return roomClient.Me.uuid == leaderUuid;
     }
 
@@ -168,9 +207,6 @@ public class LavaSpawner : MonoBehaviour
         Vector2Int gridMin = GridManager.Instance.gridMin;
         Vector2Int gridMax = GridManager.Instance.gridMax;
 
-        // +1 / -1 inner buffer: tiles are centered on their cell, so an edge cell's
-        // mesh extends half a cell outside the surface. Keep patches 1 cell away from
-        // every edge to ensure nothing overhangs.
         var candidates = new List<Vector2Int>();
         for (int x = gridMin.x + 1; x <= gridMax.x - size.x; x++)
             for (int y = gridMin.y + 1; y <= gridMax.y - size.y; y++)
@@ -225,9 +261,7 @@ public class LavaSpawner : MonoBehaviour
                 }
 
                 if (GridManager.Instance.TryPlace(cell, CellType.Lava, obj))
-                {
                     obj.GetComponent<ObstacleAgent>()?.MarkAsRegisteredByLeader();
-                }
                 else
                 {
                     Debug.LogWarning($"LavaSpawner: TryPlace failed at {cell} — despawning.");
@@ -237,8 +271,6 @@ public class LavaSpawner : MonoBehaviour
         }
     }
 
-    // Scale the tile so its XZ footprint matches exactly one grid cell,
-    // regardless of the prefab mesh size (Plane=10x10, Quad=1x1, etc.)
     void ScaleToCell(GameObject obj)
     {
         Renderer[] renderers = obj.GetComponentsInChildren<Renderer>();

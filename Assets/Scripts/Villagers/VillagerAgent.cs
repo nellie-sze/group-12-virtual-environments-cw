@@ -291,6 +291,8 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
         state = VillagerState.Held;
         forceHeldSend = true;
 
+        AudioManager.Instance?.PlayVillagerPickupSound(transform.position);
+
         if (loop != null)
         {
             StopCoroutine(loop);
