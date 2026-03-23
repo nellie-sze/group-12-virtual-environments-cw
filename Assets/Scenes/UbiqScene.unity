@@ -4327,7 +4327,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 727abfb212d0954489d8aad1e31a7e89, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CountdownTimer
-  totalTime: 300
+  totalTime: 5
   timerText: {fileID: 1022358347}
 --- !u!114 &2070249554
 MonoBehaviour:
@@ -4406,7 +4406,7 @@ MonoBehaviour:
   destroyVolume: 0.8
   pathBuiltClip: {fileID: 8300000, guid: 0ca9e02932f2b47f086180e4a511642a, type: 3}
   pathBuiltVolume: 0.75
-  invalidPlacementClip: {fileID: 0}
+  invalidPlacementClip: {fileID: 8300000, guid: 58eb0227ec5ae49b48447bcb3ab9c024, type: 3}
   invalidVolume: 0.7
   pickupClip: {fileID: 8300000, guid: aeac699ccdda8447fae0b4b96a7feadf, type: 3}
   pickupVolume: 0.7
