@@ -4241,6 +4241,7 @@ GameObject:
   - component: {fileID: 2070249555}
   - component: {fileID: 2070249556}
   - component: {fileID: 2070249557}
+  - component: {fileID: 2070249558}
   m_Layer: 0
   m_Name: Game Manager
   m_TagString: Untagged
@@ -4419,6 +4420,39 @@ MonoBehaviour:
   loseClip: {fileID: 8300000, guid: 229ac2a45d46d4713a351d5a62dafa07, type: 3}
   endGameVolume: 1
   xrOrigin: {fileID: 0}
+--- !u!114 &2070249558
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2070249546}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fedfaebc82cfa43be95efd5f7262e2e5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EndGameAnimator
+  glowRampDuration: 0.4
+  glowStaggerDelay: 0.12
+  winGlowColor: {r: 0, g: 4, b: 2, a: 1}
+  loseGlowColor: {r: 4, g: 0.2, b: 0, a: 1}
+  waterParticlePrefab: {fileID: 2765807304831486828, guid: d422d46da36934f1290e80e8d120681d, type: 3}
+  waterParticleYOffset: 0.15
+  waterFlowStepDelay: 0.18
+  fireworksPrefab: {fileID: 4823048940546074881, guid: dae5e06035b2e4cf094ff5c9ac772e8e, type: 3}
+  fireworksBurstCount: 4
+  fireworksBurstInterval: 0.5
+  fireworksHeight: 1.5
+  firePrefab: {fileID: 0}
+  fireSpreadInterval: 0.08
+  fireDuration: 3.5
+  fireYOffset: 0.05
+  charAmount: 0.85
+  lavaPrefab: {fileID: 0}
+  lavaFloodDuration: 2.5
+  directionalLight: {fileID: 0}
+  loseLightColor: {r: 1, g: 0.15, b: 0, a: 1}
+  lightTransitionDuration: 1.5
 --- !u!4 &2089147408 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4003897846794392, guid: cd87e5026d1695148aabe96121c526ef, type: 3}
