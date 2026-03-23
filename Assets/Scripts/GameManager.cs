@@ -214,6 +214,8 @@ public class GameManager : MonoBehaviour
             var cell = pathCells[UnityEngine.Random.Range(0, pathCells.Count)];
             Debug.Log($"[GameManager] Block decay - removing path block at {cell}");
             PathBlockManager.Instance.RequestRemove(cell);
+            if (AudioManager.Instance != null)
+                AudioManager.Instance.PlayPathDeleteSound(GridManager.Instance.GridToWorld(cell));
         }
     }
 
