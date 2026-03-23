@@ -57,6 +57,13 @@ public class EndGameAnimator : MonoBehaviour
     [Range(0f, 1f)]
     public float charAmount = 0.85f;
 
+    [Header("Lose — Explosion")]
+    [Tooltip("One-shot explosion Particle System prefab fired at the grid centre just before lava floods.")]
+    public ParticleSystem explosionPrefab;
+
+    [Tooltip("Y height above the grid surface at which the explosion fires.")]
+    public float explosionHeight = 0.5f;
+
     [Header("Lose — Lava Flood")]
     [Tooltip("Lava particle prefab that floods across the whole grid after fire. " + "Use a looping flat orange/red Particle System, Simulation Space = World.")]
     public ParticleSystem lavaPrefab;
@@ -97,14 +104,16 @@ public class EndGameAnimator : MonoBehaviour
         Debug.Log("[EndGameAnimator] Win sequence started.");
         BuildWinPath();
 
-        if (winPath.Count == 0)
+        if (winPath.Count > 0)
         {
-            Debug.LogWarning("[EndGameAnimator] Win path is empty — cannot animate.");
-            yield break;
+            yield return StartCoroutine(GlowPathBlocks(winGlowColor));
+            yield return StartCoroutine(FlowWaterAlongPath());
+        }
+        else
+        {
+            Debug.LogWarning("[EndGameAnimator] Win path is empty — skipping glow and water, still firing fireworks.");
         }
 
-        yield return StartCoroutine(GlowPathBlocks(winGlowColor));
-        yield return StartCoroutine(FlowWaterAlongPath());
         yield return StartCoroutine(FireFireworks());
 
         Debug.Log("[EndGameAnimator] Win sequence complete.");
@@ -127,6 +136,11 @@ public class EndGameAnimator : MonoBehaviour
 
         // Short dramatic pause at peak fire
         yield return new WaitForSeconds(0.4f);
+
+        // Explosion at grid centre before lava floods
+        FireExplosion();
+
+        yield return new WaitForSeconds(0.6f);
 
         // Lava rises and floods everything
         yield return StartCoroutine(FloodLava());
@@ -346,6 +360,22 @@ public class EndGameAnimator : MonoBehaviour
 
         // Let lava linger then clean up
         Destroy(lavaPs.gameObject, 8f);
+    }
+
+    void FireExplosion()
+    {
+        if (explosionPrefab == null) return;
+
+        Vector2Int gridMin = GridManager.Instance.gridMin;
+        Vector2Int gridMax = GridManager.Instance.gridMax;
+        float gs = GridManager.Instance.gridSize;
+
+        Vector3 centre = new Vector3(
+            (gridMin.x + gridMax.x) * 0.5f * gs,
+            GetCellWorldPos(gridMin).y + explosionHeight,
+            (gridMin.y + gridMax.y) * 0.5f * gs);
+
+        SpawnParticleAt(explosionPrefab, centre, 0f);
     }
 
     void CleanUpFire()
