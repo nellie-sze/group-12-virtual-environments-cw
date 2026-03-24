@@ -217,6 +217,7 @@ public class LavaSpawner : MonoBehaviour
         foreach (Vector2Int origin in candidates)
         {
             if (!PatchIsFree(origin, size)) continue;
+            if (PatchAdjacentToStartFinish(origin, size)) continue;
             PlacePatch(origin, size);
             return true;
         }
@@ -231,6 +232,37 @@ public class LavaSpawner : MonoBehaviour
                 if (GridManager.Instance.IsOccupied(new Vector2Int(x, y)))
                     return false;
         return true;
+    }
+
+    bool PatchAdjacentToStartFinish(Vector2Int origin, Vector2Int size)
+    {
+        if (GridManager.Instance == null) return false;
+
+        Vector2Int[] directions =
+        {
+            Vector2Int.up,
+            Vector2Int.down,
+            Vector2Int.left,
+            Vector2Int.right
+        };
+
+        for (int x = origin.x; x < origin.x + size.x; x++)
+        {
+            for (int y = origin.y; y < origin.y + size.y; y++)
+            {
+                Vector2Int cell = new Vector2Int(x, y);
+
+                foreach (Vector2Int dir in directions)
+                {
+                    Vector2Int neighbor = cell + dir;
+                    if (!GridManager.Instance.TryGetCell(neighbor, out var data)) continue;
+
+                    if (data.type == CellType.Start || data.type == CellType.Finish)
+                        return true;
+                }
+            }
+        }
+        return false;
     }
 
     void PlacePatch(Vector2Int origin, Vector2Int size)
