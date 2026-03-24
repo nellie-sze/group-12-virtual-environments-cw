@@ -99,13 +99,12 @@ public class EndGameAnimator : MonoBehaviour
         Debug.Log("[EndGameAnimator] Win sequence started.");
         BuildWinPath();
 
-        // Fireworks start immediately — glow and water run alongside
         StartCoroutine(FireFireworks());
 
         if (winPath.Count > 0)
         {
             StartCoroutine(GlowPathBlocks(winGlowColor));
-            StartCoroutine(FlowWaterAlongPath());
+            //StartCoroutine(FlowWaterAlongPath());
         }
 
         yield break;
@@ -122,21 +121,16 @@ public class EndGameAnimator : MonoBehaviour
     {
         Debug.Log("[EndGameAnimator] Lose sequence started.");
 
-        // Light transition runs in parallel — don't yield on it
         StartCoroutine(TransitionLightToRed());
 
-        // Fire spreads outward from lava cells across the whole grid
         yield return StartCoroutine(SpreadFireAcrossGrid());
 
-        // Short dramatic pause at peak fire
         yield return new WaitForSeconds(0.4f);
 
-        // Explosion at grid centre before lava floods
         FireExplosion();
 
         yield return new WaitForSeconds(0.6f);
 
-        // Lava rises and floods everything
         yield return StartCoroutine(FloodLava());
 
         Debug.Log("[EndGameAnimator] Lose sequence complete.");
