@@ -937,6 +937,83 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ff023e59e9ac5a1469fd1b584e5d6d59, type: 3}
+--- !u!1001 &494364892
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 775987241}
+    m_Modifications:
+    - target: {fileID: 17353152146238521, guid: 54f5460d9e67ba54f8aaaa2411b85b5f, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 3.333333
+      objectReference: {fileID: 0}
+    - target: {fileID: 17353152146238521, guid: 54f5460d9e67ba54f8aaaa2411b85b5f, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 3.333333
+      objectReference: {fileID: 0}
+    - target: {fileID: 17353152146238521, guid: 54f5460d9e67ba54f8aaaa2411b85b5f, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 3.333333
+      objectReference: {fileID: 0}
+    - target: {fileID: 17353152146238521, guid: 54f5460d9e67ba54f8aaaa2411b85b5f, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 1.8333333
+      objectReference: {fileID: 0}
+    - target: {fileID: 17353152146238521, guid: 54f5460d9e67ba54f8aaaa2411b85b5f, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -1.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 17353152146238521, guid: 54f5460d9e67ba54f8aaaa2411b85b5f, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 17353152146238521, guid: 54f5460d9e67ba54f8aaaa2411b85b5f, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 17353152146238521, guid: 54f5460d9e67ba54f8aaaa2411b85b5f, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 17353152146238521, guid: 54f5460d9e67ba54f8aaaa2411b85b5f, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 17353152146238521, guid: 54f5460d9e67ba54f8aaaa2411b85b5f, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 17353152146238521, guid: 54f5460d9e67ba54f8aaaa2411b85b5f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 17353152146238521, guid: 54f5460d9e67ba54f8aaaa2411b85b5f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 17353152146238521, guid: 54f5460d9e67ba54f8aaaa2411b85b5f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 17353152146238522, guid: 54f5460d9e67ba54f8aaaa2411b85b5f, type: 3}
+      propertyPath: spawnRadius
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 17353152146238523, guid: 54f5460d9e67ba54f8aaaa2411b85b5f, type: 3}
+      propertyPath: m_Name
+      value: FireworkSpawner
+      objectReference: {fileID: 0}
+    - target: {fileID: 17353152146238523, guid: 54f5460d9e67ba54f8aaaa2411b85b5f, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 54f5460d9e67ba54f8aaaa2411b85b5f, type: 3}
 --- !u!4 &513995655 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1472063397283046187, guid: 3997896b1034a4595808debd65674790, type: 3}
@@ -11315,6 +11392,22 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 903146917005052740, guid: 2231e242ec531e44caa03826addc9302, type: 3}
   m_PrefabInstance: {fileID: 703398741}
   m_PrefabAsset: {fileID: 0}
+--- !u!4 &740751410 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 17353152146238521, guid: 54f5460d9e67ba54f8aaaa2411b85b5f, type: 3}
+  m_PrefabInstance: {fileID: 494364892}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &740751411 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 17353152146238522, guid: 54f5460d9e67ba54f8aaaa2411b85b5f, type: 3}
+  m_PrefabInstance: {fileID: 494364892}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33a285c69551b9844b01b7f588a1d6f6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!4 &761975797 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4548539680920072, guid: 6fc2010b5899cfd488a0ddf205679e2b, type: 3}
@@ -28680,6 +28773,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7290265295817051041, guid: f2d44976f09b5df40b4d00077fec932a, type: 3}
       insertIndex: -1
       addedObject: {fileID: 513995655}
+    - targetCorrespondingSourceObject: {fileID: 7290265295817051041, guid: f2d44976f09b5df40b4d00077fec932a, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 740751410}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 7290265296496997648, guid: f2d44976f09b5df40b4d00077fec932a, type: 3}
       insertIndex: -1
@@ -29201,10 +29297,8 @@ MonoBehaviour:
   waterParticlePrefab: {fileID: 928092965}
   waterParticleYOffset: 0.15
   waterFlowStepDelay: 0.18
-  fireworksPrefab: {fileID: 678727728}
-  fireworksBurstCount: 4
-  fireworksBurstInterval: 0.5
-  fireworksHeight: 1.5
+  fireworkSpawner: {fileID: 740751411}
+  fireworksDuration: 10
   firePrefab: {fileID: 617135448}
   fireSpreadInterval: 0.08
   fireDuration: 3.5

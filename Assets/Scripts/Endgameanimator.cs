@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using OccaSoftware.Fireworks.Runtime;
 
 public class EndGameAnimator : MonoBehaviour
 {
@@ -28,17 +29,11 @@ public class EndGameAnimator : MonoBehaviour
     public float waterFlowStepDelay = 0.18f;
 
     [Header("Fireworks")]
-    [Tooltip("Particle System prefab for the fireworks burst at the Finish cell.")]
-    public ParticleSystem fireworksPrefab;
+    [Tooltip("The FireworkSpawner from the OccaSoftware asset. Place it in the scene above the grid and disable it — this script enables it during the win sequence.")]
+    public FireworkSpawner fireworkSpawner;
 
-    [Tooltip("Number of firework bursts fired in sequence at the Finish cell.")]
-    public int fireworksBurstCount = 4;
-
-    [Tooltip("Seconds between each firework burst.")]
-    public float fireworksBurstInterval = 0.5f;
-
-    [Tooltip("Height above the grid surface at which fireworks explode.")]
-    public float fireworksHeight = 1.5f;
+    [Tooltip("How long the fireworks celebration runs before the win sequence ends.")]
+    public float fireworksDuration = 5f;
 
     [Header("Lose — Fire Spread")]
     [Tooltip("Fire particle prefab spawned per grid cell as fire spreads outward from lava. " + "Use a looping flame Particle System with orange/red colours, Simulation Space = World.")]
@@ -427,23 +422,15 @@ public class EndGameAnimator : MonoBehaviour
 
     IEnumerator FireFireworks()
     {
-        if (fireworksPrefab == null)
+        if (fireworkSpawner == null)
         {
-            Debug.LogWarning("[EndGameAnimator] fireworksPrefab not assigned — skipping fireworks.");
+            Debug.LogWarning("[EndGameAnimator] fireworkSpawner not assigned — skipping fireworks.");
             yield break;
         }
 
-        Vector2Int finishCell = GetFinishCell();
-        Vector3 basePos = GetCellWorldPos(finishCell) + new Vector3(0f, fireworksHeight, 0f);
-
-        for (int i = 0; i < fireworksBurstCount; i++)
-        {
-            Vector3 scatter = new Vector3(
-                Random.Range(-0.4f, 0.4f), 0f,
-                Random.Range(-0.4f, 0.4f));
-            SpawnParticleAt(fireworksPrefab, basePos + scatter, 0f);
-            yield return new WaitForSeconds(fireworksBurstInterval);
-        }
+        fireworkSpawner.gameObject.SetActive(true);
+        yield return new WaitForSeconds(fireworksDuration);
+        fireworkSpawner.gameObject.SetActive(false);
     }
 
     void BuildWinPath()
