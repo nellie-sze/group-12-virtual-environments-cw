@@ -99,17 +99,16 @@ public class EndGameAnimator : MonoBehaviour
         Debug.Log("[EndGameAnimator] Win sequence started.");
         BuildWinPath();
 
+        // Fireworks start immediately — glow and water run alongside
+        StartCoroutine(FireFireworks());
+
         if (winPath.Count > 0)
         {
-            yield return StartCoroutine(GlowPathBlocks(winGlowColor));
-            yield return StartCoroutine(FlowWaterAlongPath());
-        }
-        else
-        {
-            Debug.LogWarning("[EndGameAnimator] Win path is empty — skipping glow and water, still firing fireworks.");
+            StartCoroutine(GlowPathBlocks(winGlowColor));
+            StartCoroutine(FlowWaterAlongPath());
         }
 
-        yield return StartCoroutine(FireFireworks());
+        yield break;
 
         Debug.Log("[EndGameAnimator] Win sequence complete.");
     }
