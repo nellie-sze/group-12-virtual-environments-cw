@@ -50,6 +50,7 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
     private Rigidbody rb;
     private Collider cachedCollider;
     private Animator cachedAnimator;
+    private MonoBehaviour cachedAutoPlayScript;
 
     private static readonly Vector2Int[] dirs =
     {
@@ -175,6 +176,38 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
 
     void LateUpdate()
     {
+        // Pause/resume animation — runs even if grid is null
+        if (cachedAnimator == null)
+            cachedAnimator = GetComponentInChildren<Animator>();
+        if (cachedAnimator != null)
+        {
+            bool frozen = IsFrozen;
+
+            if (cachedAutoPlayScript == null)
+            {
+                foreach (var mb in cachedAnimator.GetComponents<MonoBehaviour>())
+                {
+                    if (mb != null && mb.GetType().Name == "CityPeople")
+                    {
+                        cachedAutoPlayScript = mb;
+                        break;
+                    }
+                }
+            }
+
+            if (frozen)
+            {
+                // Kill the CityPeople coroutine that keeps calling CrossFadeInFixedTime
+                if (cachedAutoPlayScript != null)
+                    cachedAutoPlayScript.StopAllCoroutines();
+                cachedAnimator.speed = 0f;
+            }
+            else
+            {
+                cachedAnimator.speed = 1f;
+            }
+        }
+
         if (grid == null)
             return;
 
@@ -197,12 +230,6 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
         {
             SendStateIfNeeded();
         }
-
-        // Pause animation while frozen by ice power-up
-        if (cachedAnimator == null)
-            cachedAnimator = GetComponentInChildren<Animator>();
-        if (cachedAnimator != null)
-            cachedAnimator.speed = IsFrozen ? 0f : 1f;
     }
 
     void StartWanderLoop()
