@@ -263,7 +263,6 @@ public class PathChecker : MonoBehaviour
             {
                 if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", color);
                 if (mat.HasProperty("_Color")) mat.SetColor("_Color", color);
-                mat.color = color;
             }
         }
     }
@@ -285,7 +284,7 @@ public class PathChecker : MonoBehaviour
             {
                 if (mat.HasProperty("_BaseColor")) colors.Add(mat.GetColor("_BaseColor"));
                 else if (mat.HasProperty("_Color")) colors.Add(mat.GetColor("_Color"));
-                else colors.Add(mat.color);
+                else colors.Add(Color.white);
             }
 
         return colors;
@@ -305,7 +304,6 @@ public class PathChecker : MonoBehaviour
                 Color c = cols[idx++];
                 if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", c);
                 if (mat.HasProperty("_Color")) mat.SetColor("_Color", c);
-                mat.color = c;
             }
     }
     private IEnumerator FlashInvalidGhost(GameObject ghost, float duration)
