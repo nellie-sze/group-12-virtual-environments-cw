@@ -28,6 +28,9 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
     public float previewThickness = 0.002f;
     public float previewYOffset = 0.002f;
 
+    [Header("Freeze Visual")]
+    public GameObject freezeVisualPrefab;
+
     [Header("State")]
     public Vector2Int cell;
     public VillagerState state = VillagerState.Idle;
@@ -50,8 +53,10 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
     private Coroutine pathFollowRoutine;
     private Rigidbody rb;
     private Collider cachedCollider;
-    private Animator cachedAnimator;
+    private Animator[] cachedAnimators;
     private MonoBehaviour cachedAutoPlayScript;
+    private bool wasFrozen;
+    private GameObject freezeVisualInstance;
 
     private static readonly Vector2Int[] dirs =
     {
@@ -158,9 +163,7 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
     {
         rb = GetComponent<Rigidbody>();
         cachedCollider = GetComponent<Collider>();
-        cachedAnimator = GetComponentInChildren<Animator>();
-        roomClient = FindFirstObjectByType<RoomClient>();
-        grabInteractable = GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
+        cachedAnimators = GetComponentsInChildren<Animator>();
     }
 
     void Start()
@@ -194,36 +197,15 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
 
     void LateUpdate()
     {
-        // Pause/resume animation — runs even if grid is null
-        if (cachedAnimator == null)
-            cachedAnimator = GetComponentInChildren<Animator>();
-        if (cachedAnimator != null)
+        // Freeze/unfreeze animation on transition only
+        bool frozen = IsFrozen;
+        if (frozen != wasFrozen)
         {
-            bool frozen = IsFrozen;
-
-            if (cachedAutoPlayScript == null)
-            {
-                foreach (var mb in cachedAnimator.GetComponents<MonoBehaviour>())
-                {
-                    if (mb != null && mb.GetType().Name == "CityPeople")
-                    {
-                        cachedAutoPlayScript = mb;
-                        break;
-                    }
-                }
-            }
-
+            wasFrozen = frozen;
             if (frozen)
-            {
-                // Kill the CityPeople coroutine that keeps calling CrossFadeInFixedTime
-                if (cachedAutoPlayScript != null)
-                    cachedAutoPlayScript.StopAllCoroutines();
-                cachedAnimator.speed = 0f;
-            }
+                EnterFrozenVisualState();
             else
-            {
-                cachedAnimator.speed = 1f;
-            }
+                ExitFrozenVisualState();
         }
 
         if (grid == null)
@@ -773,6 +755,53 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
             return false;
 
         return CountdownTimer.Instance.TimeRemaining > initialTimerValue - LavaDeathGraceSeconds;
+    }
+
+    void EnterFrozenVisualState()
+    {
+        if (cachedAnimators == null || cachedAnimators.Length == 0)
+            cachedAnimators = GetComponentsInChildren<Animator>();
+
+        foreach (var anim in cachedAnimators)
+            if (anim != null) anim.speed = 0f;
+
+        if (cachedAutoPlayScript == null)
+        {
+            foreach (var mb in GetComponentsInChildren<MonoBehaviour>())
+            {
+                if (mb != null && mb.GetType().Name == "CityPeople")
+                {
+                    cachedAutoPlayScript = mb;
+                    break;
+                }
+            }
+        }
+        if (cachedAutoPlayScript != null)
+            cachedAutoPlayScript.StopAllCoroutines();
+
+        ShowFreezeVisual(true);
+    }
+
+    void ExitFrozenVisualState()
+    {
+        if (cachedAnimators != null)
+            foreach (var anim in cachedAnimators)
+                if (anim != null) anim.speed = 1f;
+
+        ShowFreezeVisual(false);
+    }
+
+    void ShowFreezeVisual(bool show)
+    {
+        if (freezeVisualPrefab == null) return;
+
+        if (freezeVisualInstance == null)
+        {
+            freezeVisualInstance = Instantiate(freezeVisualPrefab, transform);
+            freezeVisualInstance.transform.localPosition = Vector3.zero;
+        }
+
+        freezeVisualInstance.SetActive(show);
     }
 
     IEnumerator FollowPathCoroutine(List<Vector2Int> pathBoardCells)
