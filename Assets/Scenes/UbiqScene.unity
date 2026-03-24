@@ -519,7 +519,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2303379731809473229, guid: 50b22ccaac98e6c479eac2e36f6968d8, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2303379731809473229, guid: 50b22ccaac98e6c479eac2e36f6968d8, type: 3}
       propertyPath: m_LocalPosition.z
@@ -6263,6 +6263,17 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3291232947170354309, guid: d64208b47190f0d4a9694f3d7db2daec, type: 3}
   m_PrefabInstance: {fileID: 1542743552}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &653986562 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3165565807480230260, guid: 20005dc11b7bc4249b2780e3c5448746, type: 3}
+  m_PrefabInstance: {fileID: 1306947971}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9fc34f6a59b94e8f87a7fb0b4bf82ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InstructionsUI
 --- !u!224 &653986566 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 5445856286318858274, guid: 20005dc11b7bc4249b2780e3c5448746, type: 3}
@@ -21235,7 +21246,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9021979860543945138, guid: e02b31792a067c74a81e275fcda3930b, type: 3}
       propertyPath: m_Name
-      value: Bomb
+      value: Bomb (spare)
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -21606,10 +21617,10 @@ Transform:
   m_LocalScale: {x: 0.46946755, y: 0.46946755, z: 0.46946755}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 2008087659}
   - {fileID: 1855553453}
   - {fileID: 610006277}
   - {fileID: 284371416}
-  - {fileID: 2008087659}
   - {fileID: 1467081642}
   - {fileID: 974692547}
   - {fileID: 703398742}
@@ -22154,7 +22165,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4087615822210912696, guid: d20b62eaeeead634bb26c5c883d70c36, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4087615822210912696, guid: d20b62eaeeead634bb26c5c883d70c36, type: 3}
       propertyPath: m_LocalPosition.z
@@ -22368,6 +22379,17 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 0.16003445
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &1392553070 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6692426270925158053, guid: eb3225516446415418a5c365f80bd68f, type: 3}
+  m_PrefabInstance: {fileID: 622570250}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1392553052}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0ad34abafad169848a38072baa96cdb2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.XR.Interaction.Toolkit::UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable
 --- !u!1 &1393015038
 GameObject:
   m_ObjectHideFlags: 0
@@ -29046,13 +29068,23 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   countdownTimer: {fileID: 2070249553}
   endGameAnimator: {fileID: 2070249558}
-  instructionsUI: {fileID: 0}
+  instructionsUI: {fileID: 653986562}
   livesManager: {fileID: 2070249556}
   obstacleSpawner: {fileID: 1829848787}
   lavaSpawner: {fileID: 578569725}
   villagerSpawner: {fileID: 1722277511}
   startFinishSpawner: {fileID: 2070249548}
   blockDecayInterval: 20
+  activateOnStartOnly: 1
+  gatedInteractables:
+  - {fileID: 2008087664}
+  - {fileID: 1855553459}
+  - {fileID: 610006273}
+  - {fileID: 284371421}
+  - {fileID: 1467081648}
+  - {fileID: 974692554}
+  - {fileID: 1769713970}
+  - {fileID: 1392553070}
 --- !u!114 &2070249555
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Ubiq.Messaging;
 using Ubiq.Rooms;
+using UnityEngine.XR.Interaction.Toolkit.Interactables;
 
 public class GameManager : MonoBehaviour
 {
@@ -37,6 +38,11 @@ public class GameManager : MonoBehaviour
     [Tooltip("Seconds between each random path-block removal during gameplay.")]
     public float blockDecayInterval = 20f;
 
+    [Header("Interactables")]
+    [Tooltip("Tools and powerups to keep deactivate until the game starts.")]
+    public bool activateOnStartOnly = true;
+    public XRGrabInteractable[] gatedInteractables;
+
     private NetworkContext _net;
     private RoomClient _roomClient;
     private Coroutine _decayCoroutine;
@@ -62,6 +68,8 @@ public class GameManager : MonoBehaviour
         if (villagerSpawner == null) villagerSpawner = FindFirstObjectByType<VillagerSpawner>();
         if (startFinishSpawner == null) startFinishSpawner = FindFirstObjectByType<StartFinishSpawner>();
 
+        if (activateOnStartOnly) SetInteractablesEnabled(false);
+
         Debug.Log($"[GameManager] Start. countdownTimer={(countdownTimer != null ? countdownTimer.name : "null")}, instructionsUI={(instructionsUI != null ? instructionsUI.name : "null")}, livesManager={(livesManager != null ? livesManager.name : "null")}, obstacleSpawner={(obstacleSpawner != null ? obstacleSpawner.name : "null")}, lavaSpawner={(lavaSpawner != null ? lavaSpawner.name : "null")}, villagerSpawner={(villagerSpawner != null ? villagerSpawner.name : "null")}, startFinishSpawner={(startFinishSpawner != null ? startFinishSpawner.name : "null")}");
 
         EnterState(GameState.Waiting);
@@ -85,9 +93,11 @@ public class GameManager : MonoBehaviour
         switch (next)
         {
             case GameState.Waiting:
+                SetInteractablesEnabled(false);
                 break;
 
             case GameState.Playing:
+                SetInteractablesEnabled(true);
                 Debug.Log($"[GameManager] Entering Playing. countdownTimer={(countdownTimer != null ? countdownTimer.name : "null")}, livesManager={(livesManager != null ? livesManager.name : "null")}");
                 if (countdownTimer != null) countdownTimer.StartTimer();
                 _decayCoroutine = StartCoroutine(BlockDecayLoop());
@@ -249,5 +259,16 @@ public class GameManager : MonoBehaviour
         Debug.Log($"[GameManager] OnAllLivesLost called. currentState={CurrentState}");
         if (CurrentState != GameState.Playing) return;
         EnterState(GameState.Lost);
+    }
+
+    private void SetInteractablesEnabled(bool enabled)
+    {
+        if (gatedInteractables == null) return;
+
+        foreach (var interactable in gatedInteractables)
+        {
+            if (interactable == null) continue;
+            interactable.enabled = enabled;
+        }
     }
 }
