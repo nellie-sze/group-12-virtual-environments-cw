@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Ubiq.Geometry;
 using Ubiq.Messaging;
+using Ubiq.Rooms;
 using Ubiq.Spawning;
 
 public class VillagerAgent : MonoBehaviour, INetworkSpawnable
@@ -62,8 +63,11 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
 
     // Networking (Ubiq)
     private NetworkContext context;
+    private RoomClient roomClient;
+    private UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable grabInteractable;
     private Pose lastHeldPose;
     private bool forceHeldSend;
+    private bool pendingLocalHoldRequest;
     private Vector2Int lastSentCell;
     private VillagerState lastSentState;
     private float lastStateSendTime;
@@ -79,7 +83,9 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
         State = 0,
         MoveStart = 1,
         MoveEnd = 2,
-        HeldPose = 3
+        HeldPose = 3,
+        GrabRequest = 4,
+        AuthorityTransfer = 5
     }
 
     private struct Message
@@ -102,6 +108,10 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
 
         // held pose (local to the network scene)
         public Pose pose;
+
+        // authority handoff
+        public string requesterUuid;
+        public string authorityUuid;
     }
 
     public void ProcessMessage(ReferenceCountedSceneGraphMessage message)
@@ -135,6 +145,12 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
             case MessageType.HeldPose:
                 ApplyRemoteHeldPose(m);
                 break;
+            case MessageType.GrabRequest:
+                ApplyGrabRequest(m);
+                break;
+            case MessageType.AuthorityTransfer:
+                ApplyAuthorityTransfer(m);
+                break;
         }
     }
 
@@ -143,6 +159,8 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
         rb = GetComponent<Rigidbody>();
         cachedCollider = GetComponent<Collider>();
         cachedAnimator = GetComponentInChildren<Animator>();
+        roomClient = FindFirstObjectByType<RoomClient>();
+        grabInteractable = GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
     }
 
     void Start()
@@ -345,9 +363,69 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
 
         state = VillagerState.Held;
         forceHeldSend = true;
+        pendingLocalHoldRequest = false;
 
         AudioManager.Instance?.PlayVillagerPickupSound(transform.position);
+        StopMotionCoroutines();
+        ZeroRigidBodyVelocity();
 
+        if (isAuthority)
+        {
+            SendState(force: true);
+        }
+    }
+
+    public void RequestBeginHold()
+    {
+        if (state == VillagerState.Dead)
+        {
+            return;
+        }
+
+        pendingLocalHoldRequest = true;
+
+        if (isAuthority || string.IsNullOrEmpty(LocalUuid) || context.Scene == null)
+        {
+            BeginHold();
+            return;
+        }
+
+        context.SendJson(new Message
+        {
+            type = MessageType.GrabRequest,
+            requesterUuid = LocalUuid
+        });
+    }
+
+    public void CancelPendingHoldRequest()
+    {
+        pendingLocalHoldRequest = false;
+    }
+
+    public void RequestEndHold(Vector3 releaseWorldPos)
+    {
+        pendingLocalHoldRequest = false;
+
+        if (isAuthority)
+        {
+            EndHold(releaseWorldPos);
+        }
+    }
+
+    public void EndHold(Vector3 releaseWorldPos)
+    {
+        if (state == VillagerState.Dead) return;
+
+        if (releaseRoutine != null)
+            StopCoroutine(releaseRoutine);
+
+        releaseRoutine = StartCoroutine(ReleaseAndResume(releaseWorldPos));
+    }
+
+    private string LocalUuid => roomClient != null && roomClient.Me != null ? roomClient.Me.uuid : null;
+
+    private void StopMotionCoroutines()
+    {
         if (loop != null)
         {
             StopCoroutine(loop);
@@ -366,27 +444,99 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
             pathFollowRoutine = null;
         }
 
-        // Avoid warnings with kinematic rigidbodies.
+        if (remoteMoveRoutine != null)
+        {
+            StopCoroutine(remoteMoveRoutine);
+            remoteMoveRoutine = null;
+        }
+    }
+
+    private void ZeroRigidBodyVelocity()
+    {
         if (rb != null && !rb.isKinematic)
         {
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
         }
+    }
+
+    private void BroadcastAuthorityTransfer(string targetUuid)
+    {
+        context.SendJson(new Message
+        {
+            type = MessageType.AuthorityTransfer,
+            authorityUuid = targetUuid
+        });
+    }
+
+    private void ApplyGrabRequest(Message m)
+    {
+        if (!isAuthority || state == VillagerState.Dead || state == VillagerState.Held || string.IsNullOrEmpty(m.requesterUuid))
+        {
+            return;
+        }
+
+        if (m.requesterUuid == LocalUuid)
+        {
+            return;
+        }
+
+        BroadcastAuthorityTransfer(m.requesterUuid);
+        ApplyAuthorityTransfer(new Message
+        {
+            type = MessageType.AuthorityTransfer,
+            authorityUuid = m.requesterUuid
+        });
+    }
+
+    private void ApplyAuthorityTransfer(Message m)
+    {
+        if (string.IsNullOrEmpty(m.authorityUuid))
+        {
+            return;
+        }
+
+        bool amNewAuthority = m.authorityUuid == LocalUuid;
+
+        if (amNewAuthority)
+        {
+            isAuthority = true;
+
+            if (state == VillagerState.Dead)
+            {
+                pendingLocalHoldRequest = false;
+                return;
+            }
+
+            bool stillSelected = grabInteractable != null && grabInteractable.isSelected;
+            if (pendingLocalHoldRequest && stillSelected)
+            {
+                BeginHold();
+                return;
+            }
+
+            pendingLocalHoldRequest = false;
+            state = VillagerState.Idle;
+            HideDropPreview();
+            StartWanderLoop();
+            SendState(force: true);
+            return;
+        }
 
         if (isAuthority)
         {
-            SendState(force: true);
+            StopMotionCoroutines();
+            ZeroRigidBodyVelocity();
+            HideDropPreview();
+
+            if (state != VillagerState.Dead)
+            {
+                state = VillagerState.Held;
+            }
         }
-    }
 
-    public void EndHold(Vector3 releaseWorldPos)
-    {
-        if (state == VillagerState.Dead) return;
-
-        if (releaseRoutine != null)
-            StopCoroutine(releaseRoutine);
-
-        releaseRoutine = StartCoroutine(ReleaseAndResume(releaseWorldPos));
+        isAuthority = false;
+        pendingLocalHoldRequest = false;
     }
 
     IEnumerator ReleaseAndResume(Vector3 releaseWorldPos)

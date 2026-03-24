@@ -29,13 +29,11 @@ public class VillagerGrabHook : MonoBehaviour
 
     private void OnSelectEntered(SelectEnterEventArgs args)
     {
-        agent.BeginHold();
+        agent.RequestBeginHold();
     }
 
     private void OnSelectExited(SelectExitEventArgs args)
     {
-        
-
-        agent.EndHold(transform.position);
+        agent.RequestEndHold(transform.position);
     }
 }

@@ -24271,7 +24271,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 727abfb212d0954489d8aad1e31a7e89, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CountdownTimer
-  totalTime: 120
+  totalTime: 240
   timerText: {fileID: 1022358347}
 --- !u!114 &2070249554
 MonoBehaviour:
