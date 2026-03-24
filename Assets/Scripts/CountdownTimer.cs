@@ -98,5 +98,6 @@ public class CountdownTimer : MonoBehaviour
     }
 
     // Remaining time as a 0–1 fraction.
+    public float TimeRemaining => timeRemaining;
     public float FractionRemaining => totalTime > 0f ? timeRemaining / totalTime : 0f;
 }

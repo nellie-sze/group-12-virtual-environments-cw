@@ -57,8 +57,10 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
     private float lastStateSendTime;
     private int localMoveSeq;
     private int remoteMoveSeq;
+    private float initialTimerValue = float.NaN;
 
     private const float StateResendIntervalSeconds = 1.0f;
+    private const float LavaDeathGraceSeconds = 5.0f;
 
     private enum MessageType
     {
@@ -151,6 +153,7 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
         lastSentState = state;
         lastStateSendTime = Time.time;
         lastHeldPose = new Pose(new Vector3(float.NaN, float.NaN, float.NaN), Quaternion.identity);
+        initialTimerValue = CountdownTimer.Instance != null ? CountdownTimer.Instance.TimeRemaining : float.NaN;
 
         if (isAuthority)
         {
@@ -540,6 +543,7 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
     {
         if (state == VillagerState.Dead) return;
         if (!isAuthority) return;
+        if (IsWithinLavaDeathGracePeriod()) return;
 
         if (IsCellLava(cell))
         {
@@ -556,6 +560,17 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
             if (GameManager.Instance != null)
                 GameManager.Instance.OnVillagerDied();
         }
+    }
+
+    bool IsWithinLavaDeathGracePeriod()
+    {
+        if (float.IsNaN(initialTimerValue))
+            return false;
+
+        if (CountdownTimer.Instance == null)
+            return false;
+
+        return CountdownTimer.Instance.TimeRemaining > initialTimerValue - LavaDeathGraceSeconds;
     }
 
     IEnumerator FollowPathCoroutine(List<Vector2Int> pathBoardCells)
