@@ -106,6 +106,8 @@ public class GameManager : MonoBehaviour
 
             case GameState.Won:
                 Debug.Log("[GameManager] Entering Won. Stopping timer and playing win sequence.");
+                SetInteractablesEnabled(false);
+                DeactivateGrabGates();
                 if (_decayCoroutine != null) { StopCoroutine(_decayCoroutine); _decayCoroutine = null; }
                 if (countdownTimer != null) countdownTimer.StopTimer();
                 if (endGameAnimator != null) endGameAnimator.PlayWinSequence();
@@ -116,6 +118,8 @@ public class GameManager : MonoBehaviour
 
             case GameState.Lost:
                 Debug.Log("[GameManager] Entering Lost. Stopping timer / showing end game / playing lose sequence.");
+                SetInteractablesEnabled(false);
+                DeactivateGrabGates();
                 if (_decayCoroutine != null) { StopCoroutine(_decayCoroutine); _decayCoroutine = null; }
                 if (countdownTimer != null) countdownTimer.ShowEndGame();
                 if (endGameAnimator != null) endGameAnimator.PlayLoseSequence();
@@ -248,6 +252,14 @@ public class GameManager : MonoBehaviour
         Debug.Log($"[GameManager] Activating {gates.Length} GrabGate component(s).");
         foreach (var gate in gates)
             gate.OnGameStart();
+    }
+
+    private void DeactivateGrabGates()
+    {
+        var gates = FindObjectsByType<GrabGate>(FindObjectsSortMode.None);
+        Debug.Log($"[GameManager] Deactivating {gates.Length} GrabGate component(s).");
+        foreach (var gate in gates)
+            gate.OnGameEnd();
     }
 
     // Called by VillagerAgent when a villager dies in lava.

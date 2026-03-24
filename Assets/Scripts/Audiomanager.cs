@@ -17,14 +17,15 @@ public class AudioManager : MonoBehaviour
     [Header("Destroy Sounds")]
     [Tooltip("Played when a tree or flower is chopped.")]
     public AudioClip treeDestroyClip;
+    [Range(0f, 1f)] public float treeDestroyVolume = 0.8f;
 
     [Tooltip("Played when a rock is smashed.")]
     public AudioClip rockDestroyClip;
+    [Range(0f, 1f)] public float rockDestroyVolume = 0.8f;
 
     [Tooltip("Played when a placed path block is deleted.")]
     public AudioClip pathDeleteClip;
-
-    [Range(0f, 1f)] public float destroyVolume = 0.8f;
+    [Range(0f, 1f)] public float pathDeleteVolume = 0.8f;
 
     [Header("Path Building")]
     [Tooltip("Played when a path block is successfully placed.")]
@@ -73,10 +74,6 @@ public class AudioManager : MonoBehaviour
     [Tooltip("Played when the ice power-up freezes villagers.")]
     public AudioClip iceClip;
     [Range(0f, 1f)] public float iceVolume = 0.85f;
-
-    [Header("References")]
-    public Transform xrOrigin;
-
 
     private AudioSource musicSource;
     private AudioSource footstepSource;
@@ -186,15 +183,15 @@ public class AudioManager : MonoBehaviour
 
     // Played by AxeTool when a tree/flower is successfully chopped.
     public void PlayTreeDestroySound(Vector3 worldPos)
-        => PlayAtPoint(treeDestroyClip, worldPos, destroyVolume);
+        => PlayAtPoint(treeDestroyClip, worldPos, treeDestroyVolume);
 
     // Played by PickaxeTool when a rock is successfully smashed.
     public void PlayRockDestroySound(Vector3 worldPos)
-        => PlayAtPoint(rockDestroyClip, worldPos, destroyVolume);
+        => PlayAtPoint(rockDestroyClip, worldPos, rockDestroyVolume);
 
     // Played by DeleteTool when a path block is deleted.
     public void PlayPathDeleteSound(Vector3 worldPos)
-        => PlayAtPoint(pathDeleteClip, worldPos, destroyVolume);
+        => PlayAtPoint(pathDeleteClip, worldPos, pathDeleteVolume);
 
     // Played by ShovelTool after a path block is successfully placed.
     public void PlayPathBuiltSound()

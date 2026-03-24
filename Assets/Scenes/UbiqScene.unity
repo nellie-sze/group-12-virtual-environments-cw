@@ -16593,6 +16593,11 @@ Transform:
   - {fileID: 1769713961}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: -90, y: 0, z: 0}
+--- !u!1 &991322260 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2218496723442559054, guid: d6878e1999eb4b44a9f5a263af86c185, type: 3}
+  m_PrefabInstance: {fileID: 1701092740}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &991322261 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 5731359841781308914, guid: d64208b47190f0d4a9694f3d7db2daec, type: 3}
@@ -16604,6 +16609,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ff2f7cf4a9ab864fbff1a8c9a28273c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
+--- !u!114 &991322266 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1820897918385990095, guid: d6878e1999eb4b44a9f5a263af86c185, type: 3}
+  m_PrefabInstance: {fileID: 1701092740}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 991322260}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0cb9aa70a22847b5925ee5f067c10a9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &991322268
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 991322260}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 357aaa7d30036644fa6ddd250a588b9b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
+  xrOrigin: {fileID: 991322266}
+  targetY: 0
 --- !u!1 &1022358345
 GameObject:
   m_ObjectHideFlags: 0
@@ -22925,6 +22955,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1820897918385990095, guid: d6878e1999eb4b44a9f5a263af86c185, type: 3}
+      propertyPath: m_RequestedTrackingOriginMode
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2218496723442559053, guid: d6878e1999eb4b44a9f5a263af86c185, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -22996,6 +23030,9 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 189725024}
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2218496723442559054, guid: d6878e1999eb4b44a9f5a263af86c185, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 991322268}
     - targetCorrespondingSourceObject: {fileID: 657184242118504722, guid: d6878e1999eb4b44a9f5a263af86c185, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1349173248}
@@ -24377,7 +24414,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AudioManager
   natureMusic: {fileID: 8300000, guid: 2d23ae77d5354444ea0b0df8aea79163, type: 3}
-  natureMusicVolume: 0.35
+  natureMusicVolume: 0.5
   footstepClips:
   - {fileID: 8300000, guid: 0408f207592a74f56a4386a449daffc2, type: 3}
   - {fileID: 8300000, guid: f745f256140164e02b3ddd135a5d0fd6, type: 3}
@@ -24385,9 +24422,11 @@ MonoBehaviour:
   footstepInterval: 0.45
   footstepMoveThreshold: 0.2
   treeDestroyClip: {fileID: 8300000, guid: 771d68f4995e44d35936619ad0376089, type: 3}
+  treeDestroyVolume: 0.5
   rockDestroyClip: {fileID: 8300000, guid: cb0f8f4e354a24c79bc325007252d290, type: 3}
+  rockDestroyVolume: 0.8
   pathDeleteClip: {fileID: 8300000, guid: 179218a64d16d432f932622b37b82aac, type: 3}
-  destroyVolume: 0.85
+  pathDeleteVolume: 0.8
   pathBuiltClip: {fileID: 8300000, guid: 0ca9e02932f2b47f086180e4a511642a, type: 3}
   pathBuiltVolume: 0.75
   invalidPlacementClip: {fileID: 8300000, guid: 58eb0227ec5ae49b48447bcb3ab9c024, type: 3}
@@ -24395,7 +24434,7 @@ MonoBehaviour:
   pickupClip: {fileID: 8300000, guid: aeac699ccdda8447fae0b4b96a7feadf, type: 3}
   pickupVolume: 0.7
   villagerDeathClip: {fileID: 8300000, guid: 08180c4606c4748cdbd74d8fb67c0b86, type: 3}
-  villagerDeathVolume: 0.503
+  villagerDeathVolume: 0.3
   villagerPickupClip: {fileID: 8300000, guid: aeac699ccdda8447fae0b4b96a7feadf, type: 3}
   villagerPickupVolume: 0.8
   timerWarningClip: {fileID: 8300000, guid: 34187042975264e7ea86f2db06303438, type: 3}
@@ -24410,7 +24449,6 @@ MonoBehaviour:
   bombVolume: 0.68
   iceClip: {fileID: 8300000, guid: 5bd904c13bddedb4684e3dda0179d326, type: 3}
   iceVolume: 0.85
-  xrOrigin: {fileID: 0}
 --- !u!114 &2070249558
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -238,8 +238,15 @@ public class ShovelTool : MonoBehaviour
     void TryBuild()
     {
         if (ghostHighlight == null || !ghostHighlight.activeSelf) return;
-        
-        Vector2Int cell = GridManager.Instance.WorldToGrid(ghostHighlight.transform.position); 
+
+        Vector3 placementPosition = ghostHighlight.transform.position;
+        Vector2Int cell = GridManager.Instance.WorldToGrid(placementPosition);
+
+        if (!GridManager.Instance.IsWithinGridSurfaceBuffered(placementPosition, gridSize / 2f))
+        {
+            Debug.LogError($"[ShovelTool] Rejected out-of-buffer path placement at cell {cell}, worldPos {placementPosition}. Grid buffer bounds would be exceeded.");
+            return;
+        }
 
         if (!GridManager.Instance.IsInBounds(cell) || GridManager.Instance.IsOccupied(cell)) return;
 
@@ -259,7 +266,6 @@ public class ShovelTool : MonoBehaviour
         }
 
         bool isStraight = currentMode == ToolMode.Straight;
-        Vector3    placementPosition = ghostHighlight.transform.position;
         Quaternion placementRotation = Quaternion.Euler(0f, currentRotationY, 0f);
         Debug.Log($"Placing path at position={placementPosition}, cell={cell}");
 

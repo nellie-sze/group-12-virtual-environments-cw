@@ -8,7 +8,7 @@ public class GrabGate : MonoBehaviour
     private XRGrabInteractable grab;
     private HoldingTracker tracker;
     private bool isRegisteredHeld;
-    private bool gameStart = false;
+    private bool gameActive = false;
 
     private void Awake()
     {
@@ -41,7 +41,7 @@ public class GrabGate : MonoBehaviour
 
     private void Update()
     {
-        if (!gameStart) return;
+        if (!gameActive) return;
         if (tracker == null)
             tracker = HoldingTracker.Instance != null ? HoldingTracker.Instance : FindFirstObjectByType<HoldingTracker>();
 
@@ -70,6 +70,16 @@ public class GrabGate : MonoBehaviour
 
     public void OnGameStart()
     {
-        gameStart = true;
+        gameActive = true;
+    }
+
+    public void OnGameEnd()
+    {
+        gameActive = false;
+
+        if (grab != null)
+        {
+            grab.enabled = false;
+        }
     }
 }
