@@ -49,8 +49,9 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
     private Coroutine pathFollowRoutine;
     private Rigidbody rb;
     private Collider cachedCollider;
-    private Animator cachedAnimator;
+    private Animator[] cachedAnimators;
     private MonoBehaviour cachedAutoPlayScript;
+    private bool wasFrozen;
 
     private static readonly Vector2Int[] dirs =
     {
@@ -142,7 +143,7 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
     {
         rb = GetComponent<Rigidbody>();
         cachedCollider = GetComponent<Collider>();
-        cachedAnimator = GetComponentInChildren<Animator>();
+        cachedAnimators = GetComponentsInChildren<Animator>();
     }
 
     void Start()
@@ -176,36 +177,15 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
 
     void LateUpdate()
     {
-        // Pause/resume animation — runs even if grid is null
-        if (cachedAnimator == null)
-            cachedAnimator = GetComponentInChildren<Animator>();
-        if (cachedAnimator != null)
+        // Freeze/unfreeze animation on transition only
+        bool frozen = IsFrozen;
+        if (frozen != wasFrozen)
         {
-            bool frozen = IsFrozen;
-
-            if (cachedAutoPlayScript == null)
-            {
-                foreach (var mb in cachedAnimator.GetComponents<MonoBehaviour>())
-                {
-                    if (mb != null && mb.GetType().Name == "CityPeople")
-                    {
-                        cachedAutoPlayScript = mb;
-                        break;
-                    }
-                }
-            }
-
+            wasFrozen = frozen;
             if (frozen)
-            {
-                // Kill the CityPeople coroutine that keeps calling CrossFadeInFixedTime
-                if (cachedAutoPlayScript != null)
-                    cachedAutoPlayScript.StopAllCoroutines();
-                cachedAnimator.speed = 0f;
-            }
+                EnterFrozenVisualState();
             else
-            {
-                cachedAnimator.speed = 1f;
-            }
+                ExitFrozenVisualState();
         }
 
         if (grid == null)
@@ -623,6 +603,36 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
             return false;
 
         return CountdownTimer.Instance.TimeRemaining > initialTimerValue - LavaDeathGraceSeconds;
+    }
+
+    void EnterFrozenVisualState()
+    {
+        if (cachedAnimators == null || cachedAnimators.Length == 0)
+            cachedAnimators = GetComponentsInChildren<Animator>();
+
+        foreach (var anim in cachedAnimators)
+            if (anim != null) anim.speed = 0f;
+
+        if (cachedAutoPlayScript == null)
+        {
+            foreach (var mb in GetComponentsInChildren<MonoBehaviour>())
+            {
+                if (mb != null && mb.GetType().Name == "CityPeople")
+                {
+                    cachedAutoPlayScript = mb;
+                    break;
+                }
+            }
+        }
+        if (cachedAutoPlayScript != null)
+            cachedAutoPlayScript.StopAllCoroutines();
+    }
+
+    void ExitFrozenVisualState()
+    {
+        if (cachedAnimators != null)
+            foreach (var anim in cachedAnimators)
+                if (anim != null) anim.speed = 1f;
     }
 
     IEnumerator FollowPathCoroutine(List<Vector2Int> pathBoardCells)
