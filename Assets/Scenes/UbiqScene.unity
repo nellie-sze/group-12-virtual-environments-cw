@@ -277,6 +277,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 6618725628355234377, guid: 42ac2a24f3ee58448916f745ce79c5ee, type: 3}
       insertIndex: -1
       addedObject: {fileID: 284371425}
+    - targetCorrespondingSourceObject: {fileID: 6618725628355234377, guid: 42ac2a24f3ee58448916f745ce79c5ee, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 284371429}
   m_SourcePrefab: {fileID: 100100000, guid: 42ac2a24f3ee58448916f745ce79c5ee, type: 3}
 --- !u!1 &16386460
 GameObject:
@@ -590,6 +593,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 3480242447457170110, guid: 50b22ccaac98e6c479eac2e36f6968d8, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2008087668}
+    - targetCorrespondingSourceObject: {fileID: 3480242447457170110, guid: 50b22ccaac98e6c479eac2e36f6968d8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2008087672}
   m_SourcePrefab: {fileID: 100100000, guid: 50b22ccaac98e6c479eac2e36f6968d8, type: 3}
 --- !u!1 &284371415 stripped
 GameObject:
@@ -852,6 +858,18 @@ MonoBehaviour:
   highlightColor: {r: 0, g: 0.8, b: 1, a: 1}
   pulseSpeed: 2
   pulseIntensity: 1.2
+--- !u!114 &284371429
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 284371415}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0e855eabeec130e43b96cea2c24e1b28, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GrabGate
 --- !u!4 &379618927 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4548539680920072, guid: 6fc2010b5899cfd488a0ddf205679e2b, type: 3}
@@ -1304,6 +1322,18 @@ MonoBehaviour:
   highlightColor: {r: 0, g: 0.8, b: 1, a: 1}
   pulseSpeed: 2
   pulseIntensity: 1.2
+--- !u!114 &610006287
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 610006269}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0e855eabeec130e43b96cea2c24e1b28, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GrabGate
 --- !u!1 &617135446
 GameObject:
   m_ObjectHideFlags: 0
@@ -22236,6 +22266,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7522467440924630778, guid: d20b62eaeeead634bb26c5c883d70c36, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1467081644}
+    - targetCorrespondingSourceObject: {fileID: 7522467440924630778, guid: d20b62eaeeead634bb26c5c883d70c36, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1467081653}
   m_SourcePrefab: {fileID: 100100000, guid: d20b62eaeeead634bb26c5c883d70c36, type: 3}
 --- !u!1 &1349173246 stripped
 GameObject:
@@ -27506,6 +27539,18 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &1467081653
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1467081641}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0e855eabeec130e43b96cea2c24e1b28, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GrabGate
 --- !u!1001 &1542743552
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -28939,6 +28984,18 @@ MonoBehaviour:
   highlightColor: {r: 0, g: 0.8, b: 1, a: 1}
   pulseSpeed: 2
   pulseIntensity: 1.2
+--- !u!114 &2008087672
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2008087658}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0e855eabeec130e43b96cea2c24e1b28, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GrabGate
 --- !u!4 &2069216731 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4835789832631930, guid: bdf8e7438a7816543998181bd3067573, type: 3}
@@ -28968,6 +29025,7 @@ GameObject:
   - component: {fileID: 2070249557}
   - component: {fileID: 2070249558}
   - component: {fileID: 2070249559}
+  - component: {fileID: 2070249560}
   m_Layer: 0
   m_Name: Game Manager
   m_TagString: Untagged
@@ -29207,6 +29265,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd6588ef76a8cd54d9b846ca94a1d635, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EndGameTestTrigger
+--- !u!114 &2070249560
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2070249546}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b12aee19c027f5429816ae78bba9da7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
 --- !u!4 &2082302564 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4538438218131234, guid: f31c6bb6e68212e41b0bcae74612a240, type: 3}
@@ -29448,6 +29518,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7322173429083555654, guid: 9ab17a5463ca4ea45bcb6c7371b46ad9, type: 3}
       insertIndex: -1
       addedObject: {fileID: 610006283}
+    - targetCorrespondingSourceObject: {fileID: 7322173429083555654, guid: 9ab17a5463ca4ea45bcb6c7371b46ad9, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 610006287}
   m_SourcePrefab: {fileID: 100100000, guid: 9ab17a5463ca4ea45bcb6c7371b46ad9, type: 3}
 --- !u!1001 &7100000001
 PrefabInstance:

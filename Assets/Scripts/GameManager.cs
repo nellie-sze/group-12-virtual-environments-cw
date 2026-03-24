@@ -98,6 +98,7 @@ public class GameManager : MonoBehaviour
 
             case GameState.Playing:
                 SetInteractablesEnabled(true);
+                ActivateGrabGates();
                 Debug.Log($"[GameManager] Entering Playing. countdownTimer={(countdownTimer != null ? countdownTimer.name : "null")}, livesManager={(livesManager != null ? livesManager.name : "null")}");
                 if (countdownTimer != null) countdownTimer.StartTimer();
                 _decayCoroutine = StartCoroutine(BlockDecayLoop());
@@ -237,6 +238,14 @@ public class GameManager : MonoBehaviour
             if (string.CompareOrdinal(p.uuid, leaderId) < 0)
                 leaderId = p.uuid;
         return _roomClient.Me.uuid == leaderId;
+    }
+
+    private void ActivateGrabGates()
+    {
+        var gates = FindObjectsByType<GrabGate>(FindObjectsSortMode.None);
+        Debug.Log($"[GameManager] Activating {gates.Length} GrabGate component(s).");
+        foreach (var gate in gates)
+            gate.OnGameStart();
     }
 
     // Called by VillagerAgent when a villager dies in lava.
