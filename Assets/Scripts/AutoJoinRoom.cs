@@ -13,10 +13,12 @@ using UnityEngine;
 public class AutoJoinRoom : MonoBehaviour
 {
     [Tooltip("All peers must use the same GUID to end up in the same room.")]
-    public string roomGuid = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
+    public string roomGuid = "051ad3d8-a785-4091-8e52-68a965c62afd";
 
     void Start()
     {
+        Debug.Log($"AutoJoinRoom: Start on '{gameObject.name}' with configured roomGuid '{roomGuid}'.");
+
         RoomClient roomClient = RoomClient.Find(this);
 
         if (roomClient == null)
@@ -25,13 +27,16 @@ public class AutoJoinRoom : MonoBehaviour
             return;
         }
 
+        Debug.Log($"AutoJoinRoom: Found RoomClient on '{roomClient.gameObject.name}'.");
+
         if (!Guid.TryParse(roomGuid, out Guid guid))
         {
             Debug.LogError($"AutoJoinRoom: '{roomGuid}' is not a valid GUID.");
             return;
         }
 
+        Debug.Log($"AutoJoinRoom: Parsed GUID successfully. Joining room {guid}...");
         roomClient.Join(guid);
-        Debug.Log($"AutoJoinRoom: Joining room {guid}");
+        Debug.Log($"AutoJoinRoom: Join call sent for room {guid}.");
     }
 }
