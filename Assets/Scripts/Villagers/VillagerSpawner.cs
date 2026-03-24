@@ -69,6 +69,27 @@ public class VillagerSpawner : MonoBehaviour
         context.SendJson(new SpawnRequestMessage { requestId = requestId });
     }
 
+    // Called by GameManager when the game is lost, despawns all active villagers.
+    public void RemoveAllVillagers()
+    {
+        // Find all active villagers in the scene
+        var villagers = FindObjectsByType<VillagerAgent>(FindObjectsSortMode.None);
+
+        foreach (var villager in villagers)
+        {
+            if (villager == null) return;
+
+            AudioManager.Instance?.PlayVillagerDeathSound(villager.transform.position);
+
+            if (IsLeaderPeer() && spawnManager != null)
+                spawnManager.Despawn(villager.gameObject);
+            else
+                Destroy(villager.gameObject);
+        }
+
+        Debug.Log($"[VillagerSpawner] RemoveAllVillagers: removed {villagers.Length} villagers.");
+    }
+
     private void HandleSpawnRequest(string requestId)
     {
         if (hasSpawned)

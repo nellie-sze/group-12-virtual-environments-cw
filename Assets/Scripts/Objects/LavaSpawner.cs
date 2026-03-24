@@ -174,6 +174,23 @@ public class LavaSpawner : MonoBehaviour
         context.SendJson(new NetMessage { type = "remove", cellX = cell.x, cellY = cell.y });
     }
 
+    // Called by GameManager when the game is won, removes all lava cells from the grid.
+    public void RemoveAllLava()
+    {
+        if (GridManager.Instance == null) return;
+
+        var lavaCells = new List<Vector2Int>();
+        foreach (var kvp in GridManager.Instance.GetAllCells())
+            if (kvp.Value.type == CellType.Lava)
+                lavaCells.Add(kvp.Key);
+
+        // Remove each lava cell — this also syncs removal to all peers via RequestRemove
+        foreach (var cell in lavaCells)
+            RequestRemove(cell);
+
+        Debug.Log($"[LavaSpawner] RemoveAllLava: removed lava cells.");
+    }
+
     private void HandleRemove(Vector2Int cell)
     {
         if (GridManager.Instance == null) return;

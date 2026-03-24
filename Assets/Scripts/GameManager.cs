@@ -110,6 +110,7 @@ public class GameManager : MonoBehaviour
                 if (countdownTimer != null) countdownTimer.StopTimer();
                 if (endGameAnimator != null) endGameAnimator.PlayWinSequence();
                 if (AudioManager.Instance != null) AudioManager.Instance.PlayWinSound();
+                if (lavaSpawner != null) lavaSpawner.RemoveAllLava();
                 Debug.Log("[GameManager] Players WIN - path complete!");
                 break;
 
@@ -119,6 +120,7 @@ public class GameManager : MonoBehaviour
                 if (countdownTimer != null) countdownTimer.ShowEndGame();
                 if (endGameAnimator != null) endGameAnimator.PlayLoseSequence();
                 if (AudioManager.Instance != null) AudioManager.Instance.PlayLoseSound();
+                if (villagerSpawner != null) villagerSpawner.RemoveAllVillagers();
                 Debug.Log("[GameManager] Players LOSE - time ran out or lives depleted!");
                 break;
         }
