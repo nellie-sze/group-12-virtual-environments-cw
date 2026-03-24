@@ -71,18 +71,22 @@ public class StartFinishSpawner : MonoBehaviour
         Vector2Int gridMax = GridManager.Instance.gridMax;
 
         Vector2Int startCell, finishCell;
-        if (Random.value < 0.5f)
+        do
         {
-            // Left/right edges — exclude corners by clamping Y away from gridMin.y and gridMax.y
-            startCell  = new Vector2Int(gridMin.x, Random.Range(gridMin.y + 1, gridMax.y));
-            finishCell = new Vector2Int(gridMax.x, Random.Range(gridMin.y + 1, gridMax.y));
+            if (Random.value < 0.5f)
+            {
+                // Left/right edges: exclude corners by clamping Y away from gridMin.y and gridMax.y
+                startCell = new Vector2Int(gridMin.x, Random.Range(gridMin.y + 1, gridMax.y));
+                finishCell = new Vector2Int(gridMax.x, Random.Range(gridMin.y + 1, gridMax.y));
+            }
+            else
+            {
+                // Top/bottom edges: exclude corners by clamping X away from gridMin.x and gridMax.x
+                startCell = new Vector2Int(Random.Range(gridMin.x + 1, gridMax.x), gridMin.y);
+                finishCell = new Vector2Int(Random.Range(gridMin.x + 1, gridMax.x), gridMax.y);
+            }
         }
-        else
-        {
-            // Top/bottom edges — exclude corners by clamping X away from gridMin.x and gridMax.x
-            startCell  = new Vector2Int(Random.Range(gridMin.x + 1, gridMax.x), gridMin.y);
-            finishCell = new Vector2Int(Random.Range(gridMin.x + 1, gridMax.x), gridMax.y);
-        }
+        while (IsCornerCell(startCell, gridMin, gridMax) || IsCornerCell(finishCell, gridMin, gridMax));
 
         var msg = new NetMessage
         {
@@ -111,6 +115,12 @@ public class StartFinishSpawner : MonoBehaviour
 
     private void DoSpawn(Vector2Int startCell, Vector2Int finishCell)
     {
+        if (IsCornerCell(startCell, GridManager.Instance.gridMin, GridManager.Instance.gridMax))
+            Debug.LogError($"[StartFinishSpawner] Start spawned on forbidden corner cell {startCell}.");
+
+        if (IsCornerCell(finishCell, GridManager.Instance.gridMin, GridManager.Instance.gridMax))
+            Debug.LogError($"[StartFinishSpawner] Finish spawned on forbidden corner cell {finishCell}.");
+
         SpawnMarker(startPrefab, startCell, CellType.Start);
         SpawnMarker(finishPrefab, finishCell, CellType.Finish);
     }
@@ -121,7 +131,7 @@ public class StartFinishSpawner : MonoBehaviour
 
         if (spawnManager.catalogue == null || spawnManager.catalogue.IndexOf(prefab) < 0)
         {
-            Debug.LogWarning($"[StartFinishSpawner] {type} prefab not in NSM catalogue — using local Instantiate.");
+            Debug.LogWarning($"[StartFinishSpawner] {type} prefab not in NSM catalogue - using local Instantiate.");
             var fb = Instantiate(prefab, GridManager.Instance.GridToWorld(cell), Quaternion.identity);
             GridManager.Instance.TryPlace(cell, type, fb);
             return;
@@ -147,8 +157,8 @@ public class StartFinishSpawner : MonoBehaviour
 
         if (spawnManager.catalogue == null || spawnManager.catalogue.IndexOf(prefab) < 0)
         {
-            Debug.LogWarning($"[StartFinishSpawner] Block prefab not in NSM catalogue — using local Instantiate.");
-            var fb = Instantiate(prefab, GridManager.Instance.GridToWorld(cell) + new Vector3(0f, blockYOffset, 0f), Quaternion.identity);
+            Debug.LogWarning("[StartFinishSpawner] Block prefab not in NSM catalogue - using local Instantiate.");
+            Instantiate(prefab, GridManager.Instance.GridToWorld(cell) + new Vector3(0f, blockYOffset, 0f), Quaternion.identity);
             return;
         }
 
@@ -190,4 +200,9 @@ public class StartFinishSpawner : MonoBehaviour
         return roomClient.Me.uuid == leaderUuid;
     }
 
+    private static bool IsCornerCell(Vector2Int cell, Vector2Int gridMin, Vector2Int gridMax)
+    {
+        return (cell.x == gridMin.x || cell.x == gridMax.x) &&
+               (cell.y == gridMin.y || cell.y == gridMax.y);
+    }
 }
