@@ -33,12 +33,23 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
 
     public bool isAuthority = true;
 
+    // Ice power-up freeze (shared across all villagers)
+    private static float freezeEndTime = -1f;
+    public static bool IsFrozen => Time.time < freezeEndTime;
+
+    public static void FreezeAll(float duration)
+    {
+        freezeEndTime = Time.time + duration;
+        Debug.Log($"[Ice] All villagers frozen for {duration}s");
+    }
+
     private Coroutine loop;
     private Coroutine releaseRoutine;
     private Coroutine remoteMoveRoutine;
     private Coroutine pathFollowRoutine;
     private Rigidbody rb;
     private Collider cachedCollider;
+    private Animator cachedAnimator;
 
     private static readonly Vector2Int[] dirs =
     {
@@ -130,6 +141,7 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
     {
         rb = GetComponent<Rigidbody>();
         cachedCollider = GetComponent<Collider>();
+        cachedAnimator = GetComponentInChildren<Animator>();
     }
 
     void Start()
@@ -185,6 +197,12 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
         {
             SendStateIfNeeded();
         }
+
+        // Pause animation while frozen by ice power-up
+        if (cachedAnimator == null)
+            cachedAnimator = GetComponentInChildren<Animator>();
+        if (cachedAnimator != null)
+            cachedAnimator.speed = IsFrozen ? 0f : 1f;
     }
 
     void StartWanderLoop()
@@ -202,6 +220,13 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
             {
                 state = VillagerState.Idle;
                 break;
+            }
+
+            // Frozen by ice power-up — wait until thaw
+            if (IsFrozen)
+            {
+                yield return null;
+                continue;
             }
 
             if (!isAuthority || state == VillagerState.Held)
@@ -589,6 +614,10 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
                 pathFollowRoutine = null;
                 yield break;
             }
+
+            // Frozen by ice power-up — wait until thaw
+            while (IsFrozen)
+                yield return null;
 
             var target = pathBoardCells[i];
             if (target == cell) continue; // skip current position

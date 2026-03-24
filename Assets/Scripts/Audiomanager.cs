@@ -70,6 +70,10 @@ public class AudioManager : MonoBehaviour
     public AudioClip bombClip;
     [Range(0f, 1f)] public float bombVolume = 1f;
 
+    [Tooltip("Played when the ice power-up freezes villagers.")]
+    public AudioClip iceClip;
+    [Range(0f, 1f)] public float iceVolume = 0.85f;
+
     [Header("References")]
     public Transform xrOrigin;
 
@@ -219,6 +223,10 @@ public class AudioManager : MonoBehaviour
     // Played by BombPowerup when the bomb explodes.
     public void PlayBombSound(Vector3 worldPos)
         => PlayAtPoint(bombClip, worldPos, bombVolume);
+
+    // Played when the ice power-up activates.
+    public void PlayIceSound(Vector3 worldPos)
+        => PlayAtPoint(iceClip, worldPos, iceVolume);
 
     // Called by CountdownTimer every Update with the remaining seconds.
     public void UpdateTimerWarning(float timeRemaining)
