@@ -1,8 +1,7 @@
 fileFormatVersion: 2
-guid: 0c4b869431e7f714e901cbabc7d46378
-NativeFormatImporter:
+guid: 6f7c125f650547742b26034e4069a503
+PrefabImporter:
   externalObjects: {}
-  mainObjectFileID: 8574412962073106934
   userData: 
   assetBundleName: 
   assetBundleVariant: 
@@ -11,5 +10,5 @@ AssetOrigin:
   productId: 292492
   packageName: Free Lava Shader
   packageVersion: 1.0
-  assetPath: Assets/Prefabs/Lava/TerrainTex(Delete)/Materials/Rock.terrainlayer
+  assetPath: Assets/Prefabs/NetworkObstacles/Fire.prefab
   uploadId: 684944

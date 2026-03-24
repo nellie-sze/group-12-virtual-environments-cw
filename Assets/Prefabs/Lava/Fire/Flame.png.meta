@@ -143,5 +143,5 @@ AssetOrigin:
   productId: 292492
   packageName: Free Lava Shader
   packageVersion: 1.0
-  assetPath: Assets/Shaders/Fire/Flame.png
+  assetPath: Assets/Prefabs/Lava/Fire/Flame.png
   uploadId: 684944

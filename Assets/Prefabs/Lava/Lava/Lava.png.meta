@@ -130,5 +130,5 @@ AssetOrigin:
   productId: 292492
   packageName: Free Lava Shader
   packageVersion: 1.0
-  assetPath: Assets/Shaders/Lava/Lava.png
+  assetPath: Assets/Prefabs/Lava/Lava/Lava.png
   uploadId: 684944

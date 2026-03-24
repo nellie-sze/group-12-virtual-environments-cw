@@ -126,5 +126,5 @@ AssetOrigin:
   productId: 292492
   packageName: Free Lava Shader
   packageVersion: 1.0
-  assetPath: Assets/Shaders/Magma/Magma.png
+  assetPath: Assets/Prefabs/Lava/Magma/Magma.png
   uploadId: 684944

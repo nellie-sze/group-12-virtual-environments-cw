@@ -61,7 +61,6 @@ Material:
     - _QueueControl: 0
     - _QueueOffset: 0
     - _Scale: 100
-    - _XRMotionVectorsPass: 1
     - _speed: 0
     m_Colors: []
   m_BuildTextureStacks: []
