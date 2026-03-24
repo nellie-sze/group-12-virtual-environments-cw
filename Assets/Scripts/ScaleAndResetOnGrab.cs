@@ -213,6 +213,16 @@ public class ScaleAndResetOnGrab : MonoBehaviour
 
     private void LateUpdate()
     {
+        // Fallback cleanup: if we still think we own the tool but it is no
+        // longer selected locally, release the lease so it cannot stay locked
+        // on the shelf after a missed select-exit path.
+        if (grab != null && !grab.isSelected && IsLocalOwner())
+        {
+            SendLease(MessageType.Release);
+            ownerUuid = null;
+            lockUntilLocalTime = 0;
+        }
+
         // Prevent tool drifting when idle locally, but do not stomp a valid remote lease.
         if (grab != null && !grab.isSelected && !IsLeaseValid())
         {

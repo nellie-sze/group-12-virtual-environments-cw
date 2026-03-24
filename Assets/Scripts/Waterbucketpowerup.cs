@@ -51,6 +51,14 @@ public class WaterBucketPowerup : MonoBehaviour
         var m = message.FromJson<SplashMessage>();
         var worldPos = new Vector3(m.x, m.y, m.z);
         SpawnSplash(worldPos);
+
+        // Mirror the local consume flow on remote peers so the bucket
+        // disappears everywhere after a successful use.
+        if (!hasBeenUsed)
+        {
+            hasBeenUsed = true;
+            StartCoroutine(FadeOutAndDestroy());
+        }
     }
 
     void Start()
