@@ -27,6 +27,9 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
     public float previewThickness = 0.002f;
     public float previewYOffset = 0.002f;
 
+    [Header("Freeze Visual")]
+    public GameObject freezeVisualPrefab;
+
     [Header("State")]
     public Vector2Int cell;
     public VillagerState state = VillagerState.Idle;
@@ -52,6 +55,7 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
     private Animator[] cachedAnimators;
     private MonoBehaviour cachedAutoPlayScript;
     private bool wasFrozen;
+    private GameObject freezeVisualInstance;
 
     private static readonly Vector2Int[] dirs =
     {
@@ -626,6 +630,8 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
         }
         if (cachedAutoPlayScript != null)
             cachedAutoPlayScript.StopAllCoroutines();
+
+        ShowFreezeVisual(true);
     }
 
     void ExitFrozenVisualState()
@@ -633,6 +639,21 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
         if (cachedAnimators != null)
             foreach (var anim in cachedAnimators)
                 if (anim != null) anim.speed = 1f;
+
+        ShowFreezeVisual(false);
+    }
+
+    void ShowFreezeVisual(bool show)
+    {
+        if (freezeVisualPrefab == null) return;
+
+        if (freezeVisualInstance == null)
+        {
+            freezeVisualInstance = Instantiate(freezeVisualPrefab, transform);
+            freezeVisualInstance.transform.localPosition = Vector3.zero;
+        }
+
+        freezeVisualInstance.SetActive(show);
     }
 
     IEnumerator FollowPathCoroutine(List<Vector2Int> pathBoardCells)

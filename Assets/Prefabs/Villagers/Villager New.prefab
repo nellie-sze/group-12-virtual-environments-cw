@@ -1443,6 +1443,7 @@ MonoBehaviour:
   dropPreview: {fileID: 6526783678486264654}
   previewThickness: 0.002
   previewYOffset: 0.002
+  freezeVisualPrefab: {fileID: 1760415685173901982, guid: 4e9f311d6038128418f0d4422bc86cf7, type: 3}
   cell: {x: 0, y: 0}
   state: 0
   isAuthority: 1
