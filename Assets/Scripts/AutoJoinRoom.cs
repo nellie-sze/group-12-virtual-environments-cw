@@ -1,4 +1,5 @@
 using System;
+using TMPro;
 using Ubiq.Rooms;
 using UnityEngine;
 
@@ -12,7 +13,9 @@ using UnityEngine;
 /// </summary>
 public class AutoJoinRoom : MonoBehaviour
 {
-    private const string NextRoomGuidPlayerPrefsKey = "AutoJoinRoom.NextRoomGuid";
+    private const string LegacyNextRoomGuidPlayerPrefsKey = "AutoJoinRoom.NextRoomGuid";
+    private static bool hasPendingRestartRoom;
+    private static string pendingRestartRoomGuid;
 
     [Tooltip("Default room used on first launch.")]
     public string primaryRoomGuid = "051ad3d8-a785-4091-8e52-68a965c62afd";
@@ -20,30 +23,27 @@ public class AutoJoinRoom : MonoBehaviour
     [Tooltip("Alternate room used after a restart. Replace this placeholder with your second real GUID.")]
     public string secondaryRoomGuid = "3de35113-07f7-4391-a213-44c98ccd5571";
 
+    [Tooltip("Optional UI text that displays whether the player is currently using Room A or Room B.")]
+    public TMP_Text roomInfoText;
+
+    private const string RoomInfoTextObjectName = "Room Info Text";
+
     public static void SetNextRoomGuid(string guid)
     {
-        if (string.IsNullOrWhiteSpace(guid))
-        {
-            PlayerPrefs.DeleteKey(NextRoomGuidPlayerPrefsKey);
-        }
-        else
-        {
-            PlayerPrefs.SetString(NextRoomGuidPlayerPrefsKey, guid);
-        }
-
-        PlayerPrefs.Save();
+        hasPendingRestartRoom = !string.IsNullOrWhiteSpace(guid);
+        pendingRestartRoomGuid = hasPendingRestartRoom ? guid : null;
     }
 
     public static string ConsumeNextRoomGuid()
     {
-        if (!PlayerPrefs.HasKey(NextRoomGuidPlayerPrefsKey))
+        if (!hasPendingRestartRoom)
         {
             return null;
         }
 
-        string guid = PlayerPrefs.GetString(NextRoomGuidPlayerPrefsKey, string.Empty);
-        PlayerPrefs.DeleteKey(NextRoomGuidPlayerPrefsKey);
-        PlayerPrefs.Save();
+        string guid = pendingRestartRoomGuid;
+        hasPendingRestartRoom = false;
+        pendingRestartRoomGuid = null;
         return string.IsNullOrWhiteSpace(guid) ? null : guid;
     }
 
@@ -93,10 +93,64 @@ public class AutoJoinRoom : MonoBehaviour
         return primaryRoomGuid;
     }
 
+    private string GetRoomLabel(string guid)
+    {
+        if (string.Equals(guid, primaryRoomGuid, StringComparison.OrdinalIgnoreCase))
+        {
+            return "Currently in: Room A";
+        }
+
+        if (string.Equals(guid, secondaryRoomGuid, StringComparison.OrdinalIgnoreCase))
+        {
+            return "Currently in: Room B";
+        }
+
+        return "Room Unknown";
+    }
+
+    private void UpdateRoomInfoText(string roomGuid)
+    {
+        ResolveRoomInfoText();
+
+        if (roomInfoText == null)
+        {
+            return;
+        }
+
+        roomInfoText.text = GetRoomLabel(roomGuid);
+    }
+
+    private void ResolveRoomInfoText()
+    {
+        if (roomInfoText != null)
+        {
+            return;
+        }
+
+        var texts = FindObjectsByType<TMP_Text>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (var text in texts)
+        {
+            if (text != null && text.gameObject.name == RoomInfoTextObjectName)
+            {
+                roomInfoText = text;
+                Debug.Log($"AutoJoinRoom: Auto-linked roomInfoText to '{RoomInfoTextObjectName}'.");
+                return;
+            }
+        }
+    }
+
     void Start()
     {
+        if (PlayerPrefs.HasKey(LegacyNextRoomGuidPlayerPrefsKey))
+        {
+            PlayerPrefs.DeleteKey(LegacyNextRoomGuidPlayerPrefsKey);
+            PlayerPrefs.Save();
+            Debug.Log("AutoJoinRoom: Cleared legacy PlayerPrefs room override so fresh app launches default to Room A.");
+        }
+
         string roomGuid = GetCurrentConfiguredRoomGuid();
         Debug.Log($"AutoJoinRoom: Start on '{gameObject.name}' with selected roomGuid '{roomGuid}'. primary='{primaryRoomGuid}', secondary='{secondaryRoomGuid}'.");
+        UpdateRoomInfoText(roomGuid);
 
         RoomClient roomClient = RoomClient.Find(this);
 
