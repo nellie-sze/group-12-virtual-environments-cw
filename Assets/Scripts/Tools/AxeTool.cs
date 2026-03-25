@@ -135,6 +135,8 @@ public class AxeTool : MonoBehaviour
 
         Vector2Int cell = GridManager.Instance.WorldToGrid(ghostHighlight.transform.position);
         Debug.Log($"Trying to chop at cell {cell}");
+        string targetCellDescription = DescribeTargetCell(cell);
+        Debug.Log($"[AxeTool] Target cell state at {cell}: {targetCellDescription}");
 
         if (GridManager.Instance.TryGetCell(cell, out var data)
             && (data.type == CellType.Tree || data.type == CellType.Flower))
@@ -142,6 +144,10 @@ public class AxeTool : MonoBehaviour
             // Play destroy sound at the cell's world position before removing it
             AudioManager.Instance?.PlayTreeDestroySound(GridManager.Instance.GridToWorld(cell));
             ObstacleSpawner.Instance.RequestRemove(cell);
+        }
+        else
+        {
+            Debug.LogWarning($"[AxeTool] Chop failed at cell {cell}: {targetCellDescription}");
         }
     }
 
@@ -243,6 +249,23 @@ public class AxeTool : MonoBehaviour
         ScaleGhostToCell(ghostHighlight);
         ApplyGhostColour(invalidColor);
         ghostHighlight.SetActive(false);
+    }
+
+    string DescribeTargetCell(Vector2Int cell)
+    {
+        if (GridManager.Instance == null)
+            return "GridManager is missing.";
+
+        if (!GridManager.Instance.IsInBounds(cell))
+            return "target cell is out of bounds.";
+
+        if (GridManager.Instance.TryGetCell(cell, out var data))
+        {
+            string objectName = data.placedObject != null ? data.placedObject.name : "null object";
+            return $"target cell contains {data.type} ({objectName}).";
+        }
+
+        return "target cell is empty.";
     }
 
     void SetGhostColor(Color color) => ApplyGhostColour(color);

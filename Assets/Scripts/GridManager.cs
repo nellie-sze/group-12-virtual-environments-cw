@@ -197,6 +197,20 @@ public class GridManager : MonoBehaviour
     public bool TryGetCell(Vector2Int cell, out GridCell data) =>
         cells.TryGetValue(cell, out data);
 
+    public bool TrySetPlacedObject(Vector2Int cell, GameObject obj)
+    {
+        if (!cells.TryGetValue(cell, out var data))
+            return false;
+
+        data.placedObject = obj;
+        return true;
+    }
+
+    public void RemoveCell(Vector2Int cell)
+    {
+        cells.Remove(cell);
+    }
+
     public void ClearAllCells()
     {
         cells.Clear();

@@ -285,6 +285,7 @@ public class ObstacleSpawner : MonoBehaviour
             var agent = obj.GetComponent<ObstacleAgent>();
             if (agent != null)
             {
+                agent.obstacleType = type;
                 agent.SetOwner(true);
                 agent.SetAuthoritativeCell(cell);
             }

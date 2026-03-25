@@ -94,7 +94,16 @@ public class PathBlockManager : MonoBehaviour
 
         // Mark so this peer knows it can Despawn this object later.
         var agent = obj.GetComponent<PathBlockAgent>();
-        if (agent != null) agent.isLocallySpawned = true;
+        if (agent != null)
+        {
+            Vector2Int cell = GridManager.Instance.WorldToGrid(worldPos);
+            int rotationY = Mathf.RoundToInt(rotation.eulerAngles.y / 90f) * 90;
+
+            agent.isLocallySpawned = true;
+            agent.SetOwner(true);
+            agent.SetAuthoritativePlacement(cell, rotationY);
+            agent.RequestInitialRegistrationSend();
+        }
 
         return obj;
     }
@@ -137,7 +146,10 @@ public class PathBlockManager : MonoBehaviour
 
         GameObject obj = data.placedObject;
 
-        GridManager.Instance.ClearCellsForObject(obj);
+        if (obj != null)
+            GridManager.Instance.ClearCellsForObject(obj);
+        else
+            GridManager.Instance.RemoveCell(cell);
 
         if (PathChecker.Instance != null)
             PathChecker.Instance.UnregisterNode(cell);
@@ -154,6 +166,10 @@ public class PathBlockManager : MonoBehaviour
     private void OnNetworkSpawned(GameObject obj, IRoom room, IPeer peer, NetworkSpawnOrigin origin)
     {
         if (obj == null) return;
+        var agent = obj.GetComponent<PathBlockAgent>();
+        if (agent != null)
+            agent.SetOwner(origin == NetworkSpawnOrigin.Local);
+
         var sync = obj.GetComponent<NetworkedSpawnedTransform>();
         if (sync != null)
             sync.SetOwner(origin == NetworkSpawnOrigin.Local);

@@ -121,6 +121,15 @@ public class PathChecker : MonoBehaviour
         Debug.Log($"[PathChecker] Node unregistered at {cell}");
     }
 
+    public void SetNodeObject(Vector2Int cell, GameObject placedObject)
+    {
+        if (!pathNodes.ContainsKey(cell) || placedObject == null)
+            return;
+
+        cellObjects[cell] = placedObject;
+        originalColors[cell] = CacheColors(placedObject);
+    }
+
     public void ClearAllNodes()
     {
         pathNodes.Clear();

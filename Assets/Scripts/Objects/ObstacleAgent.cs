@@ -6,7 +6,7 @@ public class ObstacleAgent : MonoBehaviour, INetworkSpawnable
 {
     public NetworkId NetworkId { get; set; }
 
-    [Tooltip("Set this to Tree, Rock, or Flower in the prefab inspector!")]
+    [Tooltip("Logical grid cell type for this network-spawned object.")]
     public CellType obstacleType;
 
     private NetworkContext context;
@@ -18,13 +18,14 @@ public class ObstacleAgent : MonoBehaviour, INetworkSpawnable
     private int resendRemaining;
     private float nextResendTime;
 
-    private const int ResendCount = 5;
+    private const int ResendCount = 15;
     private const float ResendInterval = 0.2f;
 
     private struct Message
     {
         public int cellX;
         public int cellY;
+        public int cellType;
     }
 
     void Start()
@@ -50,7 +51,8 @@ public class ObstacleAgent : MonoBehaviour, INetworkSpawnable
         context.SendJson(new Message
         {
             cellX = authoritativeCell.x,
-            cellY = authoritativeCell.y
+            cellY = authoritativeCell.y,
+            cellType = (int)obstacleType
         });
 
         resendRemaining--;
@@ -62,6 +64,7 @@ public class ObstacleAgent : MonoBehaviour, INetworkSpawnable
     {
         var m = message.FromJson<Message>();
         authoritativeCell = new Vector2Int(m.cellX, m.cellY);
+        obstacleType = (CellType)m.cellType;
         hasAuthoritativeCell = true;
         TryRegisterAuthoritativeCell();
     }
@@ -100,12 +103,25 @@ public class ObstacleAgent : MonoBehaviour, INetworkSpawnable
 
         if (GridManager.Instance.TryPlace(authoritativeCell, obstacleType, gameObject))
         {
+            RegisterSpecialNodeIfNeeded();
             isRegisteredLocally = true;
             return;
         }
 
         if (GridManager.Instance.TryGetCell(authoritativeCell, out var data) && data.placedObject == gameObject)
         {
+            RegisterSpecialNodeIfNeeded();
+            isRegisteredLocally = true;
+            return;
+        }
+
+        if (GridManager.Instance.TryGetCell(authoritativeCell, out data) &&
+            data.type == obstacleType &&
+            data.placedObject == null &&
+            GridManager.Instance.TrySetPlacedObject(authoritativeCell, gameObject))
+        {
+            RegisterSpecialNodeIfNeeded();
+            PathChecker.Instance?.SetNodeObject(authoritativeCell, gameObject);
             isRegisteredLocally = true;
             return;
         }
@@ -115,5 +131,16 @@ public class ObstacleAgent : MonoBehaviour, INetworkSpawnable
             : "empty or unknown occupant";
 
         Debug.LogWarning($"[ObstacleAgent] Failed to register authoritative cell {authoritativeCell} for '{name}'. Existing occupant: {occupant}");
+    }
+
+    private void RegisterSpecialNodeIfNeeded()
+    {
+        if (PathChecker.Instance == null)
+            return;
+
+        if (obstacleType == CellType.Start || obstacleType == CellType.Finish)
+        {
+            PathChecker.Instance.RegisterNode(authoritativeCell, PathNode.Omnidirectional(), gameObject);
+        }
     }
 }

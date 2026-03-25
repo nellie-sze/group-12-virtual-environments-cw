@@ -104,6 +104,10 @@ public class LavaSpawner : MonoBehaviour
 
         if (name != lavaPrefab.name) return;
 
+        var agent = obj.GetComponent<ObstacleAgent>();
+        if (agent != null)
+            agent.SetOwner(origin == NetworkSpawnOrigin.Local);
+
         ScaleToCell(obj);
 
         var sync = obj.GetComponent<NetworkedSpawnedTransform>();
@@ -299,6 +303,14 @@ public class LavaSpawner : MonoBehaviour
                     continue;
                 }
 
+                var agent = obj.GetComponent<ObstacleAgent>();
+                if (agent != null)
+                {
+                    agent.obstacleType = CellType.Lava;
+                    agent.SetOwner(true);
+                    agent.SetAuthoritativeCell(cell);
+                }
+
                 obj.transform.SetPositionAndRotation(pos, Quaternion.identity);
                 ScaleToCell(obj);
 
@@ -310,7 +322,13 @@ public class LavaSpawner : MonoBehaviour
                 }
 
                 if (GridManager.Instance.TryPlace(cell, CellType.Lava, obj))
-                    obj.GetComponent<ObstacleAgent>()?.MarkAsRegisteredByLeader();
+                {
+                    if (agent != null)
+                    {
+                        agent.MarkAsRegisteredByLeader();
+                        agent.RequestInitialCellSend();
+                    }
+                }
                 else
                 {
                     Debug.LogWarning($"LavaSpawner: TryPlace failed at {cell} — despawning.");

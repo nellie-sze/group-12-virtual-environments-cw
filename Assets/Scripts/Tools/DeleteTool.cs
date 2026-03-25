@@ -132,6 +132,8 @@ public class DeleteTool : MonoBehaviour
         if (ghostHighlight == null || !ghostHighlight.activeSelf) return;
 
         Vector2Int cell = GridManager.Instance.WorldToGrid(ghostHighlight.transform.position);
+        string targetCellDescription = DescribeTargetCell(cell);
+        Debug.Log($"[DeleteTool] Target cell state at {cell}: {targetCellDescription}");
 
         if (GridManager.Instance.TryGetCell(cell, out var data) && data.type == CellType.Path)
         {
@@ -142,6 +144,10 @@ public class DeleteTool : MonoBehaviour
             // Also unregister from PathChecker so connection logic stays accurate
             if (PathChecker.Instance != null)
                 PathChecker.Instance.UnregisterNode(cell);
+        }
+        else
+        {
+            Debug.LogWarning($"[DeleteTool] Delete failed at cell {cell}: {targetCellDescription}");
         }
     }
     static void SetMaterialColor(Material mat, Color color)
@@ -242,6 +248,23 @@ public class DeleteTool : MonoBehaviour
         ScaleGhostToCell(ghostHighlight);
         ApplyGhostColour(invalidColor);
         ghostHighlight.SetActive(false);
+    }
+
+    string DescribeTargetCell(Vector2Int cell)
+    {
+        if (GridManager.Instance == null)
+            return "GridManager is missing.";
+
+        if (!GridManager.Instance.IsInBounds(cell))
+            return "target cell is out of bounds.";
+
+        if (GridManager.Instance.TryGetCell(cell, out var data))
+        {
+            string objectName = data.placedObject != null ? data.placedObject.name : "null object";
+            return $"target cell contains {data.type} ({objectName}).";
+        }
+
+        return "target cell is empty.";
     }
 
     void SetGhostColor(Color color) => ApplyGhostColour(color);
