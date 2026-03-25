@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 using Ubiq.Spawning;
 using Ubiq.Rooms;
 using Ubiq.Messaging;
@@ -105,6 +106,27 @@ public class PathBlockManager : MonoBehaviour
     {
         HandleRemove(cell);
         context.SendJson(new NetMessage { type = "remove", cellX = cell.x, cellY = cell.y });
+    }
+
+    public void RemoveAllPathBlocks()
+    {
+        if (GridManager.Instance == null) return;
+
+        var pathCells = new List<Vector2Int>();
+        foreach (var kvp in GridManager.Instance.GetAllCells())
+        {
+            if (kvp.Value.type == CellType.Path)
+            {
+                pathCells.Add(kvp.Key);
+            }
+        }
+
+        foreach (var cell in pathCells)
+        {
+            RequestRemove(cell);
+        }
+
+        Debug.Log($"[PathBlockManager] RemoveAllPathBlocks: removed {pathCells.Count} path cell(s).");
     }
 
     private void HandleRemove(Vector2Int cell)

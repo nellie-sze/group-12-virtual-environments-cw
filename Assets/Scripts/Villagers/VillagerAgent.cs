@@ -164,6 +164,8 @@ public class VillagerAgent : MonoBehaviour, INetworkSpawnable
         rb = GetComponent<Rigidbody>();
         cachedCollider = GetComponent<Collider>();
         cachedAnimators = GetComponentsInChildren<Animator>();
+        roomClient = FindFirstObjectByType<RoomClient>();
+        grabInteractable = GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
     }
 
     void Start()

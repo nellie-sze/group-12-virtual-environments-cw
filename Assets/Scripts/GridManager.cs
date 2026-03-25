@@ -197,6 +197,11 @@ public class GridManager : MonoBehaviour
     public bool TryGetCell(Vector2Int cell, out GridCell data) =>
         cells.TryGetValue(cell, out data);
 
+    public void ClearAllCells()
+    {
+        cells.Clear();
+    }
+
     // Used by PathChecker to iterate all placed cells
     public IEnumerable<KeyValuePair<Vector2Int, GridCell>> GetAllCells() => cells;
 

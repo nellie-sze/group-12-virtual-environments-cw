@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using Ubiq.Spawning;
 using Ubiq.Rooms;
@@ -149,6 +150,35 @@ public class StartFinishSpawner : MonoBehaviour
             obj.GetComponent<ObstacleAgent>()?.MarkAsRegisteredByLeader();
         else
             spawnManager.Despawn(obj);
+    }
+
+    public void RemoveAllMarkers()
+    {
+        if (GridManager.Instance == null) return;
+
+        var markerCells = new List<Vector2Int>();
+        foreach (var kvp in GridManager.Instance.GetAllCells())
+        {
+            if (kvp.Value.type == CellType.Start || kvp.Value.type == CellType.Finish)
+            {
+                markerCells.Add(kvp.Key);
+            }
+        }
+
+        foreach (var cell in markerCells)
+        {
+            if (!GridManager.Instance.TryGetCell(cell, out var data)) continue;
+
+            var obj = data.placedObject;
+            GridManager.Instance.ClearCellsForObject(obj);
+
+            if (IsLeaderPeer() && spawnManager != null && obj != null)
+                spawnManager.Despawn(obj);
+            else if (obj != null)
+                Destroy(obj);
+        }
+
+        Debug.Log($"[StartFinishSpawner] RemoveAllMarkers: removed {markerCells.Count} start/finish marker cell(s).");
     }
 
     void SpawnBaseBlock(GameObject prefab, Vector2Int cell)

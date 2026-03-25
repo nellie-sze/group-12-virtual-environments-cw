@@ -141,6 +141,27 @@ public class ObstacleSpawner : MonoBehaviour
         context.SendJson(new NetMessage { type = "remove", cellX = cell.x, cellY = cell.y });
     }
 
+    public void RemoveAllObstacles()
+    {
+        if (GridManager.Instance == null) return;
+
+        var obstacleCells = new List<Vector2Int>();
+        foreach (var kvp in GridManager.Instance.GetAllCells())
+        {
+            if (kvp.Value.type == CellType.Tree || kvp.Value.type == CellType.Rock || kvp.Value.type == CellType.Flower)
+            {
+                obstacleCells.Add(kvp.Key);
+            }
+        }
+
+        foreach (var cell in obstacleCells)
+        {
+            RequestRemove(cell);
+        }
+
+        Debug.Log($"[ObstacleSpawner] RemoveAllObstacles: removed {obstacleCells.Count} obstacle cell(s).");
+    }
+
     private void HandleRemove(Vector2Int cell)
     {
         if (GridManager.Instance == null) return;

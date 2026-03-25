@@ -427,7 +427,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ad15faa8522faa044984f5bbc9feb8fd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AutoJoinRoom
-  roomGuid: 051ad3d8-a785-4091-8e52-68a965c62afd
+  primaryRoomGuid: 051ad3d8-a785-4091-8e52-68a965c62afd
+  secondaryRoomGuid: 3de35113-07f7-4391-a213-44c98ccd5571
 --- !u!4 &184495916 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4802134562677756, guid: 68cbfa1438162b243ac02fb9e3e30581, type: 3}

@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Ubiq.Messaging;
 using Ubiq.Rooms;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
@@ -46,9 +47,15 @@ public class GameManager : MonoBehaviour
     private NetworkContext _net;
     private RoomClient _roomClient;
     private Coroutine _decayCoroutine;
+    private bool _restartInProgress;
 
     [Serializable]
-    private struct GameMessage { public string type; public bool includesSpawn; }
+    private struct GameMessage
+    {
+        public string type;
+        public bool includesSpawn;
+        public string nextRoomGuid;
+    }
 
     void Awake()
     {
@@ -79,9 +86,15 @@ public class GameManager : MonoBehaviour
     public void ProcessMessage(ReferenceCountedSceneGraphMessage message)
     {
         var msg = message.FromJson<GameMessage>();
-        Debug.Log($"[GameManager] ProcessMessage type={msg.type}, includesSpawn={msg.includesSpawn}, currentState={CurrentState}");
+        Debug.Log($"[GameManager] ProcessMessage type={msg.type}, includesSpawn={msg.includesSpawn}, nextRoomGuid={msg.nextRoomGuid}, currentState={CurrentState}");
         if (msg.type == "StartGame")
+        {
             DoStartGame(spawnObjects: msg.includesSpawn);
+        }
+        else if (msg.type == "RestartGame")
+        {
+            BeginNetworkRestart(msg.nextRoomGuid);
+        }
     }
 
     void EnterState(GameState next)
@@ -208,6 +221,89 @@ public class GameManager : MonoBehaviour
 
     public bool IsPlaying => CurrentState == GameState.Playing;
     public bool IsGameOver => CurrentState == GameState.Lost || CurrentState == GameState.Won;
+
+    public void ReloadCurrentScene()
+    {
+        var scene = SceneManager.GetActiveScene();
+        Debug.Log($"[GameManager] ReloadCurrentScene called. Reloading scene '{scene.name}' ({scene.buildIndex}).");
+        SceneManager.LoadScene(scene.buildIndex);
+    }
+
+    public void RestartToAlternateRoom()
+    {
+        if (_restartInProgress)
+        {
+            Debug.Log("[GameManager] RestartToAlternateRoom ignored because restart is already in progress.");
+            return;
+        }
+
+        var autoJoin = FindFirstObjectByType<AutoJoinRoom>();
+        if (autoJoin == null)
+        {
+            Debug.LogError("[GameManager] RestartToAlternateRoom failed: no AutoJoinRoom found in scene.");
+            ReloadCurrentScene();
+            return;
+        }
+
+        string currentRoomGuid = _roomClient != null && _roomClient.Room != null ? _roomClient.Room.UUID : autoJoin.primaryRoomGuid;
+        string nextRoomGuid = autoJoin.GetAlternateRoomGuid(currentRoomGuid);
+
+        Debug.Log($"[GameManager] RestartToAlternateRoom current='{currentRoomGuid}' next='{nextRoomGuid}'.");
+        _net.SendJson(new GameMessage { type = "RestartGame", nextRoomGuid = nextRoomGuid });
+        BeginNetworkRestart(nextRoomGuid);
+    }
+
+    private void BeginNetworkRestart(string nextRoomGuid)
+    {
+        if (_restartInProgress)
+        {
+            Debug.Log($"[GameManager] BeginNetworkRestart ignored because restart is already in progress. nextRoomGuid='{nextRoomGuid}'.");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(nextRoomGuid))
+        {
+            Debug.LogError("[GameManager] BeginNetworkRestart failed: nextRoomGuid was empty.");
+            return;
+        }
+
+        _restartInProgress = true;
+        Debug.Log($"[GameManager] BeginNetworkRestart scheduling restart into room '{nextRoomGuid}'.");
+        AutoJoinRoom.SetNextRoomGuid(nextRoomGuid);
+        StartCoroutine(CleanupAndReloadScene());
+    }
+
+    private IEnumerator CleanupAndReloadScene()
+    {
+        Debug.Log("[GameManager] CleanupAndReloadScene: removing spawned round objects before reload.");
+
+        if (PathBlockManager.Instance != null)
+            PathBlockManager.Instance.RemoveAllPathBlocks();
+
+        if (obstacleSpawner != null)
+            obstacleSpawner.RemoveAllObstacles();
+
+        if (lavaSpawner != null)
+            lavaSpawner.RemoveAllLava();
+
+        if (villagerSpawner != null)
+            villagerSpawner.RemoveAllVillagers();
+
+        if (startFinishSpawner != null)
+            startFinishSpawner.RemoveAllMarkers();
+
+        if (PathChecker.Instance != null)
+            PathChecker.Instance.ClearAllNodes();
+
+        if (GridManager.Instance != null)
+            GridManager.Instance.ClearAllCells();
+
+        // Give NSM/property-based despawns a short moment to flush before the room is left.
+        yield return null;
+        yield return new WaitForSeconds(0.2f);
+
+        ReloadCurrentScene();
+    }
 
     // ── Block decay ───────────────────────────────────────────────────────────
 

@@ -29,5 +29,11 @@ public class TestButtons : MonoBehaviour
             Debug.Log("[TestTrigger] Spawning start/finish flags.");
             FindFirstObjectByType<StartFinishSpawner>()?.SpawnAll();
         }
+
+        if (GUI.Button(new Rect(10, 250, 150, 50), "TEST RESTART"))
+        {
+            Debug.Log("[TestTrigger] Restarting into alternate room.");
+            GameManager.Instance?.RestartToAlternateRoom();
+        }
     }
 }

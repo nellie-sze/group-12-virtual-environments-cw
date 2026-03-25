@@ -121,6 +121,14 @@ public class PathChecker : MonoBehaviour
         Debug.Log($"[PathChecker] Node unregistered at {cell}");
     }
 
+    public void ClearAllNodes()
+    {
+        pathNodes.Clear();
+        cellObjects.Clear();
+        originalColors.Clear();
+        Debug.Log("[PathChecker] Cleared all registered path nodes.");
+    }
+
     public bool HasExitToward(Vector2Int cell, Vector2Int direction) =>
         pathNodes.TryGetValue(cell, out var node) && node.HasExit(direction);
 
