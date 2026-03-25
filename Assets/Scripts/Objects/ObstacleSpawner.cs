@@ -186,7 +186,8 @@ public class ObstacleSpawner : MonoBehaviour
     private void OnNetworkSpawned(GameObject obj, IRoom room, IPeer peer, NetworkSpawnOrigin origin)
     {
         var agent = obj.GetComponent<ObstacleAgent>();
-        if (agent == null) return;
+        if (agent != null)
+            agent.SetOwner(origin == NetworkSpawnOrigin.Local);
 
         var sync = obj.GetComponent<NetworkedSpawnedTransform>();
         if (sync != null)
@@ -281,6 +282,13 @@ public class ObstacleSpawner : MonoBehaviour
             GameObject obj = spawnManager.SpawnWithPeerScope(prefab);
             if (obj == null) continue;
 
+            var agent = obj.GetComponent<ObstacleAgent>();
+            if (agent != null)
+            {
+                agent.SetOwner(true);
+                agent.SetAuthoritativeCell(cell);
+            }
+
             Quaternion rotation = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
             obj.transform.SetPositionAndRotation(pos, rotation);
             FitToSingleGridCell(obj);
@@ -295,7 +303,11 @@ public class ObstacleSpawner : MonoBehaviour
             if (GridManager.Instance.TryPlace(cell, type, obj))
             {
                 placed++;
-                obj.GetComponent<ObstacleAgent>()?.MarkAsRegisteredByLeader();
+                if (agent != null)
+                {
+                    agent.MarkAsRegisteredByLeader();
+                    agent.RequestInitialCellSend();
+                }
             }
             else
             {

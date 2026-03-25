@@ -1,39 +1,119 @@
-using System.Collections;
 using UnityEngine;
+using Ubiq.Messaging;
 using Ubiq.Spawning;
 
-public class ObstacleAgent : MonoBehaviour
+public class ObstacleAgent : MonoBehaviour, INetworkSpawnable
 {
+    public NetworkId NetworkId { get; set; }
+
     [Tooltip("Set this to Tree, Rock, or Flower in the prefab inspector!")]
     public CellType obstacleType;
 
+    private NetworkContext context;
+    private bool owner;
     private bool isRegisteredLocally = false;
+    private bool hasAuthoritativeCell = false;
+    private Vector2Int authoritativeCell;
+    private bool pendingInitialCellSend;
+    private int resendRemaining;
+    private float nextResendTime;
 
-    IEnumerator Start()
+    private const int ResendCount = 5;
+    private const float ResendInterval = 0.2f;
+
+    private struct Message
     {
-        // Check if we are a remote peer receiving this object
-        var networkOrigin = GetComponent<NetworkedSpawnedTransform>();
-        if (networkOrigin != null && !networkOrigin.IsOwner)
+        public int cellX;
+        public int cellY;
+    }
+
+    void Start()
+    {
+        context = NetworkScene.Register(this);
+        TryRegisterAuthoritativeCell();
+    }
+
+    void LateUpdate()
+    {
+        if (!owner && hasAuthoritativeCell && !isRegisteredLocally)
         {
-            // Remote peers receive the object at (0,0,0) initially. 
-            // We wait half a second for Ubiq to sync the real position over the network.
-            yield return new WaitForSeconds(0.5f);
-
-            if (this == null) yield break; // destroyed during the wait (e.g. synced removal)
-
-            if (GridManager.Instance != null && !isRegisteredLocally)
-            {
-                // Calculate our cell based on the newly synced network position
-                Vector2Int cell = GridManager.Instance.WorldToGrid(transform.position);
-                GridManager.Instance.TryPlace(cell, obstacleType, gameObject);
-                isRegisteredLocally = true;
-            }
+            TryRegisterAuthoritativeCell();
         }
+
+        if (!owner || !pendingInitialCellSend || !hasAuthoritativeCell || context.Scene == null)
+            return;
+
+        if (Time.time < nextResendTime)
+            return;
+
+        nextResendTime = Time.time + ResendInterval;
+        context.SendJson(new Message
+        {
+            cellX = authoritativeCell.x,
+            cellY = authoritativeCell.y
+        });
+
+        resendRemaining--;
+        if (resendRemaining <= 0)
+            pendingInitialCellSend = false;
+    }
+
+    public void ProcessMessage(ReferenceCountedSceneGraphMessage message)
+    {
+        var m = message.FromJson<Message>();
+        authoritativeCell = new Vector2Int(m.cellX, m.cellY);
+        hasAuthoritativeCell = true;
+        TryRegisterAuthoritativeCell();
+    }
+
+    public void SetOwner(bool isOwner)
+    {
+        owner = isOwner;
+    }
+
+    public void SetAuthoritativeCell(Vector2Int cell)
+    {
+        authoritativeCell = cell;
+        hasAuthoritativeCell = true;
+    }
+
+    public void RequestInitialCellSend()
+    {
+        if (!owner || !hasAuthoritativeCell)
+            return;
+
+        pendingInitialCellSend = true;
+        resendRemaining = ResendCount;
+        nextResendTime = 0f;
     }
 
     public void MarkAsRegisteredByLeader()
     {
         // The leader already placed this immediately upon spawning, so skip the delay.
         isRegisteredLocally = true;
+    }
+
+    private void TryRegisterAuthoritativeCell()
+    {
+        if (GridManager.Instance == null || !hasAuthoritativeCell || isRegisteredLocally)
+            return;
+
+        if (GridManager.Instance.TryPlace(authoritativeCell, obstacleType, gameObject))
+        {
+            isRegisteredLocally = true;
+            return;
+        }
+
+        if (GridManager.Instance.TryGetCell(authoritativeCell, out var data) && data.placedObject == gameObject)
+        {
+            isRegisteredLocally = true;
+            return;
+        }
+
+        string occupant = GridManager.Instance.TryGetCell(authoritativeCell, out data) && data.placedObject != null
+            ? $"{data.type} ({data.placedObject.name})"
+            : "empty or unknown occupant";
+
+        Debug.LogWarning($"[ObstacleAgent] Failed to register authoritative cell {authoritativeCell} for '{name}'. Existing occupant: {occupant}");
     }
 }
