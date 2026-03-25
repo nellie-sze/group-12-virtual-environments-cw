@@ -44,6 +44,10 @@ public class GameManager : MonoBehaviour
     public bool activateOnStartOnly = true;
     public XRGrabInteractable[] gatedInteractables;
 
+    [Header("UI")]
+    [Tooltip("Replay button root that should only appear when the game is won or lost.")]
+    public GameObject replayButtonObject;
+
     private NetworkContext _net;
     private RoomClient _roomClient;
     private Coroutine _decayCoroutine;
@@ -107,10 +111,12 @@ public class GameManager : MonoBehaviour
         {
             case GameState.Waiting:
                 SetInteractablesEnabled(false);
+                SetReplayButtonVisible(false);
                 break;
 
             case GameState.Playing:
                 SetInteractablesEnabled(true);
+                SetReplayButtonVisible(false);
                 ActivateGrabGates();
                 Debug.Log($"[GameManager] Entering Playing. countdownTimer={(countdownTimer != null ? countdownTimer.name : "null")}, livesManager={(livesManager != null ? livesManager.name : "null")}");
                 if (countdownTimer != null) countdownTimer.StartTimer();
@@ -120,6 +126,7 @@ public class GameManager : MonoBehaviour
             case GameState.Won:
                 Debug.Log("[GameManager] Entering Won. Stopping timer and playing win sequence.");
                 SetInteractablesEnabled(false);
+                SetReplayButtonVisible(true);
                 DeactivateGrabGates();
                 if (_decayCoroutine != null) { StopCoroutine(_decayCoroutine); _decayCoroutine = null; }
                 if (countdownTimer != null) countdownTimer.StopTimer();
@@ -132,6 +139,7 @@ public class GameManager : MonoBehaviour
             case GameState.Lost:
                 Debug.Log("[GameManager] Entering Lost. Stopping timer / showing end game / playing lose sequence.");
                 SetInteractablesEnabled(false);
+                SetReplayButtonVisible(true);
                 DeactivateGrabGates();
                 if (_decayCoroutine != null) { StopCoroutine(_decayCoroutine); _decayCoroutine = null; }
                 if (countdownTimer != null) countdownTimer.ShowEndGame();
@@ -389,5 +397,11 @@ public class GameManager : MonoBehaviour
             if (interactable == null) continue;
             interactable.enabled = enabled;
         }
+    }
+
+    private void SetReplayButtonVisible(bool visible)
+    {
+        if (replayButtonObject == null) return;
+        replayButtonObject.SetActive(visible);
     }
 }
